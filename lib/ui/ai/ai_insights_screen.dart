@@ -48,10 +48,14 @@ class _AiInsightsScreenState extends ConsumerState<AiInsightsScreen> {
       _error = null;
       _lastForced = force;
     });
+    // Read before the await: the user may leave while the AI is answering,
+    // and the Home card must still pick up the new analysis.
+    final ai = ref.read(aiServiceProvider);
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
-      final a = await runAi(() => ref.read(aiServiceProvider).analyse(force: force));
+      final a = await runAi(() => ai.analyse(force: force));
+      container.invalidate(aiCachedAnalysisProvider);
       if (mounted) setState(() => _analysis = a);
-      ref.invalidate(aiCachedAnalysisProvider);
     } on AiError catch (e) {
       if (mounted) setState(() => _error = e);
     } finally {

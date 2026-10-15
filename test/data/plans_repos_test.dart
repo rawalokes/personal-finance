@@ -79,6 +79,19 @@ void main() {
       expect((await loans.get('L2')).installment, before.installment);
     });
 
+    test('a payment above what is owed is refused and changes nothing', () async {
+      final before = await loans.get('L1');
+      await expectLater(
+        loans.recordRepayment('L1', amount: payoffAmount(before) + 100, date: '2026-10-13', fromAccountId: 'gibl'),
+        throwsA(isA<RepaymentTooLarge>()),
+      );
+      expect((await loans.get('L1')).outstanding, before.outstanding);
+      expect(await balanceOf(db, 'gibl'), fromRupees(24600));
+      // Exactly the payoff amount is fine and closes the debt.
+      await loans.recordRepayment('L1', amount: payoffAmount(before), date: '2026-10-13', fromAccountId: 'gibl');
+      expect((await loans.get('L1')).outstanding, 0);
+    });
+
     test('repayments of one loan are listed newest first', () async {
       await loans.recordRepayment('L3', amount: fromRupees(5167), date: '2026-11-05', fromAccountId: 'nabil');
       final list = await loans.watchRepayments('L3').first;

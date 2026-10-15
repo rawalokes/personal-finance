@@ -83,6 +83,24 @@ void main() {
       await tester.pump(kUndoWindow);
     });
 
+    testWidgets('editing only the name keeps paisa-exact amounts and an empty due date', (tester) async {
+      final db = await pumpPaisa(tester, location: '/home');
+      await (db.update(db.loans)..where((l) => l.id.equals('L2'))).write(
+        const LoansCompanion(outstanding: Value(13145075), installment: Value(679050), nextDueDate: Value(null)),
+      );
+      await tester.pumpAndSettle();
+      GoRouter.of(tester.element(find.text('AVAILABLE TO SPEND'))).push('/loans/L2/edit');
+      await tester.pumpAndSettle();
+      await tester.enterText(fieldLabelled('Loan name'), 'Personal loan (NIC)');
+      await scrollAndTap(tester, find.widgetWithText(PaisaButton, 'Save changes'));
+      final row = await (db.select(db.loans)..where((l) => l.id.equals('L2'))).getSingle();
+      expect(row.name, 'Personal loan (NIC)');
+      expect(row.outstanding, 13145075);
+      expect(row.installment, 679050);
+      expect(row.nextDueDate, isNull);
+      await tester.pump(kUndoWindow);
+    });
+
     testWidgets('editing changes the installment; undo restores it', (tester) async {
       final db = await pumpPaisa(tester, location: '/loans/L2');
       await tester.tap(find.bySemanticsLabel('Edit loan'));

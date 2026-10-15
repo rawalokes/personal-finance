@@ -42,9 +42,9 @@ DATA:
 ${_json(summary)}''';
 
 String budgetPrompt(Map<String, Object?> summary) => '''
-Suggest a monthly budget limit for each spending category that has spending or a budget, using the
-category history. Keep essentials realistic and suggest savings where spending is high. Use the
-categoryId values exactly as given in "budgets" or "spendingByCategory".
+Suggest a monthly budget limit for each spending category in "categories" that has spending or a
+budget, using its "spentByMonth" history. Keep essentials realistic and suggest savings where spending
+is high. Use each category's "categoryId" exactly as given; never invent categories.
 
 DATA:
 ${_json(summary)}''';

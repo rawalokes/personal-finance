@@ -63,11 +63,13 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
     }
     setState(() => _testing = true);
     final ai = ref.read(aiServiceProvider);
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
       final models = await runAi(() => ai.testKey(candidate));
       if (candidate != saved) await ai.saveKey(candidate);
+      container.invalidate(aiKeyProvider);
+      if (!mounted) return;
       _key.clear();
-      ref.invalidate(aiKeyProvider);
       if (mounted) {
         setState(() {
           _ok = true;
@@ -89,8 +91,9 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
   }
 
   Future<void> _remove() async {
+    final container = ProviderScope.containerOf(context, listen: false);
     await ref.read(aiServiceProvider).removeKey();
-    ref.invalidate(aiKeyProvider);
+    container.invalidate(aiKeyProvider);
     if (!mounted) return;
     setState(() {
       _status = null;

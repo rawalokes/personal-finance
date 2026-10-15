@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/repos/loan_repo.dart';
 import '../../../finance/finance.dart';
 import '../../../store/data_providers.dart';
 import '../../components/buttons.dart';
@@ -17,7 +20,7 @@ import '../../typography.dart';
 
 class _RepayForm extends ChangeNotifier {
   _RepayForm(Loan loan, IsoDate today)
-      : amount = TextEditingController(text: '${toWholeRupees(loan.installment)}'),
+      : amount = TextEditingController(text: plainRupees(math.min(loan.installment, payoffAmount(loan)))),
         date = today,
         account = loan.repaymentAccountId {
     amount.addListener(notifyListeners);
@@ -114,6 +117,10 @@ Future<void> showRepaySheet(BuildContext context, Loan loan) => showPaisaFormShe
                         f.setError('Enter an amount greater than zero');
                         return;
                       }
+                      if (amount > payoffAmount(loan)) {
+                        f.setError('That is more than you owe — at most ${toastNpr(ref, payoffAmount(loan))}');
+                        return;
+                      }
                       if (account == null) {
                         f.setError('Add an account to pay from first');
                         return;
@@ -126,6 +133,11 @@ Future<void> showRepaySheet(BuildContext context, Loan loan) => showPaisaFormShe
                             .recordRepayment(loan.id, amount: amount, date: f.date, fromAccountId: account);
                         if (ctx.mounted) Navigator.of(ctx).pop();
                         showUndoToast(toast, 'Repayment recorded · principal and interest split', undo);
+                      } on RepaymentTooLarge catch (e) {
+                        if (ctx.mounted) {
+                          f.setSaving(false);
+                          f.setError('That is more than you owe — at most ${toastNpr(ref, e.max)}');
+                        }
                       } catch (_) {
                         if (ctx.mounted) f.setSaving(false);
                         toast.show('Couldn’t record the payment — nothing was changed');

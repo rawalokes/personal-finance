@@ -72,6 +72,20 @@ void main() {
       expect(find.text('Target met'), findsOneWidget);
     });
 
+    testWidgets('a double tap on Create goal makes one goal', (tester) async {
+      final db = await pumpPaisa(tester, location: '/plans?seg=goals');
+      await tester.tap(find.text('New goal'));
+      await tester.pumpAndSettle();
+      await tester.enterText(fieldLabelled('Goal name'), 'Laptop');
+      await tester.enterText(fieldLabelled('Target amount (NPR)'), '150000');
+      final create = find.widgetWithText(PaisaButton, 'Create goal');
+      await tester.tap(create);
+      await tester.tap(create, warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect((await db.select(db.goals).get()).where((g) => g.name == 'Laptop'), hasLength(1));
+      await tester.pump(kUndoWindow);
+    });
+
     testWidgets('a new goal shows progress; adding money is a transfer, never spending', (tester) async {
       final db = await pumpPaisa(tester, location: '/plans?seg=goals');
       await tester.tap(find.text('New goal'));

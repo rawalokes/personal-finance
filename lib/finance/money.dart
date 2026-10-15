@@ -12,6 +12,13 @@ const String kMaskShort = '••';
 Paisa fromRupees(num rupees) => (rupees * 100).round();
 
 /// Whole rupees, rounding half away from zero.
+/// Exact rupees for a text field: '228640' or '228640.75' (no grouping).
+String plainRupees(Paisa p) {
+  final sign = p < 0 ? '-' : '';
+  final a = p.abs();
+  return a % 100 == 0 ? '$sign${a ~/ 100}' : '$sign${a ~/ 100}.${(a % 100).toString().padLeft(2, '0')}';
+}
+
 int toWholeRupees(Paisa p) => p >= 0 ? (p + 50) ~/ 100 : -((-p + 50) ~/ 100);
 
 /// Groups the digits of |n|: lakh `12,34,56,789` or international `123,456,789`.

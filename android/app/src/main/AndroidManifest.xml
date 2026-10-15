@@ -4,6 +4,9 @@
     <!-- AI assistant: Google Gemini, only when the user turns it on. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:label="Paisa"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

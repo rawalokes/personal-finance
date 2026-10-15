@@ -9,6 +9,13 @@ import '../undo.dart';
 import 'transaction_repo.dart';
 
 /// What the loan form collects. A null [ratePct] means "Not entered".
+/// A repayment above the loan's payoff amount (outstanding + this period's
+/// interest).
+class RepaymentTooLarge implements Exception {
+  const RepaymentTooLarge(this.max);
+  final Paisa max;
+}
+
 class LoanInput {
   const LoanInput({
     required this.loanTypeId,
@@ -129,7 +136,9 @@ class LoanRepository {
   }
 
   /// Records a payment of [amount]: interest first, the rest off the
-  /// principal (spec §5.4). Only the interest counts as spending.
+  /// principal (spec §5.4). Only the interest counts as spending. A payment
+  /// above what is owed is refused: the extra would leave the account with
+  /// no record of where it went.
   Future<UndoAction> recordRepayment(
     String loanId, {
     required Paisa amount,
@@ -137,6 +146,8 @@ class LoanRepository {
     required String fromAccountId,
   }) async {
     final loan = await get(loanId);
+    final max = payoffAmount(loan);
+    if (loan.outstanding <= 0 || amount > max) throw RepaymentTooLarge(max);
     final split = splitRepayment(loan, amount);
     return _transactions.add(
       Txn(

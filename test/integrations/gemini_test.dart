@@ -4,9 +4,11 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:paisa/data/seed.dart';
 import 'package:paisa/data/settings_models.dart';
 import 'package:paisa/finance/finance.dart';
 import 'package:paisa/integrations/gemini/client.dart';
+import 'package:paisa/integrations/gemini/prompts.dart';
 import 'package:paisa/integrations/gemini/redact.dart';
 import 'package:paisa/integrations/gemini/schemas.dart';
 
@@ -151,6 +153,27 @@ void main() {
       final payload = jsonEncode(buildSummaryPayload(sampleSummary(AiPrivacy.merchants)));
       expect(payload, contains('WorldLink internet'));
       expect(payload.contains('4821'), isFalse);
+    });
+
+    test('category spending is sent by category id, with recent months, even without budgets', () {
+      final input = sampleSummary(AiPrivacy.summaries);
+      final map = buildSummaryPayload(SummaryInput(
+        today: input.today,
+        accounts: input.accounts,
+        loans: input.loans,
+        transactions: input.transactions,
+        categories: [for (final c in seedCategories) c],
+        goals: const [],
+        privacy: input.privacy,
+      ));
+      final cats = (map['categories']! as List).cast<Map<String, Object?>>();
+      final groceries = cats.firstWhere((c) => c['categoryId'] == 'groceries');
+      expect(groceries['name'], 'Groceries');
+      expect(groceries.containsKey('budget'), isFalse, reason: 'a clean install has no budgets');
+      final months = (groceries['spentByMonth']! as Map).cast<String, Object?>();
+      expect(months['2026-10'], greaterThan(0));
+      expect(months.length, lessThanOrEqualTo(6));
+      expect(budgetPrompt(map), contains('"categories"'));
     });
 
     test('amounts are sent in whole rupees, not paisa', () {

@@ -225,6 +225,8 @@ class _GoalCard extends ConsumerWidget {
 }
 
 class _NewGoalForm extends ChangeNotifier {
+  /// Set before the first await so a double tap saves once.
+  bool busy = false;
   final name = TextEditingController();
   final target = TextEditingController();
   final saved = TextEditingController();
@@ -309,9 +311,17 @@ Future<void> showNewGoalSheet(BuildContext context) => showPaisaFormSheet<void, 
             child: PaisaButton(
               label: 'Create goal',
               onPressed: () async {
+                if (f.busy) return;
                 final goal = f.validate();
                 if (goal == null) return;
-                await ref.read(goalRepoProvider).add(goal);
+                f.busy = true;
+                try {
+                  await ref.read(goalRepoProvider).add(goal);
+                } catch (_) {
+                  f.busy = false;
+                  ref.read(toastProvider.notifier).show('Couldn’t create the goal — nothing was changed');
+                  return;
+                }
                 if (ctx.mounted) Navigator.of(ctx).pop();
                 ref.read(toastProvider.notifier).show('Goal “${goal.name.trim()}” created');
               },
@@ -322,6 +332,7 @@ Future<void> showNewGoalSheet(BuildContext context) => showPaisaFormSheet<void, 
     );
 
 class _AddMoneyForm extends ChangeNotifier {
+  bool busy = false;
   final amount = TextEditingController();
   String? from;
   String? to;
@@ -409,10 +420,19 @@ Future<void> showAddMoneySheet(BuildContext context, Goal goal) => showPaisaForm
                   f.setError('Add a bank, wallet or cash account first');
                   return;
                 }
+                if (f.busy) return;
+                f.busy = true;
                 final toast = ref.read(toastProvider.notifier);
-                final UndoAction undo = await ref
-                    .read(goalRepoProvider)
-                    .contribute(goal.id, amount: amount, fromAccountId: from, toAccountId: f.to);
+                final UndoAction undo;
+                try {
+                  undo = await ref
+                      .read(goalRepoProvider)
+                      .contribute(goal.id, amount: amount, fromAccountId: from, toAccountId: f.to);
+                } catch (_) {
+                  f.busy = false;
+                  toast.show('Couldn’t add the money — nothing was changed');
+                  return;
+                }
                 if (ctx.mounted) Navigator.of(ctx).pop();
                 showUndoToast(toast, '${toastNpr(ref, amount)} added to ${goal.name} · not an expense', undo);
               },

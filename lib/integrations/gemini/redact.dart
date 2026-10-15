@@ -37,6 +37,9 @@ Map<String, Object?> buildSummaryPayload(SummaryInput s) {
   final balances = summarizeBalances(s.accounts, s.loans);
   final months = {for (final t in s.transactions) monthKey(t.date)}.where((m) => m.compareTo(month) < 0).toList()..sort();
   final history = months.length > 6 ? months.sublist(months.length - 6) : months;
+  // This month plus up to five before it, for per-category spending.
+  final spendMonths = [...(history.length > 5 ? history.sublist(history.length - 5) : history), month];
+  final byMonth = {for (final m in spendMonths) m: m == month ? totals : monthlyTotals(s.transactions, m)};
   final active = s.categories.where((c) => c.active && c.isTopLevel).toList();
   final essential = active.where((c) => c.essential).fold<int>(0, (t, c) => t + (c.monthlyBudget ?? 0));
   final reserved = balances.reserved;
@@ -81,6 +84,15 @@ Map<String, Object?> buildSummaryPayload(SummaryInput s) {
       for (final e in totals.byCategory.entries)
         (s.categories.where((c) => c.id == e.key).firstOrNull?.name ?? e.key): _r(e.value),
     },
+    'categories': [
+      for (final c in active)
+        {
+          'categoryId': c.id,
+          'name': c.name,
+          if ((c.monthlyBudget ?? 0) > 0) 'budget': _r(c.monthlyBudget!),
+          'spentByMonth': {for (final m in spendMonths) m: _r(byMonth[m]!.byCategory[c.id] ?? 0)},
+        },
+    ],
     'emergencyFundMonths': essential <= 0 ? null : double.parse((reserved / essential).toStringAsFixed(1)),
     'goals': [
       for (final g in s.goals) {'name': g.name, 'target': _r(g.target), 'saved': _r(g.current), 'targetDate': g.targetDate},

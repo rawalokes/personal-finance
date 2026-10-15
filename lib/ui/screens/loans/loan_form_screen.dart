@@ -60,6 +60,9 @@ class _LoanFormScreenState extends ConsumerState<LoanFormScreen> {
   IsoDate? _start;
   IsoDate? _maturity;
   late IsoDate _next = addMonths(ref.read(clockProvider).today(), 1);
+
+  /// An edited loan that had no due date keeps none unless one is picked.
+  bool _noDueDate = false;
   String? _accountId;
   bool _loaded = false;
 
@@ -107,16 +110,17 @@ class _LoanFormScreenState extends ConsumerState<LoanFormScreen> {
       _typeId = l.loanTypeId;
       _name.text = l.name;
       _lender.text = l.lender;
-      _principal.text = '${toWholeRupees(l.principal)}';
-      _outstanding.text = '${toWholeRupees(l.outstanding)}';
+      _principal.text = plainRupees(l.principal);
+      _outstanding.text = plainRupees(l.outstanding);
       _rate.text = l.ratePct == null || l.method == InterestMethod.none ? '' : '${l.ratePct}';
-      _installment.text = '${toWholeRupees(l.installment)}';
+      _installment.text = plainRupees(l.installment);
       _fees.text = l.feesAndPrepayment ?? '';
       _method = l.method;
       _frequency = l.frequency;
       _start = l.startDate;
       _maturity = l.maturityDate;
       _next = l.nextDueDate ?? _next;
+      _noDueDate = l.nextDueDate == null;
       _accountId = l.repaymentAccountId;
     } else {
       final active = d.types.where((t) => t.active).toList();
@@ -235,7 +239,14 @@ class _LoanFormScreenState extends ConsumerState<LoanFormScreen> {
           ]),
         ),
         gap,
-        DateField(label: 'Next due date', value: _next, onChanged: (v) => setState(() => _next = v)),
+        DateField(
+          label: 'Next due date',
+          value: _next,
+          onChanged: (v) => setState(() {
+            _next = v;
+            _noDueDate = false;
+          }),
+        ),
         gap,
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Expanded(
@@ -353,7 +364,7 @@ class _LoanFormScreenState extends ConsumerState<LoanFormScreen> {
           frequency: _frequency,
           startDate: _start,
           maturityDate: _maturity,
-          nextDueDate: _next,
+          nextDueDate: _noDueDate ? null : _next,
           repaymentAccountId: _accountId,
           feesAndPrepayment: _fees.text.trim(),
         ));

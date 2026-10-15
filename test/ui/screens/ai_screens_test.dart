@@ -28,6 +28,7 @@ const _models = {
 /// [answer] (a JSON string the model "wrote").
 class FakeGemini {
   int calls = 0;
+  Duration delay = Duration.zero;
   int generateCalls = 0;
   String answer = jsonEncode(goodAnalysis);
   bool rejectKey = false;
@@ -37,6 +38,7 @@ class FakeGemini {
         if (rejectKey) return http.Response('{"error":{"message":"API key not valid. Please pass a valid API key."}}', 400);
         if (req.url.path.endsWith('/models')) return http.Response(jsonEncode(_models), 200);
         generateCalls++;
+        if (delay > Duration.zero) await Future<void>.delayed(delay);
         return http.Response(jsonEncode(reply(answer)), 200);
       });
 }
@@ -130,6 +132,22 @@ void main() {
     expect(gemini.generateCalls, 1, reason: 'served from the cache');
     await scrollAndTap(tester, find.text('Regenerate'));
     expect(gemini.generateCalls, 2);
+  });
+
+  testWidgets('leaving AI Insights before the answer arrives is safe; Home then shows the result', (tester) async {
+    await open(tester, on: true, key: true);
+    gemini.delay = const Duration(seconds: 2);
+    await scrollPageTo(tester, find.text('Get this month’s analysis'));
+    await tester.tap(find.text('Get this month’s analysis'));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.textContaining('Analysing'), findsOneWidget, reason: 'the request is still running');
+    await tester.tap(find.bySemanticsLabel('Back'));
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.text('AI insights'), findsNothing, reason: 'the screen is gone before the answer');
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('Health score 72'), findsOneWidget);
   });
 
   testWidgets('acceptance 19: a malformed answer shows a friendly error and the app keeps working', (tester) async {
