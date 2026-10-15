@@ -16,7 +16,7 @@ void main() {
     for (final label in ['Home', 'Activity', 'Accounts', 'Plans', 'More']) {
       expect(navLabel(label), findsOneWidget);
     }
-    expect(find.widgetWithText(PaisaTopBar, 'Home'), findsOneWidget);
+    expect(find.text('AVAILABLE TO SPEND'), findsOneWidget);
 
     await tester.tap(navLabel('Activity'));
     await tester.pumpAndSettle();

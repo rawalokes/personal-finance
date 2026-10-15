@@ -6,6 +6,7 @@ import 'ui/screens/accounts/account_detail_screen.dart';
 import 'ui/screens/accounts/accounts_screen.dart';
 import 'ui/screens/entry/add_expense_screen.dart';
 import 'ui/screens/entry/add_income_screen.dart';
+import 'ui/screens/home/home_screen.dart';
 import 'ui/shell/app_shell.dart';
 import 'ui/shell/placeholder_screen.dart';
 import 'ui/shell/tabs.dart';
@@ -15,6 +16,7 @@ final initialLocationProvider = Provider<String>((ref) => kTabs.first.path);
 
 /// The screen at the root of each tab. Plans and More are built in later plans.
 Widget _rootScreen(TabDef tab) => switch (tab.path) {
+      '/home' => const HomeScreen(),
       '/accounts' => const AccountsScreen(),
       _ => PlaceholderScreen(title: tab.screenTitle),
     };
