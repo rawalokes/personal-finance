@@ -15,3 +15,4 @@ export 'tax.dart';
 export 'auto_confirm.dart';
 export 'budgets.dart';
 export 'duplicates.dart';
+export 'catalog.dart';
