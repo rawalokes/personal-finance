@@ -64,6 +64,18 @@ const kAccountGroups = [
       AccountGroup.liability => ('Liability', Tone.red),
     };
 
+/// A liability with a positive balance is debt. Overpaid (below zero), the
+/// card is in credit and must not be shown as owed.
+bool isOwed(AccountGroup group, Paisa balance) => group == AccountGroup.liability && balance > 0;
+bool isInCredit(AccountGroup group, Paisa balance) => group == AccountGroup.liability && balance < 0;
+
+/// What a liability's amount displays as: always the size of the debt or
+/// credit, with [owedSign] carrying the direction. Assets show as they are.
+Paisa shownBalance(AccountGroup group, Paisa balance) => group == AccountGroup.liability ? balance.abs() : balance;
+
+/// [kMinus] for money owed, nothing otherwise (amounts display as absolute).
+String owedSign(AccountGroup group, Paisa balance) => isOwed(group, balance) ? kMinus : '';
+
 /// Account detail "Counts toward" row.
 String countsToward(AccountGroup g) => switch (g) {
       AccountGroup.liquid => 'Available balance',

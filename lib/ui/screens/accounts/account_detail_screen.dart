@@ -79,7 +79,8 @@ class _DetailBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final a = d.account!;
-    final owed = a.group == AccountGroup.liability;
+    final owed = isOwed(a.group, a.balance);
+    final liability = a.group == AccountGroup.liability;
     final (tagText, tagTone) = groupTag(a.group);
     final money = ref.watch(moneyFormatProvider);
     final today = ref.watch(clockProvider).today();
@@ -92,10 +93,13 @@ class _DetailBody extends ConsumerWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Wrap(spacing: 8, children: [Tag(tagText, tone: tagTone), Tag(accountTypeLabel(a, d.types))]),
               const SizedBox(height: 14),
-              Text(owed ? 'Amount owed' : 'Current balance', style: PaisaText.sub.copyWith(color: c.ink3)),
+              Text(
+                liability ? (owed || a.balance == 0 ? 'Amount owed' : 'In credit') : 'Current balance',
+                style: PaisaText.sub.copyWith(color: c.ink3),
+              ),
               const SizedBox(height: 4),
               MoneyText(
-                a.balance,
+                shownBalance(a.group, a.balance),
                 color: owed ? c.red : c.ink,
                 style: PaisaText.h1.copyWith(fontSize: 32, fontVariations: const [FontVariation('wght', 650)]),
               ),

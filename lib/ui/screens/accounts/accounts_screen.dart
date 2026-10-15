@@ -73,11 +73,11 @@ class _AccountsBody extends StatelessWidget {
             subtitle: g.subtitle,
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
             trailing: MoneyText(
-              live.where((a) => a.group == g.group).fold(0, (t, a) => t + a.balance),
-              sign: g.group == AccountGroup.liability ? kMinus : '',
+              shownBalance(g.group, _total(live, g.group)),
+              sign: owedSign(g.group, _total(live, g.group)),
               color: switch (g.group) {
                 AccountGroup.liquid => c.primary,
-                AccountGroup.liability => c.red,
+                AccountGroup.liability => isOwed(g.group, _total(live, g.group)) ? c.red : c.ink,
                 _ => c.ink,
               },
               style: PaisaText.body.copyWith(fontVariations: const [FontVariation('wght', 600)]),
@@ -121,6 +121,9 @@ class _AccountsBody extends StatelessWidget {
   }
 }
 
+Paisa _total(List<Account> accounts, AccountGroup group) =>
+    accounts.where((a) => a.group == group).fold(0, (t, a) => t + a.balance);
+
 class _AccountRow extends StatelessWidget {
   const _AccountRow({required this.account, required this.types});
   final Account account;
@@ -129,16 +132,16 @@ class _AccountRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final a = account;
-    final owed = a.group == AccountGroup.liability;
-    final type = accountTypeLabel(a, types);
+    final owed = isOwed(a.group, a.balance);
+    final type = isInCredit(a.group, a.balance) ? '${accountTypeLabel(a, types)} · in credit' : accountTypeLabel(a, types);
     return ListRow(
       title: a.name,
       subtitle: a.note == null ? type : '$type · ${a.note}',
       leading: IconWell(icon: accountIcon(a), tone: accountTone(a)),
       onTap: () => context.push('/accounts/${a.id}'),
       trailing: MoneyText(
-        a.balance,
-        sign: owed ? kMinus : '',
+        shownBalance(a.group, a.balance),
+        sign: owedSign(a.group, a.balance),
         color: owed ? context.colors.red : null,
         style: PaisaText.body.copyWith(fontVariations: const [FontVariation('wght', 700)]),
       ),

@@ -1,4 +1,6 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paisa/data/db/database.dart';
 import 'package:paisa/data/mappers.dart';
 import 'package:paisa/finance/finance.dart';
 import 'package:paisa/ui/components/buttons.dart';
@@ -76,5 +78,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(await db.select(db.accounts).get(), hasLength(10));
     await tester.pump(kUndoWindow);
+  });
+
+  testWidgets('review fix: an overpaid credit card shows as in credit, not owed', (tester) async {
+    final db = await pumpPaisa(tester, location: '/accounts');
+    await (db.update(db.accounts)..where((a) => a.id.equals('cc'))).write(const AccountsCompanion(balance: Value(-50000)));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Nabil Visa Credit Card'), 200);
+    expect(find.text('− NPR 500'), findsNothing);
+    expect(find.text('NPR 500'), findsWidgets);
+    expect(find.textContaining('in credit'), findsOneWidget);
   });
 }
