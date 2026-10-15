@@ -1,0 +1,52 @@
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart' show SqliteException;
+import 'package:flutter_test/flutter_test.dart';
+import 'package:paisa/data/db/database.dart';
+
+import 'test_db.dart';
+
+AccountsCompanion _account(String id) => AccountsCompanion.insert(
+      id: id,
+      name: 'Test $id',
+      shortName: id,
+      accountGroup: 'liquid',
+      kind: 'bank',
+      openingBalance: 0,
+      balance: 0,
+    );
+
+void main() {
+  test('creates every table at schema version 1', () async {
+    final db = openTestDb();
+    expect(db.schemaVersion, 1);
+    final names = (await db.customSelect("SELECT name FROM sqlite_master WHERE type = 'table'").get())
+        .map((r) => r.read<String>('name'))
+        .toSet();
+    expect(
+      names,
+      containsAll([
+        'accounts', 'transactions', 'loans', 'income_types', 'expense_categories', 'loan_types',
+        'recurring_rules', 'config_items', 'audit_entries', 'app_meta',
+      ]),
+    );
+  });
+
+  test('foreign keys are enforced: a transaction needs a real account', () async {
+    final db = openTestDb();
+    final insert = db.into(db.transactions).insert(TransactionsCompanion.insert(
+          id: 't1', date: '2026-10-14', time: '09:00', title: 'X', type: 'expense',
+          accountId: 'missing', amount: 100, status: 'posted', source: 'manual',
+          createdAt: '2026-10-14T09:00:00', updatedAt: '2026-10-14T09:00:00',
+        ));
+    await expectLater(insert, throwsA(isA<SqliteException>()));
+  });
+
+  test('money columns round-trip exact integers', () async {
+    final db = openTestDb();
+    await db.into(db.accounts).insert(_account('a').copyWith(balance: const Value(999999999999)));
+    final row = await (db.select(db.accounts)..where((a) => a.id.equals('a'))).getSingle();
+    expect(row.balance, 999999999999);
+    expect(row.archived, isFalse);
+    expect(row.autoUpdateFromSms, isFalse);
+  });
+}
