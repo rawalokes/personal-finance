@@ -1,6 +1,8 @@
 import 'dart:ui' show PointerDeviceKind;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paisa/finance/finance.dart';
 import 'package:paisa/store/ui_state.dart';
@@ -170,5 +172,23 @@ void main() {
     await pumpPaisa(tester, size: const Size(320, 640));
     await scrollPageTo(tester, find.text('Recent'));
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('review fix: card amounts of a lakh or more show every digit with the real font', (tester) async {
+    await tester.runAsync(() async {
+      final loader = FontLoader('SpaceGrotesk')..addFont(rootBundle.load('assets/fonts/SpaceGrotesk-Variable.ttf'));
+      await loader.load();
+    });
+    await pumpPaisa(tester);
+    final amount = find.text('NPR 3,85,000');
+    await tester.scrollUntilVisible(
+      amount,
+      200,
+      scrollable: find.descendant(of: find.byKey(const Key('account-carousel')), matching: find.byType(Scrollable)),
+    );
+    final paragraph = tester.renderObject<RenderParagraph>(amount);
+    final boxes = paragraph.getBoxesForSelection(const TextSelection(baseOffset: 0, extentOffset: 'NPR 3,85,000'.length));
+    expect(boxes.map((b) => b.top).toSet(), hasLength(1), reason: 'digits must not wrap onto a hidden second line');
+    expect(paragraph.didExceedMaxLines, isFalse);
   });
 }

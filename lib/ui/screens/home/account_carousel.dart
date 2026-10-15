@@ -92,7 +92,7 @@ class _AccountCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final a = account;
-    final owed = a.group == AccountGroup.liability;
+    final owed = isOwed(a.group, a.balance);
     final sub = hero ? c.heroCardSub : c.ink3;
     return SizedBox(
       width: hero ? 210 : 160,
@@ -120,13 +120,22 @@ class _AccountCard extends StatelessWidget {
                     Text('AUTO', style: PaisaText.tag.copyWith(fontSize: 11, color: c.primary)),
                 ]),
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  MoneyText(
-                    a.balance,
-                    sign: owed ? kMinus : '',
-                    style: PaisaText.h2.copyWith(fontSize: 21, color: c.ink),
+                  // Cards have a fixed width: shrink a long amount rather than cut it.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: MoneyText(
+                      shownBalance(a.group, a.balance),
+                      sign: owedSign(a.group, a.balance),
+                      style: PaisaText.h2.copyWith(fontSize: 21, color: c.ink),
+                    ),
                   ),
                   Text(
-                    owed ? '$typeLabel · owed' : typeLabel,
+                    owed
+                        ? '$typeLabel · owed'
+                        : isInCredit(a.group, a.balance)
+                            ? '$typeLabel · in credit'
+                            : typeLabel,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: PaisaText.hint.copyWith(fontSize: 12, color: sub),

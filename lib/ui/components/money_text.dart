@@ -40,6 +40,10 @@ class MoneyText extends ConsumerWidget {
     return Text(
       text,
       maxLines: 1,
+      // Never break "NPR 3,85,000" after "NPR": a clipped second line would
+      // hide every digit. Too-long amounts end in an ellipsis instead.
+      softWrap: false,
+      overflow: TextOverflow.ellipsis,
       style: base.copyWith(color: color ?? base.color ?? context.colors.ink),
       semanticsLabel: f.masked ? 'Amount hidden' : null,
     );
