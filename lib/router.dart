@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'ui/screens/accounts/account_detail_screen.dart';
 import 'ui/screens/accounts/accounts_screen.dart';
 import 'ui/shell/app_shell.dart';
 import 'ui/shell/placeholder_screen.dart';
@@ -30,6 +31,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(path: tab.path, builder: (context, state) => _rootScreen(tab)),
             ]),
         ],
+      ),
+      GoRoute(
+        path: '/accounts/:id',
+        builder: (context, state) => AccountDetailScreen(accountId: state.pathParameters['id']!),
       ),
     ],
   );
