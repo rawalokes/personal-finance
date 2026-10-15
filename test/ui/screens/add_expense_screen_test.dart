@@ -1,6 +1,11 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paisa/data/db/database.dart';
 import 'package:paisa/data/mappers.dart';
+import 'package:paisa/data/repos/catalog_repo.dart';
+import 'package:paisa/data/undo.dart';
+import 'package:paisa/store/data_providers.dart';
+import 'package:paisa/store/ui_state.dart';
 import 'package:paisa/finance/finance.dart';
 import 'package:paisa/ui/components/buttons.dart';
 import 'package:paisa/ui/components/inputs.dart';
@@ -95,4 +100,45 @@ void main() {
       await tester.pump(kUndoWindow);
     });
   });
+
+  testWidgets('review fix: if saving the repeat rule fails, the expense is not saved either', (tester) async {
+    final db = await pumpPaisa(tester, location: '/expense/new', overrides: [
+      catalogRepoProvider.overrideWith((ref) => _FailingRecurring(ref.watch(databaseProvider), ref.watch(auditLogProvider))),
+    ]);
+    await tester.enterText(fieldLabelled('Amount'), '1695');
+    await scrollAndTap(tester, find.byType(PaisaToggle));
+    await save(tester, 'Save expense');
+    expect(find.text('Couldn’t save — nothing was changed'), findsOneWidget);
+    expect(await balanceOf(db, 'nabil'), fromRupees(142350));
+    expect(await txns(db), hasLength(17));
+  });
+  testWidgets('review fix: with no account to use, Add expense asks you to add one instead of crashing', (tester) async {
+    final db = await pumpPaisa(tester, location: '/expense/new');
+    await (db.update(db.accounts)..where((a) => a.accountGroup.isIn(['liquid', 'liability'])))
+        .write(const AccountsCompanion(archived: Value(true)));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Add an account first'), findsOneWidget);
+    final saveLabel = 'Save expense';
+    expect(tester.widget<PaisaButton>(find.widgetWithText(PaisaButton, saveLabel)).onPressed, isNull);
+  });
+  testWidgets('review fix: with balances hidden, the budget hint masks spending and the budget', (tester) async {
+    await pumpPaisa(tester, location: '/expense/new', overrides: [hideBalancesProvider.overrideWith(_Hidden.new)]);
+    expect(find.textContaining('6,560'), findsNothing);
+    expect(find.textContaining('12,000'), findsNothing);
+    expect(find.textContaining('Groceries: NPR ••••••'), findsOneWidget);
+  });
+}
+
+/// A catalog whose recurring-rule write fails, like a database error would.
+class _FailingRecurring extends CatalogRepository {
+  _FailingRecurring(super.db, super.audit);
+
+  @override
+  Future<UndoAction> addRecurring(RecurringRule rule) => Future.error(StateError('disk full'));
+}
+
+class _Hidden extends HideBalances {
+  @override
+  bool build() => true;
 }

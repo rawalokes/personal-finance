@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../finance/finance.dart';
 import '../../../store/data_providers.dart';
+import '../../../store/ui_state.dart';
 import '../../components/buttons.dart';
 import '../../components/indicators.dart';
 import '../../components/sheet.dart';
@@ -58,7 +59,8 @@ Future<void> showReconcileSheet(BuildContext context, Account account) {
       final diff = v == null ? null : v - account.balance;
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text(
-          'Paisa shows ${toastNpr(ref, account.balance)}. Enter the ${owed ? 'amount owed' : 'balance'} '
+          // The stored balance (and the difference from it) mask with hide balances.
+          'Paisa shows ${ref.watch(moneyFormatProvider).npr(account.balance)}. Enter the ${owed ? 'amount owed' : 'balance'} '
           'from your bank app or statement.',
           style: PaisaText.sub.copyWith(color: c.ink3),
         ),
@@ -75,7 +77,7 @@ Future<void> showReconcileSheet(BuildContext context, Account account) {
           diff == 0
               ? const Note('Balances match — nothing to adjust.', tone: Tone.positive)
               : Note(
-                  'Difference ${_signed(ref, diff)}. An adjustment entry will be added — not counted as income or expense.',
+                  'Difference ${ref.watch(moneyFormatProvider).masked ? ref.watch(moneyFormatProvider).npr(diff) : _signed(ref, diff)}. An adjustment entry will be added — not counted as income or expense.',
                   tone: Tone.amber,
                 ),
         ],

@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paisa/data/mappers.dart';
 import 'package:paisa/finance/finance.dart';
+import 'package:paisa/store/ui_state.dart';
 import 'package:paisa/ui/components/buttons.dart';
 import 'package:paisa/ui/components/inputs.dart';
 import 'package:paisa/ui/components/toast.dart';
@@ -108,4 +109,17 @@ void main() {
     expect(row.archived, isFalse);
     await tester.pump(kUndoWindow);
   });
+
+  testWidgets('review fix: with balances hidden, the reconcile sheet does not reveal the balance', (tester) async {
+    await pumpPaisa(tester, location: '/accounts/esewa', overrides: [hideBalancesProvider.overrideWith(_Hidden.new)]);
+    await tester.tap(find.bySemanticsLabel('Reconcile'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('8,420'), findsNothing);
+    expect(find.textContaining('Paisa shows NPR ••••••'), findsOneWidget);
+  });
+}
+
+class _Hidden extends HideBalances {
+  @override
+  bool build() => true;
 }

@@ -6,6 +6,7 @@ import '../../../store/data_providers.dart';
 import '../../../store/salary_settings.dart';
 import '../../components/async_view.dart';
 import '../../components/buttons.dart';
+import '../../components/empty_state.dart';
 import '../../components/indicators.dart';
 import '../../components/inputs.dart';
 import '../../components/layout.dart';
@@ -15,6 +16,7 @@ import '../../components/tone.dart';
 import '../../feedback.dart';
 import '../../icons/paisa_icons.dart';
 import '../../shell/detail_page.dart';
+import '../accounts/add_account_sheet.dart';
 import '../../theme.dart';
 import '../../typography.dart';
 import 'entry_data.dart';
@@ -83,13 +85,25 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
         width: double.infinity,
         child: PaisaButton(
           label: 'Save income',
-          onPressed: _saving || data.value == null ? null : () => _save(data.value!),
+          onPressed: _saving || data.value == null || _choices(data.value!).isEmpty ? null : () => _save(data.value!),
         ),
       ),
     );
   }
 
+  List<Account> _choices(EntryData d) =>
+      d.accountChoices({AccountGroup.liquid, AccountGroup.reserved}, widget.accountId);
+
   Widget _form(EntryData d) {
+    if (_choices(d).isEmpty) {
+      return EmptyState(
+        icon: PaisaIcons.wallet,
+        title: 'Add an account first',
+        body: 'Income goes into a bank, wallet, cash or savings account. Add one to record it.',
+        actionLabel: 'Add account',
+        onAction: () => showAddAccountSheet(context),
+      );
+    }
     final c = context.colors;
     final salary = ref.watch(salarySettingsProvider);
     final types = d.incomeTypes.where((t) => t.active).toList();

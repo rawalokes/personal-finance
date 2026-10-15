@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/undo.dart';
 import '../../../finance/finance.dart';
 import '../../../store/data_providers.dart';
+import '../../../store/ui_state.dart';
 import '../../components/async_view.dart';
 import '../../components/buttons.dart';
+import '../../components/empty_state.dart';
 import '../../components/inputs.dart';
 import '../../components/layout.dart';
 import '../../components/surfaces.dart';
@@ -16,6 +18,7 @@ import '../../feedback.dart';
 import '../../icons/paisa_icon.dart';
 import '../../icons/paisa_icons.dart';
 import '../../shell/detail_page.dart';
+import '../accounts/add_account_sheet.dart';
 import '../../theme.dart';
 import '../../typography.dart';
 import 'entry_data.dart';
@@ -83,13 +86,32 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
         width: double.infinity,
         child: PaisaButton(
           label: 'Save expense',
-          onPressed: _saving || data.value == null ? null : () => _save(data.value!),
+          onPressed: _saving || data.value == null || !_ready(data.value!) ? null : () => _save(data.value!),
         ),
       ),
     );
   }
 
+  /// An account to pay from and a category to file under both exist.
+  bool _ready(EntryData d) => _choices(d).isNotEmpty && _categories(d).isNotEmpty;
+
   Widget _form(EntryData d) {
+    if (_choices(d).isEmpty) {
+      return EmptyState(
+        icon: PaisaIcons.wallet,
+        title: 'Add an account first',
+        body: 'Expenses are paid from a bank, wallet, cash or card account. Add one to record spending.',
+        actionLabel: 'Add account',
+        onAction: () => showAddAccountSheet(context),
+      );
+    }
+    if (_categories(d).isEmpty) {
+      return const EmptyState(
+        icon: PaisaIcons.tag,
+        title: 'No categories',
+        body: 'Turn on at least one expense category to record spending.',
+      );
+    }
     final c = context.colors;
     final cat = _category(d);
     final choices = _choices(d);
@@ -116,7 +138,8 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
         footer: budget == null || budget <= 0
             ? null
             : Text(
-                '${cat.name}: ${toastNpr(ref, after)} of ${toastNpr(ref, budget)} after this'
+                // Includes the month's stored spending, so it masks with hide balances.
+                '${cat.name}: ${ref.watch(moneyFormatProvider).npr(after)} of ${ref.watch(moneyFormatProvider).npr(budget)} after this'
                 '${after > budget ? ' — over budget' : ''}',
                 style: PaisaText.numeric(PaisaText.hint.copyWith(color: after > budget ? c.red : c.ink3)),
               ),
@@ -185,21 +208,25 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
     final toast = ref.read(toastProvider.notifier);
     setState(() => _saving = true);
     try {
-      final undos = [
-        await ref.read(transactionRepoProvider).add(tx, summary: 'Added expense $title · ${toastNpr(ref, amount)}'),
-      ];
-      if (_repeat) {
-        undos.add(await ref.read(catalogRepoProvider).addRecurring(RecurringRule(
-              id: newId(),
-              name: title,
-              kind: RecurringKind.expense,
-              amount: amount,
-              categoryId: cat.id,
-              accountId: accountId,
-              frequency: RecurringFrequency.monthly,
-              nextDate: addMonths(_date, 1),
-            )));
-      }
+      final txns = ref.read(transactionRepoProvider);
+      final catalog = ref.read(catalogRepoProvider);
+      final summary = 'Added expense $title · ${toastNpr(ref, amount)}';
+      // One database transaction: if the repeat rule can't be saved, the
+      // expense isn't either, so "nothing was changed" stays true.
+      final undos = await ref.read(databaseProvider).transaction(() async => [
+            await txns.add(tx, summary: summary),
+            if (_repeat)
+              await catalog.addRecurring(RecurringRule(
+                id: newId(),
+                name: title,
+                kind: RecurringKind.expense,
+                amount: amount,
+                categoryId: cat.id,
+                accountId: accountId,
+                frequency: RecurringFrequency.monthly,
+                nextDate: addMonths(_date, 1),
+              )),
+          ]);
       if (mounted) leavePage(context);
       showUndoToast(
         toast,

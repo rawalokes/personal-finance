@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paisa/data/db/database.dart';
 import 'package:paisa/data/mappers.dart';
@@ -92,5 +93,16 @@ void main() {
       expect(await txns(db), hasLength(17));
       await tester.pump(kUndoWindow);
     });
+  });
+
+  testWidgets('review fix: with no account to use, Add income asks you to add one instead of crashing', (tester) async {
+    final db = await pumpPaisa(tester, location: '/income/new');
+    await (db.update(db.accounts)..where((a) => a.accountGroup.isIn(['liquid', 'reserved'])))
+        .write(const AccountsCompanion(archived: Value(true)));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Add an account first'), findsOneWidget);
+    final saveLabel = 'Save income';
+    expect(tester.widget<PaisaButton>(find.widgetWithText(PaisaButton, saveLabel)).onPressed, isNull);
   });
 }
