@@ -1,13 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paisa/data/seed.dart';
+
+import '../../data/sample_data.dart';
 import 'package:paisa/finance/finance.dart';
 import 'package:paisa/ui/accounts/account_presentation.dart';
 import 'package:paisa/ui/components/tone.dart';
 import 'package:paisa/ui/icons/paisa_icons.dart';
 import 'package:paisa/ui/txn/txn_presentation.dart';
 
-final lookup = TxnLookup(accounts: seedAccounts, categories: seedCategories, incomeTypes: seedIncomeTypes);
-Txn seeded(String id) => seedTransactions.firstWhere((t) => t.id == id);
+final lookup = TxnLookup(accounts: sampleAccounts, categories: seedCategories, incomeTypes: seedIncomeTypes);
+Txn seeded(String id) => sampleTransactions.firstWhere((t) => t.id == id);
 TxnView view(Txn t, {MoneyFormat money = const MoneyFormat()}) =>
     describeTxn(t, lookup, today: '2026-10-14', money: money);
 
@@ -100,8 +102,8 @@ void main() {
   });
 
   group('account presentation', () {
-    final nabil = seedAccounts.first;
-    final cc = seedAccounts.last;
+    final nabil = sampleAccounts.first;
+    final cc = sampleAccounts.last;
     test('icon, tone and type label', () {
       expect(accountIcon(nabil), PaisaIcons.bank);
       expect(accountIcon(cc), PaisaIcons.card);

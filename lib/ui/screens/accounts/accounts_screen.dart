@@ -8,6 +8,7 @@ import '../../../store/data_providers.dart';
 import '../../accounts/account_presentation.dart';
 import '../../components/async_view.dart';
 import '../../components/buttons.dart';
+import '../../components/empty_state.dart';
 import '../../components/layout.dart';
 import '../../components/money_text.dart';
 import '../../components/surfaces.dart';
@@ -64,8 +65,18 @@ class _AccountsBody extends StatelessWidget {
     final live = d.accounts.where((a) => !a.archived).toList();
     final archived = d.accounts.length - live.length;
     final activeLoans = d.loans.where((l) => !l.closed && l.outstanding > 0).length;
+    final hasLoans = d.loans.isNotEmpty;
     return ListView(padding: const EdgeInsets.only(bottom: 28), children: [
-      Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: NetWorthCard(summary: d.summary)),
+      if (live.isEmpty && !hasLoans)
+        EmptyState(
+          icon: PaisaIcons.wallet,
+          title: 'No accounts yet',
+          body: 'Add a bank, wallet, cash or card with its current balance. Linked SMS can keep it up to date.',
+          actionLabel: 'Add your first account',
+          onAction: () => showAddAccountSheet(context),
+        )
+      else
+        Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: NetWorthCard(summary: d.summary)),
       for (final g in kAccountGroups)
         if (live.any((a) => a.group == g.group)) ...[
           SectionHeader(
@@ -90,28 +101,30 @@ class _AccountsBody extends StatelessWidget {
             ]),
           ),
         ],
-      SectionHeader(
-        title: 'Loans',
-        subtitle: 'Tracked in Plans · $activeLoans active',
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
-        trailing: MoneyText(
-          d.summary.loans,
-          color: c.red,
-          style: PaisaText.body.copyWith(fontVariations: const [FontVariation('wght', 600)]),
-        ),
-      ),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
-        child: PaisaCard(
-          padding: EdgeInsets.zero,
-          onTap: () => context.go('/plans'),
-          child: ListRow(
-            title: 'View loans & schedules',
-            leading: const IconWell(icon: PaisaIcons.rupee, tone: Tone.amber),
-            trailing: PaisaIcon(PaisaIcons.chevR, size: 19, color: c.ink3),
+      if (hasLoans) ...[
+        SectionHeader(
+          title: 'Loans',
+          subtitle: 'Tracked in Plans · $activeLoans active',
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
+          trailing: MoneyText(
+            d.summary.loans,
+            color: c.red,
+            style: PaisaText.body.copyWith(fontVariations: const [FontVariation('wght', 600)]),
           ),
         ),
-      ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+          child: PaisaCard(
+            padding: EdgeInsets.zero,
+            onTap: () => context.go('/plans'),
+            child: ListRow(
+              title: 'View loans & schedules',
+              leading: const IconWell(icon: PaisaIcons.rupee, tone: Tone.amber),
+              trailing: PaisaIcon(PaisaIcons.chevR, size: 19, color: c.ink3),
+            ),
+          ),
+        ),
+      ],
       if (archived > 0)
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),

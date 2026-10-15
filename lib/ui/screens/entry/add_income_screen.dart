@@ -50,7 +50,8 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
   void initState() {
     super.initState();
     _accountId = widget.accountId;
-    _gross = TextEditingController(text: '${toWholeRupees(ref.read(salarySettingsProvider).grossMonthly)}');
+    final gross = ref.read(salarySettingsProvider).grossMonthly;
+    _gross = TextEditingController(text: gross > 0 ? '${toWholeRupees(gross)}' : '');
     _gross.addListener(() => setState(() {}));
   }
 
@@ -262,7 +263,11 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
       id: ref.read(idGenProvider)(),
       date: _date,
       time: clock.hhmm(),
-      title: desc.isNotEmpty ? desc : (_isSalary ? 'Salary — ${salary.employer}' : typeName),
+      title: desc.isNotEmpty
+          ? desc
+          : _isSalary && salary.employer.isNotEmpty
+              ? 'Salary — ${salary.employer}'
+              : typeName,
       type: TxType.income,
       accountId: _accountFor(d, choices),
       incomeTypeId: _typeId,

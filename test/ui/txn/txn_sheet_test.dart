@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paisa/data/db/database.dart';
-import 'package:paisa/data/seed.dart';
 import 'package:paisa/finance/finance.dart';
 import 'package:paisa/store/data_providers.dart';
 import 'package:paisa/ui/components/toast.dart';
@@ -11,12 +10,13 @@ import 'package:paisa/ui/tokens.dart';
 import 'package:paisa/ui/txn/txn_sheet.dart';
 
 import '../../data/data_fixtures.dart';
+import '../../data/sample_data.dart';
 import '../../data/test_db.dart';
 
 Future<AppDatabase> pumpSheetHost(WidgetTester tester, String txnId) async {
   final db = openTestDb();
-  await seedIfNeeded(db);
-  final txn = seedTransactions.firstWhere((t) => t.id == txnId);
+  await seedWithSampleData(db);
+  final txn = sampleTransactions.firstWhere((t) => t.id == txnId);
   await tester.pumpWidget(ProviderScope(
     overrides: [databaseProvider.overrideWithValue(db), clockProvider.overrideWithValue(testClock)],
     child: MaterialApp(

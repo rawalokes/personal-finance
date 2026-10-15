@@ -5,24 +5,33 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:paisa/app.dart';
 import 'package:paisa/data/db/database.dart';
 import 'package:paisa/data/seed.dart';
+import 'package:paisa/store/salary_settings.dart';
 import 'package:paisa/router.dart';
 import 'package:paisa/store/data_providers.dart';
 import 'package:paisa/ui/components/inputs.dart';
 
 import '../data/data_fixtures.dart';
+import '../data/sample_data.dart';
 import '../data/test_db.dart';
 
-/// Opens the real app on a seeded in-memory database, with the clock fixed
-/// at 14 Oct 2026 10:30 and a 390 × 844 screen (spec §8 base size).
+/// Opens the real app on an in-memory database with the clock fixed at
+/// 14 Oct 2026 10:30 and a 390 × 844 screen (spec §8 base size).
+/// [seed] (default) loads the spec §12 sample data and sample salary;
+/// [cleanInstall] loads only what a fresh install has; neither = empty db.
 Future<AppDatabase> pumpPaisa(
   WidgetTester tester, {
   String location = '/home',
   Size size = const Size(390, 844),
   bool seed = true,
+  bool cleanInstall = false,
   List<Override> overrides = const [],
 }) async {
   final db = openTestDb();
-  if (seed) await seedIfNeeded(db);
+  if (cleanInstall) {
+    await seedIfNeeded(db);
+  } else if (seed) {
+    await seedWithSampleData(db);
+  }
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -32,6 +41,7 @@ Future<AppDatabase> pumpPaisa(
       clockProvider.overrideWithValue(testClock),
       idGenProvider.overrideWithValue(counterIds('new')),
       initialLocationProvider.overrideWithValue(location),
+      if (seed && !cleanInstall) salarySettingsProvider.overrideWithValue(sampleSalarySettings),
       ...overrides,
     ],
     child: const PaisaApp(),

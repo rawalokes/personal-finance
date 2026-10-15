@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:paisa/data/seed.dart';
 import 'package:paisa/finance/finance.dart';
 import 'package:paisa/store/data_providers.dart';
 import 'package:paisa/store/salary_settings.dart';
 
 import '../data/data_fixtures.dart';
+import '../data/sample_data.dart';
 import '../data/test_db.dart';
 
 /// Riverpod 3 pauses providers nobody listens to, so a test listens before
@@ -20,11 +20,12 @@ void keepAlive(ProviderContainer c, List<ProviderListenable<Object?>> providers)
 
 Future<ProviderContainer> seededContainer() async {
   final db = openTestDb();
-  await seedIfNeeded(db);
+  await seedWithSampleData(db);
   return ProviderContainer.test(overrides: [
     databaseProvider.overrideWithValue(db),
     clockProvider.overrideWithValue(testClock),
     idGenProvider.overrideWithValue(counterIds()),
+    salarySettingsProvider.overrideWithValue(sampleSalarySettings),
   ]);
 }
 

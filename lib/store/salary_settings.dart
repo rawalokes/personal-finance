@@ -30,13 +30,14 @@ class SalarySettings {
       );
 }
 
-/// Spec §12 salary with the sample deductions and FY 2083/84 sample tax
-/// rules. Plan 4 (Salary & deductions) replaces this body with the saved
-/// salary profile.
+/// A clean install knows no employer or salary yet; the FY 2083/84 sample
+/// deductions and tax rules (labelled as samples in the UI) let gross-salary
+/// entry work. Plan 4 (Salary & deductions) replaces this body with the
+/// saved salary profile.
 final salarySettingsProvider = Provider<SalarySettings>(
   (ref) => SalarySettings(
-    employer: 'Himal Tech Pvt. Ltd.',
-    grossMonthly: fromRupees(120000),
+    employer: '',
+    grossMonthly: 0,
     basicPct: 60,
     taxCategory: 'individual',
     deductions: sampleDeductions(),
