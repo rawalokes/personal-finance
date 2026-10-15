@@ -8,6 +8,7 @@ import 'ui/screens/activity/activity_screen.dart';
 import 'ui/screens/entry/add_expense_screen.dart';
 import 'ui/screens/entry/add_income_screen.dart';
 import 'ui/screens/home/home_screen.dart';
+import 'ui/screens/search/search_screen.dart';
 import 'ui/shell/app_shell.dart';
 import 'ui/shell/placeholder_screen.dart';
 import 'ui/shell/tabs.dart';
@@ -42,6 +43,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/accounts/:id',
         builder: (context, state) => AccountDetailScreen(accountId: state.pathParameters['id']!),
       ),
+      GoRoute(path: '/search', builder: (context, state) => const SearchScreen()),
       GoRoute(
         path: '/income/new',
         builder: (context, state) => AddIncomeScreen(accountId: state.uri.queryParameters['account']),
