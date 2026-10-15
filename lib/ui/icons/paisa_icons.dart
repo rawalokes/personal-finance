@@ -74,4 +74,23 @@ abstract final class PaisaIcons {
     info, cart, bolt, car, heart, book, health, play, ticket, brief, gift, laptop, store, key, trend,
     pie, dots, scale, sliders, layers, archive, file, plane,
   ];
+
+  /// Icons stored by name in the database (income types, categories, loan
+  /// types). Keys are the constant names above.
+  static const byName = <String, String>{
+    'home': home, 'list': list, 'wallet': wallet, 'target': target, 'gear': gear, 'plus': plus,
+    'moneyIn': moneyIn, 'moneyOut': moneyOut, 'transfer': transfer, 'rupee': rupee, 'bank': bank,
+    'search': search, 'bell': bell, 'eye': eye, 'eyeOff': eyeOff, 'chevR': chevR, 'chevL': chevL,
+    'chevD': chevD, 'close': close, 'check': check, 'edit': edit, 'sms': sms, 'alert': alert,
+    'calendar': calendar, 'refresh': refresh, 'download': download, 'shield': shield, 'lock': lock, 'tag': tag,
+    'chart': chart, 'card': card, 'cash': cash, 'phone': phone, 'percent': percent, 'clock': clock,
+    'flag': flag, 'repeat': repeat, 'user': user, 'trash': trash, 'undo': undo, 'copy': copy, 'info': info,
+    'cart': cart, 'bolt': bolt, 'car': car, 'heart': heart, 'book': book, 'health': health, 'play': play,
+    'ticket': ticket, 'brief': brief, 'gift': gift, 'laptop': laptop, 'store': store, 'key': key,
+    'trend': trend, 'pie': pie, 'dots': dots, 'scale': scale, 'sliders': sliders, 'layers': layers,
+    'archive': archive, 'file': file, 'plane': plane,
+  };
+
+  /// [byName] lookup that falls back to [tag] for unknown names.
+  static String named(String name) => byName[name] ?? tag;
 }

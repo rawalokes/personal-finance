@@ -3,6 +3,10 @@
 typedef IsoDate = String;
 
 const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const _monthsLong = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
 const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 DateTime parseIsoDate(IsoDate s) {
@@ -53,6 +57,12 @@ String monthYear(IsoDate date) {
   final d = parseIsoDate(date);
   return '${_months[d.month - 1]} ${d.year}';
 }
+
+/// 'October' — used in "October so far".
+String monthName(IsoDate date) => _monthsLong[parseIsoDate(date).month - 1];
+
+/// 'October 2026' — the History range chip.
+String monthNameYear(IsoDate date) => '${monthName(date)} ${parseIsoDate(date).year}';
 
 String weekdayName(IsoDate date) => _weekdays[parseIsoDate(date).weekday - 1];
 

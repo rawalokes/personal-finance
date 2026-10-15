@@ -42,6 +42,12 @@ void main() {
     expect(weekdayName('2026-10-14'), 'Wed');
   });
 
+  test('long month names', () {
+    expect(monthName('2026-10-14'), 'October');
+    expect(monthNameYear('2026-10-14'), 'October 2026');
+    expect(monthNameYear('2027-01-01'), 'January 2027');
+  });
+
   test('relativeDay', () {
     expect(relativeDay('2026-10-14', today), 'Today');
     expect(relativeDay('2026-10-13', today), 'Yesterday');
