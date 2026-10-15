@@ -20,6 +20,7 @@ import '../../typography.dart';
 import '../../txn/transaction_tile.dart';
 import '../../txn/txn_presentation.dart';
 import '../../txn/txn_sheet.dart';
+import '../../ai/ai_insight_card.dart';
 import 'account_carousel.dart';
 
 class HomeData {
@@ -190,6 +191,7 @@ class _HomeBody extends ConsumerWidget {
             child: _PendingBar(count: pending, onTap: () => context.go('/activity')),
           ),
         Padding(padding: const EdgeInsets.fromLTRB(20, 12, 20, 0), child: _MonthCard(month: d.month, today: today)),
+        const AiInsightCard(),
         if (d.summary.loans > 0)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),

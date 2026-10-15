@@ -26,8 +26,8 @@ class CatalogRepository {
   final AuditLog _audit;
   final IdGen _newId;
 
-  Future<void> _log(String action, String entity, String? id, String summary) =>
-      _audit.write(action: action, entity: entity, entityId: id, summary: summary);
+  Future<void> _log(String action, String entity, String? id, String summary, {AuditActor actor = AuditActor.user}) =>
+      _audit.write(action: action, entity: entity, entityId: id, summary: summary, actor: actor);
 
   Stream<List<IncomeType>> watchIncomeTypes() =>
       (_db.select(_db.incomeTypes)..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
@@ -78,12 +78,13 @@ class CatalogRepository {
   // ---- editing ----
 
   /// Sets (or with null clears) a category's monthly budget.
-  Future<void> setBudget(String categoryId, Paisa? limit) => _db.transaction(() async {
+  /// [actor] is `ai` when the user applies an AI suggestion (spec §9.4).
+  Future<void> setBudget(String categoryId, Paisa? limit, {AuditActor actor = AuditActor.user}) => _db.transaction(() async {
         await (_db.update(_db.expenseCategories)..where((c) => c.id.equals(categoryId)))
             .write(ExpenseCategoriesCompanion(monthlyBudget: Value(limit)));
         final name = (await (_db.select(_db.expenseCategories)..where((c) => c.id.equals(categoryId))).getSingle()).name;
         await _log('category.budget', 'category', categoryId,
-            limit == null ? 'Removed $name budget' : '$name budget set to ${auditMoney(limit)}');
+            limit == null ? 'Removed $name budget' : '$name budget set to ${auditMoney(limit)}', actor: actor);
       });
 
   /// Adds (empty id) or updates a category; returns its id. Names are unique
