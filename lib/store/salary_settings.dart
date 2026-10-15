@@ -1,8 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../finance/finance.dart';
+import 'data_providers.dart';
 
-/// What Add income needs to turn a gross salary into take-home.
+/// What Add income and the salary screens need to turn gross into take-home.
 class SalarySettings {
   const SalarySettings({
     required this.employer,
@@ -25,22 +26,22 @@ class SalarySettings {
         basicPct: basicPct,
         deductions: deductions,
         rules: rules,
-        taxCategory: taxCategory,
+        taxCategory: rules.categories.containsKey(taxCategory) ? taxCategory : rules.categories.keys.first,
         asOf: asOf,
       );
 }
 
-/// A clean install knows no employer or salary yet; the FY 2083/84 sample
-/// deductions and tax rules (labelled as samples in the UI) let gross-salary
-/// entry work. Plan 4 (Salary & deductions) replaces this body with the
-/// saved salary profile.
-final salarySettingsProvider = Provider<SalarySettings>(
-  (ref) => SalarySettings(
-    employer: '',
-    grossMonthly: 0,
-    basicPct: 60,
-    taxCategory: 'individual',
-    deductions: sampleDeductions(),
-    rules: sampleTaxRules(),
-  ),
-);
+/// The saved salary profile, deductions and tax rules. A clean install has
+/// no employer or gross, the sample deductions and the sample tax rules
+/// (labelled as samples wherever they are shown).
+final salarySettingsProvider = FutureProvider<SalarySettings>((ref) async {
+  final profile = await ref.watch(salaryProfileProvider.future);
+  return SalarySettings(
+    employer: profile.employer,
+    grossMonthly: profile.grossMonthly,
+    basicPct: profile.basicPct,
+    taxCategory: profile.taxCategory,
+    deductions: await ref.watch(deductionsProvider.future),
+    rules: await ref.watch(taxRulesProvider.future),
+  );
+});

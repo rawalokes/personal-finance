@@ -282,3 +282,26 @@ AuditEntriesCompanion auditToCompanion(AuditEntry e) => AuditEntriesCompanion.in
       beforeJson: Value(e.beforeJson),
       afterJson: Value(e.afterJson),
     );
+
+Goal goalFromRow(GoalRow r) => Goal(
+      id: r.id,
+      name: r.name,
+      kind: r.kind,
+      icon: r.icon,
+      target: r.target,
+      current: r.current,
+      linkedAccountId: r.linkedAccountId,
+      targetDate: r.targetDate,
+    );
+
+GoalsCompanion goalToCompanion(Goal g, {int sortOrder = 0}) => GoalsCompanion.insert(
+      id: g.id,
+      name: g.name,
+      kind: g.kind,
+      icon: Value(g.icon),
+      target: g.target,
+      current: Value(g.current),
+      linkedAccountId: Value(g.linkedAccountId),
+      targetDate: Value(g.targetDate),
+      sortOrder: Value(sortOrder),
+    );

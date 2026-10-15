@@ -7,6 +7,11 @@ import '../data/db/database.dart';
 import '../data/records.dart';
 import '../data/repos/account_repo.dart';
 import '../data/repos/catalog_repo.dart';
+import '../data/repos/data_repo.dart';
+import '../data/repos/goal_repo.dart';
+import '../data/repos/loan_repo.dart';
+import '../data/repos/settings_repo.dart';
+import '../data/settings_models.dart';
 import '../data/repos/transaction_repo.dart';
 import '../finance/finance.dart';
 
@@ -39,7 +44,35 @@ final accountRepoProvider = Provider<AccountRepository>(
 );
 
 final catalogRepoProvider = Provider<CatalogRepository>(
-  (ref) => CatalogRepository(ref.watch(databaseProvider), ref.watch(auditLogProvider)),
+  (ref) => CatalogRepository(ref.watch(databaseProvider), ref.watch(auditLogProvider), newId: ref.watch(idGenProvider)),
+);
+
+final loanRepoProvider = Provider<LoanRepository>(
+  (ref) => LoanRepository(
+    ref.watch(databaseProvider),
+    ref.watch(auditLogProvider),
+    ref.watch(transactionRepoProvider),
+    clock: ref.watch(clockProvider),
+    newId: ref.watch(idGenProvider),
+  ),
+);
+
+final goalRepoProvider = Provider<GoalRepository>(
+  (ref) => GoalRepository(
+    ref.watch(databaseProvider),
+    ref.watch(auditLogProvider),
+    ref.watch(transactionRepoProvider),
+    clock: ref.watch(clockProvider),
+    newId: ref.watch(idGenProvider),
+  ),
+);
+
+final settingsRepoProvider = Provider<SettingsRepository>(
+  (ref) => SettingsRepository(ref.watch(databaseProvider), ref.watch(auditLogProvider)),
+);
+
+final dataRepoProvider = Provider<DataRepository>(
+  (ref) => DataRepository(ref.watch(databaseProvider), ref.watch(auditLogProvider), clock: ref.watch(clockProvider)),
 );
 
 /// Every account, archived included, in display order.
@@ -74,3 +107,31 @@ final monthTotalsProvider = FutureProvider<MonthlyTotals>((ref) async {
   final txns = await ref.watch(transactionsProvider.future);
   return monthlyTotals(txns, monthKey(ref.watch(clockProvider).today()));
 });
+
+final loanTypesProvider = StreamProvider<List<LoanType>>((ref) => ref.watch(catalogRepoProvider).watchLoanTypes());
+
+final recurringProvider = StreamProvider<List<RecurringRule>>((ref) => ref.watch(catalogRepoProvider).watchRecurring());
+
+final goalsProvider = StreamProvider<List<Goal>>((ref) => ref.watch(goalRepoProvider).watchAll());
+
+final configListProvider = StreamProvider.family<List<ConfigItem>, String>(
+  (ref, listKey) => ref.watch(catalogRepoProvider).watchConfig(listKey),
+);
+
+final loanRepaymentsProvider = StreamProvider.family<List<Txn>, String>(
+  (ref, loanId) => ref.watch(loanRepoProvider).watchRepayments(loanId),
+);
+
+final salaryProfileProvider = StreamProvider<SalaryProfile>((ref) => ref.watch(settingsRepoProvider).watchSalaryProfile());
+
+final deductionsProvider = StreamProvider<List<Deduction>>((ref) => ref.watch(settingsRepoProvider).watchDeductions());
+
+final taxRulesProvider = StreamProvider<TaxRuleSet>((ref) => ref.watch(settingsRepoProvider).watchTaxRules());
+
+final securityProvider = StreamProvider<SecuritySettings>((ref) => ref.watch(settingsRepoProvider).watchSecurity());
+
+final aiSettingsProvider = StreamProvider<AiSettings>((ref) => ref.watch(settingsRepoProvider).watchAi());
+
+final payoffPlanProvider = StreamProvider<PayoffPlanSettings>((ref) => ref.watch(settingsRepoProvider).watchPayoffPlan());
+
+final auditProvider = StreamProvider<List<AuditEntry>>((ref) => ref.watch(auditLogProvider).watchRecent());

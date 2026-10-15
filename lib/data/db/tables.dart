@@ -201,3 +201,34 @@ class AppMeta extends Table {
   @override
   Set<Column> get primaryKey => {key};
 }
+
+/// Savings goals (spec §4 `Goal`). Schema v2.
+@DataClassName('GoalRow')
+class Goals extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get kind => text()();
+  TextColumn get icon => text().withDefault(const Constant('flag'))();
+  IntColumn get target => integer()();
+
+  /// Saved so far; ignored when [linkedAccountId] tracks an account balance.
+  IntColumn get current => integer().withDefault(const Constant(0))();
+  TextColumn get linkedAccountId => text().nullable()();
+  TextColumn get targetDate => text().nullable()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// App settings as JSON documents under a key: preferences, salary profile,
+/// deductions, tax rules, security, AI settings, payoff plan, AI cache.
+/// Secrets (API key, PIN) never go here; they live in secure storage. v2.
+@DataClassName('SettingRow')
+class Settings extends Table {
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+
+  @override
+  Set<Column> get primaryKey => {key};
+}

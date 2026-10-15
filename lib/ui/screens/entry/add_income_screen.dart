@@ -50,8 +50,11 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
   void initState() {
     super.initState();
     _accountId = widget.accountId;
-    final gross = ref.read(salarySettingsProvider).grossMonthly;
-    _gross = TextEditingController(text: gross > 0 ? '${toWholeRupees(gross)}' : '');
+    _gross = TextEditingController();
+    // Prefill gross mode with the saved salary once it has loaded.
+    ref.read(salarySettingsProvider.future).then((s) {
+      if (mounted && _gross.text.isEmpty && s.grossMonthly > 0) _gross.text = '${toWholeRupees(s.grossMonthly)}';
+    });
     _gross.addListener(() => setState(() {}));
   }
 
@@ -106,7 +109,7 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
       );
     }
     final c = context.colors;
-    final salary = ref.watch(salarySettingsProvider);
+    final salary = d.salary;
     final types = d.incomeTypes.where((t) => t.active).toList();
     final choices = d.accountChoices({AccountGroup.liquid, AccountGroup.reserved}, widget.accountId);
     final account = _accountFor(d, choices);
@@ -237,7 +240,7 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
   }
 
   Future<void> _save(EntryData d) async {
-    final salary = ref.read(salarySettingsProvider);
+    final salary = d.salary;
     Paisa? amount;
     setState(() => _amountError = _grossError = null);
     if (_grossMode) {

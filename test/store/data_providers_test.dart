@@ -25,7 +25,6 @@ Future<ProviderContainer> seededContainer() async {
     databaseProvider.overrideWithValue(db),
     clockProvider.overrideWithValue(testClock),
     idGenProvider.overrideWithValue(counterIds()),
-    salarySettingsProvider.overrideWithValue(sampleSalarySettings),
   ]);
 }
 
@@ -57,7 +56,8 @@ void main() {
 
   test('sample salary settings give spec §13 test 8 take-home of 92,789', () async {
     final c = await seededContainer();
-    final s = c.read(salarySettingsProvider);
+    keepAlive(c, [salarySettingsProvider]);
+    final s = await c.read(salarySettingsProvider.future);
     expect(toWholeRupees(s.breakdown(s.grossMonthly, asOf: '2026-10-14').takeHome), 92789);
   });
 }

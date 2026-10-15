@@ -232,6 +232,45 @@ class Loan {
   final String? feesAndPrepayment;
   final bool closed;
 
+  /// Every user-editable term (loan form). Pass [clearRate] to make the rate
+  /// "not entered" again, since null otherwise means "keep".
+  Loan copyWithTerms({
+    String? loanTypeId,
+    String? name,
+    String? lender,
+    Paisa? principal,
+    Paisa? outstanding,
+    double? ratePct,
+    bool clearRate = false,
+    InterestMethod? method,
+    Paisa? installment,
+    LoanFrequency? frequency,
+    IsoDate? startDate,
+    IsoDate? maturityDate,
+    IsoDate? nextDueDate,
+    String? repaymentAccountId,
+    String? feesAndPrepayment,
+    bool? closed,
+  }) =>
+      Loan(
+        id: id,
+        loanTypeId: loanTypeId ?? this.loanTypeId,
+        name: name ?? this.name,
+        lender: lender ?? this.lender,
+        principal: principal ?? this.principal,
+        outstanding: outstanding ?? this.outstanding,
+        ratePct: clearRate ? null : ratePct ?? this.ratePct,
+        method: method ?? this.method,
+        installment: installment ?? this.installment,
+        frequency: frequency ?? this.frequency,
+        startDate: startDate ?? this.startDate,
+        maturityDate: maturityDate ?? this.maturityDate,
+        nextDueDate: nextDueDate ?? this.nextDueDate,
+        repaymentAccountId: repaymentAccountId ?? this.repaymentAccountId,
+        feesAndPrepayment: feesAndPrepayment ?? this.feesAndPrepayment,
+        closed: closed ?? this.closed,
+      );
+
   Loan copyWith({Paisa? outstanding, IsoDate? nextDueDate, bool? closed}) => Loan(
         id: id,
         loanTypeId: loanTypeId,

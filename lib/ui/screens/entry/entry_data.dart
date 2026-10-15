@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../finance/finance.dart';
 import '../../../store/data_providers.dart';
+import '../../../store/salary_settings.dart';
 
 /// What the Add income / Add expense forms need, loaded together.
 class EntryData {
@@ -10,6 +11,7 @@ class EntryData {
     required this.incomeTypes,
     required this.categories,
     required this.month,
+    required this.salary,
   });
 
   /// Non-archived accounts in display order.
@@ -19,6 +21,9 @@ class EntryData {
 
   /// This month's totals, for the budget hint.
   final MonthlyTotals month;
+
+  /// Salary profile, deductions and tax rules for gross-salary entry.
+  final SalarySettings salary;
 
   /// Accounts offered for [groups], always including [preselected] (the
   /// account whose page opened the form) even if its group is not listed.
@@ -33,6 +38,7 @@ final entryDataProvider = FutureProvider<EntryData>((ref) async {
     incomeTypes: await ref.watch(incomeTypesProvider.future),
     categories: await ref.watch(categoriesProvider.future),
     month: await ref.watch(monthTotalsProvider.future),
+    salary: await ref.watch(salarySettingsProvider.future),
   );
 });
 

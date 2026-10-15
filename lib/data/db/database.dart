@@ -15,14 +15,16 @@ part 'database.g.dart';
   ConfigItems,
   AuditEntries,
   AppMeta,
+  Goals,
+  Settings,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   /// Bump this and add a step in [migration] whenever a table changes.
-  /// Later plans add the SMS, goals, salary and integration tables.
+  /// v2: goals and settings.
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -31,6 +33,12 @@ class AppDatabase extends _$AppDatabase {
           await customStatement('CREATE INDEX idx_txn_date ON transactions (date, time)');
           await customStatement('CREATE INDEX idx_txn_account ON transactions (account_id)');
           await customStatement('CREATE INDEX idx_txn_counter ON transactions (counter_account_id)');
+        },
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.createTable(goals);
+            await m.createTable(settings);
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

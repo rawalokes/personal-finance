@@ -128,3 +128,38 @@ class RecurringRule {
   final IsoDate nextDate;
   final bool active;
 }
+
+/// Spec §4 `Goal`. A goal linked to an account tracks that account's balance;
+/// otherwise [current] counts contributions.
+class Goal {
+  const Goal({
+    required this.id,
+    required this.name,
+    required this.kind,
+    this.icon = 'flag',
+    required this.target,
+    this.current = 0,
+    this.linkedAccountId,
+    this.targetDate,
+  });
+
+  final String id;
+  final String name;
+  final String kind;
+  final String icon;
+  final Paisa target;
+  final Paisa current;
+  final String? linkedAccountId;
+  final IsoDate? targetDate;
+
+  Goal copyWith({Paisa? current}) => Goal(
+        id: id,
+        name: name,
+        kind: kind,
+        icon: icon,
+        target: target,
+        current: current ?? this.current,
+        linkedAccountId: linkedAccountId,
+        targetDate: targetDate,
+      );
+}

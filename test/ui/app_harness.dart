@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:paisa/app.dart';
 import 'package:paisa/data/db/database.dart';
 import 'package:paisa/data/seed.dart';
-import 'package:paisa/store/salary_settings.dart';
 import 'package:paisa/router.dart';
 import 'package:paisa/store/data_providers.dart';
 import 'package:paisa/ui/components/inputs.dart';
@@ -41,7 +40,6 @@ Future<AppDatabase> pumpPaisa(
       clockProvider.overrideWithValue(testClock),
       idGenProvider.overrideWithValue(counterIds('new')),
       initialLocationProvider.overrideWithValue(location),
-      if (seed && !cleanInstall) salarySettingsProvider.overrideWithValue(sampleSalarySettings),
       ...overrides,
     ],
     child: const PaisaApp(),

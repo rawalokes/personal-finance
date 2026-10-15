@@ -1,10 +1,13 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:paisa/data/db/database.dart';
 import 'package:paisa/data/mappers.dart';
 import 'package:paisa/data/records.dart';
 import 'package:paisa/data/seed.dart';
 import 'package:paisa/finance/finance.dart';
-import 'package:paisa/store/salary_settings.dart';
+import 'package:paisa/data/repos/settings_repo.dart';
+import 'package:paisa/data/settings_models.dart';
 
 // The spec §12 / mockup sample data. Tests use it as a realistic fixture; the
 // app itself ships none of it (a clean install starts empty, see seed.dart).
@@ -27,6 +30,10 @@ Future<void> seedWithSampleData(AppDatabase db) async {
       await (db.update(db.expenseCategories)..where((c) => c.id.equals(id)))
           .write(ExpenseCategoriesCompanion(monthlyBudget: Value(_r(budget))));
     }
+    await db.into(db.settings).insert(SettingsCompanion.insert(
+          key: SettingKey.salaryProfile,
+          value: jsonEncode(sampleSalaryProfile.toJson()),
+        ));
     for (final (id, account, expected) in sampleIncomeDefaults) {
       await (db.update(db.incomeTypes)..where((t) => t.id.equals(id))).write(IncomeTypesCompanion(
             defaultAccountId: Value(account),
@@ -49,14 +56,7 @@ const List<(String, String, num?)> sampleIncomeDefaults = [
 ];
 
 /// Spec §12 salary: gross 1,20,000 at Himal Tech, basic 60%.
-final sampleSalarySettings = SalarySettings(
-  employer: 'Himal Tech Pvt. Ltd.',
-  grossMonthly: fromRupees(120000),
-  basicPct: 60,
-  taxCategory: 'individual',
-  deductions: sampleDeductions(),
-  rules: sampleTaxRules(),
-);
+final sampleSalaryProfile = SalaryProfile(employer: 'Himal Tech Pvt. Ltd.', grossMonthly: fromRupees(120000), basicPct: 60);
 
 Account _account(
   String id,
