@@ -64,7 +64,7 @@ class _NavItem extends StatelessWidget {
         onTap: onTap,
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: PaisaSize.navItemMinHeight),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          child: Column(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
             SizedBox(
               width: 56,
               height: 30,
