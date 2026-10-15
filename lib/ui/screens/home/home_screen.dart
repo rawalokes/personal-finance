@@ -12,6 +12,7 @@ import '../../components/indicators.dart';
 import '../../components/layout.dart';
 import '../../components/money_text.dart';
 import '../../components/surfaces.dart';
+import '../../date_line.dart';
 import '../../icons/paisa_icon.dart';
 import '../../icons/paisa_icons.dart';
 import '../../theme.dart';
@@ -85,7 +86,17 @@ class HomeScreen extends ConsumerWidget {
       Padding(
         padding: const EdgeInsets.fromLTRB(20, 14, 14, 6),
         child: Row(children: [
-          Expanded(child: Text(greetingFor(now), style: PaisaText.sub.copyWith(fontSize: 14, color: c.ink3))),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(greetingFor(now), style: PaisaText.sub.copyWith(fontSize: 14, color: c.ink3)),
+              Text(
+                homeDateLine(now, ref.watch(calendarProvider)),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: PaisaText.hint.copyWith(color: c.ink3),
+              ),
+            ]),
+          ),
           PaisaIconButton(
             icon: PaisaIcons.search,
             label: 'Search transactions',

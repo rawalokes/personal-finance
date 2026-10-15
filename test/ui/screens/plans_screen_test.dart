@@ -48,8 +48,8 @@ void main() {
       expect(find.text('You still owe'), findsOneWidget);
       expect(find.text('NPR 4,44,253'), findsOneWidget);
       expect(find.text('Plan how to pay it off'), findsOneWidget);
+      await scrollPageTo(tester, find.text('Scooter loan'));
       await scrollPageTo(tester, find.text('Borrowed from Kiran'));
-      expect(find.text('Scooter loan'), findsOneWidget);
       await tester.tap(find.text('Borrowed from Kiran'));
       await tester.pumpAndSettle();
       expect(find.text('Outstanding principal'), findsOneWidget);

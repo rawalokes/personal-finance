@@ -26,8 +26,14 @@ enum _SalaryMode { takeHome, gross }
 /// Add income (spec §7). Opened from Home (salary first) or an account's
 /// "Money in" ([accountId] pre-selected, Other Income first).
 class AddIncomeScreen extends ConsumerStatefulWidget {
-  const AddIncomeScreen({super.key, this.accountId});
+  const AddIncomeScreen({super.key, this.accountId, this.typeId, this.amount});
   final String? accountId;
+
+  /// Preselected income type (Settings → Income types → Add record).
+  final String? typeId;
+
+  /// Prefilled take-home (Salary → Record salary).
+  final Paisa? amount;
 
   @override
   ConsumerState<AddIncomeScreen> createState() => _AddIncomeScreenState();
@@ -37,7 +43,7 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
   final _amount = TextEditingController();
   late final TextEditingController _gross;
   final _desc = TextEditingController();
-  late String _typeId = widget.accountId == null ? 'salary' : 'other_inc';
+  late String _typeId = widget.typeId ?? (widget.accountId == null ? 'salary' : 'other_inc');
   String? _accountId;
   _SalaryMode _mode = _SalaryMode.takeHome;
   bool _pending = false;
@@ -50,6 +56,8 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
   void initState() {
     super.initState();
     _accountId = widget.accountId;
+    final preset = widget.amount;
+    if (preset != null && preset > 0) _amount.text = '${toWholeRupees(preset)}';
     _gross = TextEditingController();
     // Prefill gross mode with the saved salary once it has loaded.
     ref.read(salarySettingsProvider.future).then((s) {

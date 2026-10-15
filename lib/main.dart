@@ -11,6 +11,8 @@ import 'data/db/database.dart';
 import 'data/repos/settings_repo.dart';
 import 'data/seed.dart';
 import 'data/settings_models.dart';
+import 'data/secret_store.dart';
+import 'store/app_lock.dart';
 import 'store/data_providers.dart';
 import 'store/ui_state.dart';
 
@@ -36,8 +38,13 @@ Future<void> main() async {
     pending = pending.then((_) => settings.savePrefs(snapshot));
   }
 
+  // Start behind the lock screen when the app lock is on and a PIN exists.
+  final security = await settings.security();
+  final startLocked = security.appLock && await PinService(DeviceSecretStore()).hasPin();
+
   runApp(ProviderScope(
     overrides: [
+      initialLockedProvider.overrideWithValue(startLocked),
       databaseProvider.overrideWithValue(db),
       initialPrefsProvider.overrideWithValue(initial),
       prefsSaverProvider.overrideWithValue(savePrefs),

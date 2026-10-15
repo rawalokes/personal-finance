@@ -54,13 +54,24 @@ Finder fieldLabelled(String label) => find.descendant(
       matching: find.byType(EditableText),
     );
 
-/// Scrolls the page (the first, outermost scrollable) until [finder] shows.
-Future<void> scrollPageTo(WidgetTester tester, Finder finder) =>
-    tester.scrollUntilVisible(finder, 200, scrollable: find.byType(Scrollable).first);
+/// The page's vertical scrollable. (Text fields contain horizontal
+/// scrollables of their own, so "the first Scrollable" is not reliable.)
+Finder get pageScrollable => find.byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.down).first;
 
-/// Scrolls the first scrollable until [finder] is visible, then taps it.
+/// Scrolls the page down until [finder] shows, then fully into view.
+Future<void> scrollPageTo(WidgetTester tester, Finder finder) async {
+  // Like a user closing the keyboard first: a focused text field otherwise
+  // scrolls itself back on screen.
+  FocusManager.instance.primaryFocus?.unfocus();
+  await tester.pump();
+  if (finder.evaluate().isEmpty) await tester.scrollUntilVisible(finder, 200, scrollable: pageScrollable);
+  await tester.ensureVisible(finder.first);
+  await tester.pumpAndSettle();
+}
+
+/// Scrolls [finder] into view, then taps it.
 Future<void> scrollAndTap(WidgetTester tester, Finder finder) async {
-  await tester.scrollUntilVisible(finder, 200, scrollable: find.byType(Scrollable).first);
+  await scrollPageTo(tester, finder);
   await tester.tap(finder);
   await tester.pumpAndSettle();
 }

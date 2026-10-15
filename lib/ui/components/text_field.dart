@@ -25,6 +25,7 @@ class PaisaTextField extends StatelessWidget {
     this.prefixIcon,
     this.autofocus = false,
     this.showLabel = true,
+    this.obscure = false,
   });
 
   final String label;
@@ -42,6 +43,9 @@ class PaisaTextField extends StatelessWidget {
 
   /// False when the label is only for screen readers (e.g. the search box).
   final bool showLabel;
+
+  /// Hide what is typed (PINs).
+  final bool obscure;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +65,7 @@ class PaisaTextField extends StatelessWidget {
         onChanged: onChanged,
         autofocus: autofocus,
         keyboardType: keyboardType,
+        obscureText: obscure,
         style: textStyle.copyWith(color: c.ink),
         decoration: InputDecoration(
           isDense: true,
