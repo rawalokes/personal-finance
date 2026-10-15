@@ -116,7 +116,7 @@ class _AccountsBody extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
           child: PaisaCard(
             padding: EdgeInsets.zero,
-            onTap: () => context.go('/plans'),
+            onTap: () => context.go('/plans?seg=loans'),
             child: ListRow(
               title: 'View loans & schedules',
               leading: const IconWell(icon: PaisaIcons.rupee, tone: Tone.amber),

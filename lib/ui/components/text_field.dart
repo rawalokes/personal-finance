@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../finance/dates.dart';
 import '../icons/paisa_icon.dart';
+import 'buttons.dart';
 import '../icons/paisa_icons.dart';
 import '../theme.dart';
 import '../tokens.dart';
@@ -151,6 +152,50 @@ class DateField extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    ]);
+  }
+}
+
+/// A date the user may leave empty ("No date"), e.g. a goal's target date.
+class OptionalDateField extends StatelessWidget {
+  const OptionalDateField({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    required this.initialPick,
+  });
+
+  final String label;
+  final IsoDate? value;
+  final ValueChanged<IsoDate?> onChanged;
+
+  /// Where the picker opens when nothing is set yet.
+  final IsoDate initialPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final v = value;
+    if (v != null) {
+      return Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+        Expanded(child: DateField(label: label, value: v, onChanged: onChanged)),
+        PaisaIconButton(icon: PaisaIcons.close, label: 'Clear $label', onPressed: () => onChanged(null)),
+      ]);
+    }
+    final c = context.colors;
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
+      ExcludeSemantics(child: Text(label, style: PaisaText.label.copyWith(color: c.ink2))),
+      const SizedBox(height: 6),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: PaisaButton(
+          label: 'No date · set one',
+          icon: PaisaIcons.calendar,
+          variant: ButtonVariant.outline,
+          small: true,
+          onPressed: () => onChanged(initialPick),
         ),
       ),
     ]);

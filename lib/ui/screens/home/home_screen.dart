@@ -162,7 +162,7 @@ class _HomeBody extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Expanded(child: _QuickAction(icon: PaisaIcons.rupee, label: 'Loans', onTap: () => context.go('/plans'))),
+            Expanded(child: _QuickAction(icon: PaisaIcons.rupee, label: 'Loans', onTap: () => context.go('/plans?seg=loans'))),
           ]),
         ),
         Padding(
@@ -344,7 +344,7 @@ class _LoansCard extends StatelessWidget {
           alignment: Alignment.centerLeft,
           child: PaisaLink(
             label: '${free == null ? '' : '$free · '}Plan how to pay it off →',
-            onPressed: () => context.go('/plans'),
+            onPressed: () => context.push('/loans/planner'),
           ),
         ),
       ]),

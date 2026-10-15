@@ -8,6 +8,11 @@ import 'ui/screens/activity/activity_screen.dart';
 import 'ui/screens/entry/add_expense_screen.dart';
 import 'ui/screens/entry/add_income_screen.dart';
 import 'ui/screens/home/home_screen.dart';
+import 'ui/screens/loans/loan_detail_screen.dart';
+import 'ui/screens/loans/loan_form_screen.dart';
+import 'ui/screens/loans/loan_types_screen.dart';
+import 'ui/screens/loans/payoff_planner_screen.dart';
+import 'ui/screens/plans/plans_screen.dart';
 import 'ui/screens/search/search_screen.dart';
 import 'ui/shell/app_shell.dart';
 import 'ui/shell/placeholder_screen.dart';
@@ -16,11 +21,12 @@ import 'ui/shell/tabs.dart';
 /// Where the app opens. Tests override it to start on a given screen.
 final initialLocationProvider = Provider<String>((ref) => kTabs.first.path);
 
-/// The screen at the root of each tab. Plans and More are built in later plans.
-Widget _rootScreen(TabDef tab) => switch (tab.path) {
+/// The screen at the root of each tab.
+Widget _rootScreen(TabDef tab, GoRouterState state) => switch (tab.path) {
       '/home' => const HomeScreen(),
       '/activity' => const ActivityScreen(),
       '/accounts' => const AccountsScreen(),
+      '/plans' => PlansScreen(initial: state.uri.queryParameters['seg']),
       _ => PlaceholderScreen(title: tab.screenTitle),
     };
 
@@ -35,7 +41,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         branches: [
           for (final tab in kTabs)
             StatefulShellBranch(routes: [
-              GoRoute(path: tab.path, builder: (context, state) => _rootScreen(tab)),
+              GoRoute(path: tab.path, builder: (context, state) => _rootScreen(tab, state)),
             ]),
         ],
       ),
@@ -44,6 +50,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => AccountDetailScreen(accountId: state.pathParameters['id']!),
       ),
       GoRoute(path: '/search', builder: (context, state) => const SearchScreen()),
+      GoRoute(
+        path: '/loans/new',
+        builder: (context, state) => LoanFormScreen(typeId: state.uri.queryParameters['type']),
+      ),
+      GoRoute(path: '/loans/types', builder: (context, state) => const LoanTypesScreen()),
+      GoRoute(path: '/loans/planner', builder: (context, state) => const PayoffPlannerScreen()),
+      GoRoute(
+        path: '/loans/:id',
+        builder: (context, state) => LoanDetailScreen(loanId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/loans/:id/edit',
+        builder: (context, state) => LoanFormScreen(loanId: state.pathParameters['id']),
+      ),
       GoRoute(
         path: '/income/new',
         builder: (context, state) => AddIncomeScreen(accountId: state.uri.queryParameters['account']),

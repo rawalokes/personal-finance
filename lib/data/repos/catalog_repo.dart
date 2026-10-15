@@ -205,4 +205,9 @@ class CatalogRepository {
             .write(RecurringRulesCompanion(active: Value(active)));
         await _log('recurring.toggle', 'recurring', id, '${active ? 'Resumed' : 'Paused'} a recurring rule');
       });
+
+  /// Removes a recurring rule if it exists (e.g. replacing the saved payoff
+  /// plan's reminder).
+  Future<void> removeRecurring(String id) =>
+      (_db.delete(_db.recurringRules)..where((r) => r.id.equals(id))).go();
 }

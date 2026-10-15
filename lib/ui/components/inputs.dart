@@ -36,7 +36,9 @@ class PaisaChip extends StatelessWidget {
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 if (icon != null) ...[PaisaIcon(icon!, size: 16, color: fg), const SizedBox(width: 6)],
-                Text(label, style: PaisaText.chip.copyWith(color: fg)),
+                Flexible(
+                  child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: PaisaText.chip.copyWith(color: fg)),
+                ),
               ]),
             ),
           ),
