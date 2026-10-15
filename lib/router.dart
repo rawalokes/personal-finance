@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'ui/screens/accounts/account_detail_screen.dart';
 import 'ui/screens/accounts/accounts_screen.dart';
+import 'ui/screens/entry/add_income_screen.dart';
 import 'ui/shell/app_shell.dart';
 import 'ui/shell/placeholder_screen.dart';
 import 'ui/shell/tabs.dart';
@@ -35,6 +36,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/accounts/:id',
         builder: (context, state) => AccountDetailScreen(accountId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/income/new',
+        builder: (context, state) => AddIncomeScreen(accountId: state.uri.queryParameters['account']),
       ),
     ],
   );
