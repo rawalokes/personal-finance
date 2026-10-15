@@ -6,6 +6,7 @@ analyzer:
     - android/**
     - ios/**
     - "**/*.g.dart"
+    - linux/**
   language:
     strict-casts: true
     strict-inference: true
