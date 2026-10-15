@@ -160,7 +160,7 @@ class PaisaLink extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Text(label, style: PaisaText.buttonSmall.copyWith(color: context.colors.primary)),
+              Flexible(child: Text(label, style: PaisaText.buttonSmall.copyWith(color: context.colors.primary))),
             ]),
           ),
         ),

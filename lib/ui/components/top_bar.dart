@@ -9,11 +9,22 @@ import 'buttons.dart';
 /// Screen header (`.top`). Root screens: big title. Detail screens
 /// ([onBack] given): Back button and a smaller title.
 class PaisaTopBar extends StatelessWidget {
-  const PaisaTopBar({super.key, required this.title, this.onBack, this.actions = const []});
+  const PaisaTopBar({
+    super.key,
+    required this.title,
+    this.onBack,
+    this.actions = const [],
+    this.backIcon = PaisaIcons.chevL,
+    this.backLabel = 'Back',
+  });
 
   final String title;
   final VoidCallback? onBack;
   final List<Widget> actions;
+
+  /// Forms use a close (×) "Cancel" button instead of Back.
+  final String backIcon;
+  final String backLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +35,7 @@ class PaisaTopBar extends StatelessWidget {
         padding: root ? const EdgeInsets.fromLTRB(16, 10, 10, 8) : const EdgeInsets.fromLTRB(8, 10, 10, 8),
         child: Row(children: [
           if (!root) ...[
-            PaisaIconButton(icon: PaisaIcons.chevL, label: 'Back', onPressed: onBack),
+            PaisaIconButton(icon: backIcon, label: backLabel, onPressed: onBack),
             const SizedBox(width: 6),
           ],
           Expanded(
