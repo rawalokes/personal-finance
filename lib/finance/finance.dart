@@ -18,3 +18,4 @@ export 'duplicates.dart';
 export 'catalog.dart';
 export 'reports.dart';
 export 'score.dart';
+export 'nudges.dart';
