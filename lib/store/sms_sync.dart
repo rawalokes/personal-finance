@@ -18,8 +18,8 @@ class SyncReport {
   final List<IngestResult> undo;
 }
 
-/// Brings phone SMS into the Transaction Inbox (spec §6 step 1): what the
-/// background receiver queued, and the phone inbox since the last scan.
+/// Brings phone SMS into the Transaction Inbox (spec §6 step 1): the phone
+/// inbox since the last scan, and live messages while Paisa runs.
 class SmsSync {
   SmsSync({required this.repo, required this.source, required this.settings, required this.clock});
 
@@ -31,7 +31,12 @@ class SmsSync {
   /// How far back the first scan reads.
   static const firstScan = Duration(days: 30);
 
-  Future<SyncReport> catchUp() async {
+  Future<SyncReport>? _running;
+
+  /// One sync at a time: a second call while one runs gets the same result.
+  Future<SyncReport> catchUp() => _running ??= _catchUp().whenComplete(() => _running = null);
+
+  Future<SyncReport> _catchUp() async {
     if (await source.access() != SmsAccess.granted) return const SyncReport();
     final senders = await repo.trustedSenders();
     await source.setTrustedSenders(senders);
@@ -39,13 +44,11 @@ class SmsSync {
     final now = clock.now();
     final results = <IngestResult>[];
 
-    // Received in the background since Paisa last ran: new, so the
-    // auto-update rule may apply.
-    for (final m in await source.drainQueued()) {
-      results.add(await repo.ingest(sender: m.sender, body: m.body, receivedAt: m.receivedAt, sourceKey: m.sourceKey));
-    }
-    // The phone inbox. On the first scan these are old messages the user
-    // may have recorded by hand already, so nothing is auto-saved.
+    // The phone inbox since the last scan (with an hour's overlap), which
+    // includes anything that arrived while Paisa was closed: the receiver
+    // only notifies, it never stores message text. On the first scan these
+    // are old messages the user may have recorded by hand already, so
+    // nothing is auto-saved.
     final since = last == null ? now.subtract(firstScan) : DateTime.fromMillisecondsSinceEpoch(last).subtract(const Duration(hours: 1));
     final inbox = await source.readInbox(since: since, senders: senders)
       ..sort((a, b) => a.receivedAt.compareTo(b.receivedAt));

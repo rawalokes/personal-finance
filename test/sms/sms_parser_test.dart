@@ -47,6 +47,19 @@ void main() {
       expect(m, isNot(contains('23,410')));
     });
 
+    test('review fixes: more account-number and balance shapes are masked', () {
+      for (final (raw, leak) in [
+        ('Your A/C No.0123456784821 debited by NPR 500.', '0123456784821'),
+        ('AC0123456784821 credited with NPR 500.', '0123456784821'),
+        ('NPR 500 debited. Bal Amt: NPR 24,600.00', '24,600'),
+        ('Card XXXX5512 used for Rs 900.', 'XXXX5512'),
+      ]) {
+        final m = maskSms(raw);
+        expect(m.contains(leak), isFalse, reason: '"$raw" kept "$leak": $m');
+      }
+      expect(maskSms('Card XXXX5512 used for Rs 900.'), contains('##5512'));
+    });
+
     test('the hash ignores what masking removes, so repeats match', () {
       expect(smsHash('NABIL_ALERT', 'Bal NPR 1,000.00 x'), smsHash('NABIL_ALERT', 'Bal NPR 2,000.00 x'));
       expect(smsHash('NABIL_ALERT', 'A'), isNot(smsHash('GIBL', 'A')));
@@ -145,6 +158,60 @@ void main() {
       expect(d.type, TxType.loanDisbursement);
       expect(d.loanId, 'L2', reason: 'the open loan from the same bank');
       expect(d.confidence, SmsConfidence.medium);
+    });
+  });
+
+  group('review fixes', () {
+    test('a Nepali-calendar date or an impossible date is not trusted: received date, not high confidence', () {
+      final bs = parse('NABIL_ALERT', 'Your A/C ##4821 has been debited by NPR 2,450.00 on 2083-06-28. Rmks: POS BHAT-BHATENI.');
+      expect(bs.date, '2026-10-14');
+      expect(bs.confidence, isNot(SmsConfidence.high));
+      final us = parse('NABIL_ALERT', 'Your A/C ##4821 has been debited by NPR 2,450.00 on 10/14/2026. Rmks: POS BHAT-BHATENI.');
+      expect(us.date, '2026-10-14');
+    });
+
+    test('offers and "will be refunded" notices are not transactions', () {
+      final ctx = sampleContext();
+      for (final body in [
+        'Get Rs 50 cashback on your next eSewa payment!',
+        'Dashain offer: Get Rs. 100 cashback on Fonepay QR payments. T&C apply.',
+        'Your payment of Rs. 500 to DARAZ has failed. Amount will be refunded within 7 days.',
+      ]) {
+        expect(parseSms(sender: 'eSewa', body: body, receivedAt: _received, ctx: ctx), isNull, reason: body);
+      }
+    });
+
+    test('card purchase shapes match the card account', () {
+      final d = parse('NABIL_ALERT', 'Card XXXX-XXXX-XXXX-5512 used for Rs. 1,850 at DARAZ on 14/10/2026.');
+      expect(d.accountId, 'cc');
+      expect(d.direction, Direction.debit);
+      expect(d.amount, fromRupees(1850));
+      final t = parse('NABIL_ALERT', 'A transaction of NPR 1,140.00 has been made on your Credit Card XXXX5512 at HIMALAYAN JAVA.');
+      expect(t.accountId, 'cc');
+      expect(t.categoryId, 'fun');
+    });
+
+    test('a payment received on the card is a card payment, waiting for the paying account', () {
+      final d = parse('NABIL_ALERT', 'Payment of NPR 18,640 received on your Credit Card XXXX5512. Thank you.');
+      expect(d.type, TxType.ccPayment);
+      expect(d.counterAccountId, 'cc');
+      expect(d.accountId, isNull);
+      expect(d.confidence, SmsConfidence.low);
+    });
+
+    test('more amount shapes: wallet loads, "debit of", amount before currency, numbers before the amount', () {
+      expect(parse('eSewa', 'NPR 500.00 has been loaded to your eSewa wallet from Nabil Bank.').direction, Direction.credit);
+      expect(parse('NABIL_ALERT', 'Your A/C ##4821 balance is low after debit of NPR 500.00 for POS BIG MART.').amount, fromRupees(500));
+      expect(parse('NABIL_ALERT', '450.00 NPR debited from A/C ##4821 on 14/10/2026. Rmks: POS BIG MART.').amount, fromRupees(450));
+      expect(parse('NABIL_ALERT', 'For 2 transfers 1 fee applies. A/C ##4821 debited by NPR 500.00. Rmks: POS BIG MART.').amount, fromRupees(500));
+    });
+
+    test('only an exact sender, or one with a two-letter operator prefix, is trusted', () {
+      final ctx = sampleContext();
+      expect(isTrustedSender('FREEESEWA', ctx), isFalse);
+      expect(isTrustedSender('LUCKY-KHALTI', ctx), isFalse);
+      expect(isTrustedSender('AD-NABIL_ALERT', ctx), isTrue);
+      expect(isTrustedSender('NABIL_ALERT', ctx), isTrue);
     });
   });
 

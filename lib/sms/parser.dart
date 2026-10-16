@@ -66,18 +66,20 @@ class SmsDraft {
 
 String _norm(String s) => s.toUpperCase().replaceAll(RegExp('[^A-Z0-9]'), '');
 
-/// True when [sender] is an approved sender: case does not matter, and an
-/// operator prefix such as "AD-" is allowed.
-bool isTrustedSender(String sender, SmsContext ctx) {
+/// [sender] is [id], or [id] behind a two-letter operator prefix such as
+/// "AD-". Anything else (e.g. "FREEESEWA") could be a spoof.
+bool senderMatches(String sender, String id) {
   final s = _norm(sender);
-  if (s.isEmpty) return false;
-  return ctx.trustedSenders.any((t) {
-    final n = _norm(t);
-    return n.isNotEmpty && (s == n || s.endsWith(n));
-  });
+  final n = _norm(id);
+  if (s.isEmpty || n.isEmpty) return false;
+  return s == n || (s.length == n.length + 2 && s.endsWith(n) && RegExp('^[A-Z]{2}').hasMatch(s));
 }
 
-final _amount = RegExp(r'(?:NPR|NRs\.?|Rs\.?|रु\.?)\s*([\d,]+(?:\.\d{1,2})?)', caseSensitive: false);
+/// True when [sender] is an approved sender (case does not matter).
+bool isTrustedSender(String sender, SmsContext ctx) => ctx.trustedSenders.any((t) => senderMatches(sender, t));
+
+final _amount = RegExp(r'(?<![A-Za-z])(?:NPR|NRs\.?|Rs\.?|रु\.?)\s*([\d,]+(?:\.\d{1,2})?)', caseSensitive: false);
+final _amountAfter = RegExp(r'(?<![\w.,])(\d[\d,]*(?:\.\d{1,2})?)\s*(?:NPR|NRs)\b', caseSensitive: false);
 final _last4 = RegExp(r'##(\d{4})');
 final _date = RegExp(r'\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})\b');
 final _isoDate = RegExp(r'\b(\d{4})-(\d{2})-(\d{2})\b');
@@ -86,12 +88,12 @@ final _time = RegExp(r'\b([01]?\d|2[0-3]):([0-5]\d)\b');
 bool _has(String text, String pattern) => RegExp(pattern, caseSensitive: false).hasMatch(text);
 
 Direction? _direction(String b) {
-  if (_has(b, r'\bcredited\b|\breceived\b|\bdeposited\b|\brefunded?\b|\breversed\b|\bcashback\b|\bcr\b')) {
+  if (_has(b, r'\bcredited\b|\breceived\b|\bdeposited\b|\brefunded?\b|\breversed\b|\bcashback\b|\bloaded\b|\bcr\b')) {
     // "paid to X … has been reversed to your wallet" is a credit.
     if (_has(b, r'\bdebited\b|\bdr\b') && !_has(b, r'reversed|refund')) return Direction.debit;
     return Direction.credit;
   }
-  if (_has(b, r'\bdebited\b|\bpaid\b|\bwithdrawn\b|\bwithdrawal\b|\bspent\b|\bpurchase\b|\bsent\b|\bpayment of\b|\bdr\b|\btransferred\b')) {
+  if (_has(b, r'\bdebited\b|\bpaid\b|\bwithdrawn\b|\bwithdrawal\b|\bspent\b|\bpurchase\b|\bsent\b|\bpayment of\b|\bdr\b|\btransferred\b|\bused\b|transaction of|debit of')) {
     return Direction.debit;
   }
   return null;
@@ -183,17 +185,19 @@ SmsDraft? parseSms({
   if (!isTrustedSender(sender, ctx)) return null;
   final b = maskSms(body);
   if (_has(b, r'\bOTP\b|one[- ]time password|verification code')) return null;
-  final amountMatch = _amount.firstMatch(b);
+  // Offers, and notices about money that has not moved yet.
+  if (_has(b, r'\boffers?\b|\bget\s+(?:up to\s+)?(?:rs|npr|nrs)|T&C|apply now|\beligible\b|\bwin\b|\blucky\b')) return null;
+  if (_has(b, r'will be (?:refunded|reversed|credited|debited)')) return null;
+  final amountMatch = _amount.firstMatch(b) ?? _amountAfter.firstMatch(b);
   final direction = _direction(b);
   if (amountMatch == null || direction == null) return null;
   final amount = parseNpr(amountMatch[1]!);
   if (amount == null || amount <= 0) return null;
 
   // Account: sender plus last 4 digits; wallets match by sender alone.
-  final senderNorm = _norm(sender);
   final bySender = [
     for (final a in ctx.accounts)
-      if (!a.archived && a.smsSender != null && _norm(a.smsSender!).isNotEmpty && senderNorm.endsWith(_norm(a.smsSender!))) a,
+      if (!a.archived && a.smsSender != null && senderMatches(sender, a.smsSender!)) a,
   ];
   final digits = [for (final m in _last4.allMatches(b)) m[1]!];
   Account? account;
@@ -211,7 +215,7 @@ SmsDraft? parseSms({
 
   final institution = account?.institution ??
       bySender.map((a) => a.institution).nonNulls.firstOrNull ??
-      ctx.trustedSenders.firstWhere((t) => senderNorm.endsWith(_norm(t)), orElse: () => sender);
+      ctx.trustedSenders.firstWhere((t) => senderMatches(sender, t), orElse: () => sender);
   final remark = _remark(b);
   final merchant = _merchantName(remark.isEmpty ? institution : remark);
   final others = [for (final a in ctx.accounts) if (!a.archived && a.id != account?.id) a];
@@ -221,14 +225,35 @@ SmsDraft? parseSms({
     if (ownDestination != null) break;
   }
 
-  // Date and time from the message, else when it arrived.
+  // Date and time from the message, else when it arrived. A date that is
+  // not a real calendar date, or far from when the SMS arrived (a Bikram
+  // Sambat date, a month/day swap), is not trusted.
   var date = toIsoDate(receivedAt);
+  var dateTrusted = true;
+  IsoDate? valid(int y, int mo, int d) {
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    final dt = DateTime.utc(y, mo, d);
+    if (dt.month != mo) return null;
+    final received = DateTime.utc(receivedAt.year, receivedAt.month, receivedAt.day);
+    return dt.difference(received).inDays.abs() <= 7 ? toIsoDate(dt) : null;
+  }
+
   final dm = _date.firstMatch(b);
   final im = _isoDate.firstMatch(b);
   if (dm != null) {
-    date = '${dm[3]}-${dm[2]!.padLeft(2, '0')}-${dm[1]!.padLeft(2, '0')}';
+    final v = valid(int.parse(dm[3]!), int.parse(dm[2]!), int.parse(dm[1]!));
+    if (v != null) {
+      date = v;
+    } else {
+      dateTrusted = false;
+    }
   } else if (im != null) {
-    date = im[0]!;
+    final v = valid(int.parse(im[1]!), int.parse(im[2]!), int.parse(im[3]!));
+    if (v != null) {
+      date = v;
+    } else {
+      dateTrusted = false;
+    }
   }
   final tm = _time.firstMatch(b.replaceAll(_date, ''));
   final time = tm != null
@@ -241,7 +266,15 @@ SmsDraft? parseSms({
   var reason = '';
   final text = '$remark $b';
 
-  if (_has(text, r'REVERS|\bFAILED\b')) {
+  if (account?.kind == AccountKind.creditCard && direction == Direction.credit && _has(text, r'PAYMENT|\bPAID\b')) {
+    // Paying the card bill, reported by the card: which account paid is in
+    // the bank's own SMS, usually a pair of this one.
+    type = TxType.ccPayment;
+    counterAccountId = account!.id;
+    account = null;
+    confidence = SmsConfidence.low;
+    reason = 'Card bill payment received. Pick the account you paid from, or ignore this if the bank’s debit SMS is already here.';
+  } else if (_has(text, r'REVERS|\bFAILED\b')) {
     type = TxType.reversal;
     confidence = SmsConfidence.high;
     reason = '“Reversed” keyword: the original payment failed, so nothing was spent.';
@@ -267,7 +300,9 @@ SmsDraft? parseSms({
         : byAmount != null
             ? 'Loan remark and the amount match your ${loan.name} installment.'
             : 'Loan remark; ${loan.name} is paid from this account.';
-  } else if (direction == Direction.debit && _has(text, r'CC\s*PAY|CARD\s*PAY|CREDIT\s*CARD')) {
+  } else if (direction == Direction.debit &&
+      account?.kind != AccountKind.creditCard &&
+      _has(text, r'CC\s*PAY|CARD\s*PAY|CREDIT\s*CARD\s*(?:BILL|PAY)')) {
     type = TxType.ccPayment;
     final card = ownDestination?.group == AccountGroup.liability
         ? ownDestination
@@ -314,9 +349,13 @@ SmsDraft? parseSms({
     }
   }
 
-  if (account == null) {
+  if (account == null && type != TxType.ccPayment) {
     confidence = SmsConfidence.low;
     reason = 'No account of yours matches this message. Pick the account before confirming. $reason';
+  }
+  if (!dateTrusted && confidence == SmsConfidence.high) {
+    confidence = SmsConfidence.medium;
+    reason = '$reason The date in the message could not be read, so the day it arrived is used.';
   }
 
   return SmsDraft(

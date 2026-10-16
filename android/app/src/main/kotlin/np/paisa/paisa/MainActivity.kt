@@ -81,7 +81,6 @@ class MainActivity : FlutterFragmentActivity() {
                         runOnUiThread { result.success(list) }
                     }.start()
                 }
-                "drainQueue" -> result.success(SmsBridge.drainQueue(this))
                 "setTrustedSenders" -> {
                     @Suppress("UNCHECKED_CAST")
                     SmsBridge.setTrustedSenders(this, (call.arguments as? List<String>) ?: emptyList())

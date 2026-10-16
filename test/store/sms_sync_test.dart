@@ -56,15 +56,21 @@ void main() {
     expect(await balanceOf(db, 'nabil'), fromRupees(142350));
   });
 
-  test('later syncs read only since the last scan, and the background queue can auto-save', () async {
+  test('later syncs read only since the last scan (with an hour of overlap) and may auto-save', () async {
     await sync.catchUp();
     await (db.update(db.accounts)..where((a) => a.id.equals('nabil'))).write(const AccountsCompanion(autoUpdateFromSms: Value(true)));
-    phone.queue = [nabil('SAL ASOJ HIMAL TECH', 92789, DateTime(2026, 10, 14, 9, 12), dir: 'credited')];
-    phone.inbox = [nabil('SAL ASOJ HIMAL TECH', 92789, DateTime(2026, 10, 14, 9, 12), dir: 'credited', id: '9')];
+    phone.inbox = [nabil('SAL ASOJ HIMAL TECH', 92789, DateTime(2026, 10, 14, 10, 15), dir: 'credited', id: '9')];
     final report = await sync.catchUp();
+    expect(phone.lastSince, DateTime(2026, 10, 14, 9, 30));
     expect(report.autoSaved, 1);
-    expect(report.added, 1, reason: 'the queued copy and the inbox copy are one message');
     expect(await balanceOf(db, 'nabil'), fromRupees(142350 + 92789));
+  });
+
+  test('two syncs at once read the phone once', () async {
+    phone.inbox = [nabil('POS BIG MART', 1200, DateTime(2026, 10, 2, 10), id: '1')];
+    final reports = await Future.wait([sync.catchUp(), sync.catchUp()]);
+    expect(reports.map((r) => r.added), [1, 1], reason: 'the same run, reported to both callers');
+    expect(await repo.list(), hasLength(1));
   });
 
   test('without permission nothing is read', () async {

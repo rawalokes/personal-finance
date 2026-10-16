@@ -193,6 +193,22 @@ class SmsRepository {
       earlier.map(fp),
     );
 
+    // Two sides of one movement between own accounts: Nabil "debited … to
+    // ##2290" and NIC "credited … from ##4821", or a card payment reported
+    // by both the bank and the card. Saving both would count it twice.
+    final pairOf = dupOf ??
+        (draft.type == TxType.transfer || draft.type == TxType.ccPayment
+            ? earlier.where((r) {
+                if (r.amount != draft.amount || !{'transfer', 'cc_payment'}.contains(r.type)) return false;
+                final at = DateTime.parse('${r.date}T${r.time}:00');
+                final mine = DateTime.parse('${draft.date}T${draft.time}:00');
+                if (at.difference(mine).abs() > const Duration(minutes: 30)) return false;
+                final crossed = r.accountId != null && r.accountId == draft.counterAccountId && r.counterAccountId == draft.accountId;
+                final sameCard = draft.type == TxType.ccPayment && r.counterAccountId == draft.counterAccountId && r.accountId != draft.accountId;
+                return crossed || sameCard;
+              }).firstOrNull?.id
+            : null);
+
     final message = SmsMessage(
       id: id,
       sender: sender,
@@ -212,27 +228,37 @@ class SmsRepository {
       incomeTypeId: draft.incomeTypeId,
       counterAccountId: draft.counterAccountId,
       loanId: draft.loanId,
-      confidence: dupOf != null ? SmsConfidence.low : draft.confidence,
-      reason: dupOf != null ? 'Same amount and account as a message a few minutes earlier. ${draft.reason}' : draft.reason,
-      duplicateOfId: dupOf,
+      confidence: pairOf != null ? SmsConfidence.low : draft.confidence,
+      reason: dupOf != null
+          ? 'Same amount and account as a message a few minutes earlier. ${draft.reason}'
+          : pairOf != null
+              ? 'Looks like the other side of a movement already in the inbox. ${draft.reason}'
+              : draft.reason,
+      duplicateOfId: pairOf,
     );
-    await _db.transaction(() async {
-      await _db.into(_db.smsMessages).insert(smsToCompanion(message));
-      await _audit.write(
-        action: 'sms.detected',
-        entity: 'sms',
-        entityId: id,
-        summary: 'New SMS detected: ${message.merchant}',
-        actor: AuditActor.sms,
-      );
-    });
+    try {
+      await _db.transaction(() async {
+        await _db.into(_db.smsMessages).insert(smsToCompanion(message));
+        await _audit.write(
+          action: 'sms.detected',
+          entity: 'sms',
+          entityId: id,
+          summary: 'New SMS detected: ${message.merchant}',
+          actor: AuditActor.sms,
+        );
+      });
+    } on Object catch (e) {
+      // The same message arrived twice at once (broadcast and scan).
+      if (e.toString().contains('UNIQUE constraint failed')) return const IngestResult(IngestOutcome.alreadySeen);
+      rethrow;
+    }
 
     final account = ctx.accounts.where((a) => a.id == draft.accountId).firstOrNull;
     if (allowAutoSave &&
         shouldAutoConfirm(
       account: account,
       confidence: message.confidence,
-      possibleDuplicate: dupOf != null,
+      possibleDuplicate: pairOf != null,
       suggestedType: message.type,
     )) {
       try {
@@ -294,6 +320,9 @@ class SmsRepository {
     );
     late UndoAction undoTx;
     await _db.transaction(() async {
+      // Re-read inside the transaction: a second tap must not save twice.
+      final now = await get(m.id);
+      if (!now.pending) throw const SmsNotReady('This message was already handled.');
       undoTx = await _txns.add(
         tx,
         summary: '${auto ? 'Auto-saved from SMS' : 'Confirmed SMS'}: ${tx.title} · ${auditMoney(tx.amount)}',

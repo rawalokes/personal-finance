@@ -11,7 +11,7 @@ import '../components/toast.dart';
 import '../feedback.dart';
 
 /// Keeps the Transaction Inbox in step with the phone: on start and on
-/// every return to Paisa it collects queued and new SMS; while open it
+/// every return to Paisa it reads new SMS from the phone; while open it
 /// takes live messages. Auto-saved ones get an undo toast (spec §6 step 7).
 class SmsHost extends ConsumerStatefulWidget {
   const SmsHost({super.key, required this.child});

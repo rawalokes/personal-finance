@@ -191,4 +191,56 @@ void main() {
     await sms.later(a.message!.id);
     expect(await sms.watchPendingCount().first, 2);
   });
+
+  test('review fix: two Confirm taps at once save one transaction', () async {
+    final r = await sms.ingest(sender: 'NABIL_ALERT', body: _bhatBhateni, receivedAt: DateTime(2026, 10, 14, 8, 41));
+    final results = await Future.wait([
+      sms.confirm(r.message!.id).then((_) => true, onError: (Object _) => false),
+      sms.confirm(r.message!.id).then((_) => true, onError: (Object _) => false),
+    ]);
+    expect(results.where((ok) => ok), hasLength(1));
+    expect((await db.select(db.transactions).get()).where((t) => t.smsId == r.message!.id), hasLength(1));
+    expect(await balanceOf(db, 'nabil'), fromRupees(142350 - 2450));
+  });
+
+  test('review fix: both banks reporting one own-account transfer are flagged as a pair', () async {
+    await sms.ingest(sender: 'NABIL_ALERT', body: _transfer, receivedAt: DateTime(2026, 10, 13, 19, 20));
+    final other = await sms.ingest(
+      sender: 'NIC_ASIA',
+      body: 'NIC ASIA: NPR 15,000.00 credited to A/C ##2290 on 13/10/2026 19:21 from A/C ##4821. Avl Bal NPR 4,00,000.00.',
+      receivedAt: DateTime(2026, 10, 13, 19, 21),
+    );
+    expect(other.message!.type, TxType.transfer);
+    expect(other.message!.duplicateOfId, isNotNull);
+  });
+
+  test('review fix: a card payment and the bank debit for it are flagged as a pair', () async {
+    await sms.ingest(
+        sender: 'NABIL_ALERT', body: 'A/C ##4821 debited by NPR 18,640.00 on 14/10/2026. Rmks: CC PAYMENT ##5512.', receivedAt: DateTime(2026, 10, 14, 9));
+    final card = await sms.ingest(
+        sender: 'NABIL_ALERT', body: 'Payment of NPR 18,640 received on your Credit Card XXXX5512. Thank you.', receivedAt: DateTime(2026, 10, 14, 9, 2));
+    expect(card.message!.duplicateOfId, isNotNull);
+  });
+
+  test('review fix: deleting the saved transaction sends the SMS back to review; undo restores it', () async {
+    final r = await sms.ingest(sender: 'NABIL_ALERT', body: _bhatBhateni, receivedAt: DateTime(2026, 10, 14, 8, 41));
+    await sms.confirm(r.message!.id);
+    final txId = (await sms.get(r.message!.id)).transactionId!;
+    final undo = await TransactionRepository(db, audit, clock: testClock).delete(txId);
+    var m = await sms.get(r.message!.id);
+    expect(m.status, SmsStatus.review);
+    expect(m.transactionId, isNull);
+    await undo();
+    m = await sms.get(r.message!.id);
+    expect(m.status, SmsStatus.approved);
+    expect(m.transactionId, txId);
+  });
+
+  test('review fix: the same message arriving twice at once is stored once', () async {
+    await Future.wait([
+      sms.ingest(sender: 'NABIL_ALERT', body: _bhatBhateni, receivedAt: DateTime(2026, 10, 14, 8, 41)),
+      sms.ingest(sender: 'NABIL_ALERT', body: _bhatBhateni, receivedAt: DateTime(2026, 10, 14, 8, 41), sourceKey: '5'),
+    ]);
+    expect(await sms.list(), hasLength(1));
+  });
 }

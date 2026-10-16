@@ -15,7 +15,6 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import io.flutter.plugin.common.EventChannel
 import org.json.JSONArray
-import org.json.JSONObject
 
 /**
  * Phone SMS for the Transaction Inbox (spec §6 step 1).
@@ -27,9 +26,7 @@ import org.json.JSONObject
 object SmsBridge {
     private const val PREFS = "paisa_sms"
     private const val KEY_SENDERS = "trusted_senders"
-    private const val KEY_QUEUE = "queue"
     private const val CHANNEL_ID = "sms_review"
-    private const val MAX_QUEUE = 200
     const val EXTRA_OPEN_INBOX = "open_inbox"
 
     /** Set while the Flutter side listens; live messages go straight to it. */
@@ -61,11 +58,27 @@ object SmsBridge {
         return (0 until arr.length()).map { norm(arr.getString(it)) }.filter { it.isNotEmpty() }
     }
 
-    /** Case-insensitive; operator prefixes like "AD-" are allowed. */
+    /**
+     * The sender is an approved ID, or one behind a two-letter operator
+     * prefix ("AD-NABIL_ALERT"). Same rule as Dart's senderMatches().
+     */
     fun isTrusted(sender: String, trusted: List<String>): Boolean {
         val s = norm(sender)
-        return s.isNotEmpty() && trusted.any { s == it || s.endsWith(it) }
+        if (s.isEmpty()) return false
+        return trusted.any { n ->
+            s == n || (s.length == n.length + 2 && s.endsWith(n) && s[0].isLetter() && s[1].isLetter())
+        }
     }
+
+    private val amount = Regex("(?i)(?<![A-Za-z])(NPR|NRs|Rs)\\.?\\s*\\d|\\d\\s*(NPR|NRs)\\b")
+    private val movement = Regex(
+        "(?i)debited|credited|paid|received|withdrawn|withdrawal|refunded|reversed|transferred|deposited|used for|loaded|transaction of|debit of|payment of",
+    )
+    private val notMoney = Regex("(?i)\\bOTP\\b|one[- ]time password|verification code|\\boffers?\\b|T&C|apply now|will be (refunded|reversed|credited|debited)")
+
+    /** Worth a "needs review" notification: it looks like money moved. */
+    fun looksLikeTransaction(body: String): Boolean =
+        amount.containsMatchIn(body) && movement.containsMatchIn(body) && !notMoney.containsMatchIn(body)
 
     private fun toMap(sender: String, body: String, timestamp: Long, id: String?): Map<String, Any?> =
         mapOf("sender" to sender, "body" to body, "timestamp" to timestamp, "id" to id)
@@ -94,25 +107,6 @@ object SmsBridge {
             }
         }
         return out
-    }
-
-    fun drainQueue(context: Context): List<Map<String, Any?>> {
-        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val raw = prefs.getString(KEY_QUEUE, null) ?: return emptyList()
-        prefs.edit().remove(KEY_QUEUE).apply()
-        val arr = JSONArray(raw)
-        return (0 until arr.length()).map {
-            val o = arr.getJSONObject(it)
-            toMap(o.getString("sender"), o.getString("body"), o.getLong("timestamp"), null)
-        }
-    }
-
-    private fun enqueue(context: Context, sender: String, body: String, timestamp: Long) {
-        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val arr = JSONArray(prefs.getString(KEY_QUEUE, "[]"))
-        arr.put(JSONObject().put("sender", sender).put("body", body).put("timestamp", timestamp))
-        while (arr.length() > MAX_QUEUE) arr.remove(0)
-        prefs.edit().putString(KEY_QUEUE, arr.toString()).apply()
     }
 
     private fun notifyReview(context: Context) {
@@ -144,16 +138,15 @@ object SmsBridge {
         }
     }
 
-    /** From [SmsReceiver]: a whole (possibly multi-part) message. */
+    /**
+     * From [SmsReceiver]. The text is never stored here: while Paisa runs it
+     * goes straight to Dart (which masks it); otherwise Paisa reads it from
+     * the phone's inbox the next time it opens.
+     */
     fun onReceived(context: Context, sender: String, body: String, timestamp: Long) {
         if (!isTrusted(sender, trustedSenders(context))) return
-        val live = sink
-        if (live != null) {
-            live.success(toMap(sender, body, timestamp, null))
-        } else {
-            enqueue(context, sender, body, timestamp)
-        }
-        if (!foreground) notifyReview(context)
+        sink?.success(toMap(sender, body, timestamp, null))
+        if (!foreground && looksLikeTransaction(body)) notifyReview(context)
     }
 }
 

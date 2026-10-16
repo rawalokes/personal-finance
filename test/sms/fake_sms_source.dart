@@ -2,12 +2,11 @@ import 'dart:async';
 
 import 'package:paisa/sms/sms_source.dart';
 
-/// A phone with an SMS inbox, a background queue and a live stream.
+/// A phone with an SMS inbox and a live stream.
 class FakeSmsSource implements SmsSource {
   SmsAccess state = SmsAccess.granted;
   bool grantOnRequest = true;
   List<RawSms> inbox = [];
-  List<RawSms> queue = [];
   List<String>? trusted;
   DateTime? lastSince;
   final live = StreamController<RawSms>.broadcast();
@@ -24,13 +23,6 @@ class FakeSmsSource implements SmsSource {
   Future<List<RawSms>> readInbox({required DateTime since, required List<String> senders}) async {
     lastSince = since;
     return inbox.where((m) => !m.receivedAt.isBefore(since)).toList();
-  }
-
-  @override
-  Future<List<RawSms>> drainQueued() async {
-    final q = queue;
-    queue = [];
-    return q;
   }
 
   @override

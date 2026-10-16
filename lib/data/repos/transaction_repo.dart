@@ -57,8 +57,15 @@ class TransactionRepository {
   /// test 11). Undo puts it back with the same id and effect.
   Future<UndoAction> delete(String id) async {
     late Txn removed;
+    var smsStatus = <String, String>{};
     await _db.transaction(() async {
       removed = await _deleteReverted(id);
+      // An SMS that was saved as this transaction goes back to review, so it
+      // can be confirmed again or ignored.
+      final linked = await (_db.select(_db.smsMessages)..where((m) => m.transactionId.equals(id))).get();
+      smsStatus = {for (final m in linked) m.id: m.status};
+      await (_db.update(_db.smsMessages)..where((m) => m.transactionId.equals(id)))
+          .write(const SmsMessagesCompanion(status: Value('review'), transactionId: Value(null), autoSaved: Value(false)));
       await _audit.write(
         action: 'transaction.delete',
         entity: 'transaction',
@@ -68,6 +75,10 @@ class TransactionRepository {
     });
     return UndoAction(() => _db.transaction(() async {
           await _insertApplied(removed);
+          for (final e in smsStatus.entries) {
+            await (_db.update(_db.smsMessages)..where((m) => m.id.equals(e.key)))
+                .write(SmsMessagesCompanion(status: Value(e.value), transactionId: Value(id)));
+          }
           await _audit.write(action: 'transaction.undo', entity: 'transaction', entityId: id, summary: 'Undid the last change');
         }));
   }

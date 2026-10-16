@@ -267,4 +267,10 @@ class SmsMessages extends Table {
 
   @override
   Set<Column> get primaryKey => {id};
+
+  /// One phone message is stored once, however it arrives (broadcast, scan).
+  @override
+  List<Set<Column>> get uniqueKeys => [
+        {bodyHash, receivedAt},
+      ];
 }

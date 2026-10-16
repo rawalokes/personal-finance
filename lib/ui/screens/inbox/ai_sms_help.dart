@@ -36,15 +36,20 @@ class _AiSmsHelpState extends ConsumerState<AiSmsHelp> {
       _error = null;
     });
     final m = widget.m;
+    // Read everything before the await: the user may leave this screen while
+    // the AI answers, and the answer should still be kept.
     final repo = ref.read(smsRepoProvider);
     final toast = ref.read(toastProvider.notifier);
+    final ai = ref.read(aiServiceProvider);
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
-      final s = await runAi(() => ref.read(aiServiceProvider).suggestSms(m));
+      final s = await runAi(() => ai.suggestSms(m));
       final type = TxType.fromWire(s.type);
       // Only ids that exist; the AI can't invent categories or accounts.
-      final categories = await ref.read(categoriesProvider.future);
-      final incomeTypes = await ref.read(incomeTypesProvider.future);
-      final accounts = await ref.read(accountsProvider.future);
+      final categories = await container.read(categoriesProvider.future);
+      final incomeTypes = await container.read(incomeTypesProvider.future);
+      final accounts = await container.read(accountsProvider.future);
+      if ((await repo.get(m.id)).pending == false) return;
       final category = categories.any((c) => c.id == s.categoryId) ? s.categoryId : null;
       final incomeType = incomeTypes.any((t) => t.id == s.incomeTypeId) ? s.incomeTypeId : null;
       final counter = accounts.any((a) => a.id == s.counterAccountId && a.id != m.accountId) ? s.counterAccountId : null;
@@ -61,6 +66,8 @@ class _AiSmsHelpState extends ConsumerState<AiSmsHelp> {
       toast.show('AI suggestion added — still needs your confirmation');
     } on AiError catch (e) {
       if (mounted) setState(() => _error = e);
+    } on Object {
+      if (mounted) setState(() => _error = AiError(AiErrorCode.server));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

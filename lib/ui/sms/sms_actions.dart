@@ -22,8 +22,20 @@ import '../typography.dart';
 import '../txn/txn_presentation.dart';
 import 'sms_presentation.dart';
 
+final _confirming = <String>{};
+
 /// Confirm, with the duplicate dialog (acceptance 12). True if saved.
+/// A second tap while the first is saving does nothing.
 Future<bool> confirmSmsFlow(BuildContext context, WidgetRef ref, SmsMessage m) async {
+  if (!_confirming.add(m.id)) return false;
+  try {
+    return await _confirmSms(context, ref, m);
+  } finally {
+    _confirming.remove(m.id);
+  }
+}
+
+Future<bool> _confirmSms(BuildContext context, WidgetRef ref, SmsMessage m) async {
   final repo = ref.read(smsRepoProvider);
   final toast = ref.read(toastProvider.notifier);
   Future<bool> save({required bool force}) async {

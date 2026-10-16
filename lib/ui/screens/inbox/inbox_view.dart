@@ -119,6 +119,8 @@ class _SmsAccessCardState extends ConsumerState<_SmsAccessCard> {
       toast.show(report.added == 0
           ? 'No new bank or wallet messages'
           : '${report.added} message${report.added == 1 ? '' : 's'} added to the inbox for review');
+    } on Object {
+      toast.show('Couldn’t read SMS just now. Try again, or paste the message.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }

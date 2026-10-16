@@ -44,9 +44,6 @@ abstract class SmsSource {
   /// Messages already on the phone from [senders], received since [since].
   Future<List<RawSms>> readInbox({required DateTime since, required List<String> senders});
 
-  /// Messages the background receiver kept while Paisa was closed.
-  Future<List<RawSms>> drainQueued();
-
   /// Live messages while Paisa is running.
   Stream<RawSms> incoming();
 
@@ -65,8 +62,6 @@ class UnsupportedSmsSource implements SmsSource {
   Future<bool> requestAccess() async => false;
   @override
   Future<List<RawSms>> readInbox({required DateTime since, required List<String> senders}) async => const [];
-  @override
-  Future<List<RawSms>> drainQueued() async => const [];
   @override
   Stream<RawSms> incoming() => const Stream.empty();
   @override
@@ -93,12 +88,6 @@ class AndroidSmsSource implements SmsSource {
       'readInbox',
       {'since': since.millisecondsSinceEpoch, 'senders': senders},
     );
-    return [for (final m in list ?? const []) ?RawSms.fromMap(m)];
-  }
-
-  @override
-  Future<List<RawSms>> drainQueued() async {
-    final list = await _methods.invokeListMethod<Object?>('drainQueue');
     return [for (final m in list ?? const []) ?RawSms.fromMap(m)];
   }
 
