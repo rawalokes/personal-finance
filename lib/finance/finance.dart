@@ -21,3 +21,4 @@ export 'score.dart';
 export 'nudges.dart';
 export 'challenges.dart';
 export 'calendar.dart';
+export 'plan.dart';
