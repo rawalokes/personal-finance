@@ -253,4 +253,46 @@ void main() {
       expect(d.time, '09:13');
     });
   });
+
+  group('eSewa app notifications and emails', () {
+    test('loading the wallet from your own bank is a transfer, not income', () {
+      final d = parse('eSewa', 'Load Successful. NPR 1,000.00 has been loaded to your eSewa wallet from Nabil Bank.');
+      expect(d.accountId, 'esewa');
+      expect(d.direction, Direction.credit);
+      expect(d.type, TxType.transfer);
+      expect(d.counterAccountId, 'nabil');
+    });
+
+    test('a bill payment notification names the biller without "is successful"', () {
+      final d = parse(
+        'eSewa',
+        'Payment Successful. Your payment of NPR 1,200.00 for NEA electricity bill is successful.',
+      );
+      expect(d.accountId, 'esewa');
+      expect(d.type, TxType.expense);
+      expect(d.amount, fromRupees(1200));
+      expect(d.merchant, 'NEA electricity bill');
+      expect(d.categoryId, 'utilities');
+    });
+
+    test('money received from a person is income for the wallet', () {
+      final d = parse('eSewa', 'Fund Received. You have received NPR 1,500.00 from Ram Bahadur. Remarks: lunch share');
+      expect(d.accountId, 'esewa');
+      expect(d.direction, Direction.credit);
+      expect(d.type, TxType.income);
+    });
+
+    test('promotions from the eSewa app are not transactions', () {
+      for (final body in [
+        'Pay your NEA bill & get Rs 25 cashback this Tihar!',
+        'Dashain Dhamaka: up to NPR 500 cashback on recharge. T&C apply.',
+      ]) {
+        expect(
+          parseSms(sender: 'eSewa', body: body, receivedAt: _received, ctx: sampleContext()),
+          isNull,
+          reason: body,
+        );
+      }
+    });
+  });
 }

@@ -42,7 +42,12 @@ class _SmsHostState extends ConsumerState<SmsHost> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _catchUp();
+    if (state != AppLifecycleState.resumed) return;
+    // Back from Android settings: access may have been turned on or off.
+    ref
+      ..invalidate(smsAccessProvider)
+      ..invalidate(notificationAccessProvider);
+    _catchUp();
   }
 
   void _announce(IngestResult r) {

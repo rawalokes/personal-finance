@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart' show AppLifecycleState;
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paisa/data/audit_log.dart';
@@ -148,6 +149,45 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Bhat-Bhateni Supermarket Maharajgunj'), findsOneWidget);
     expect(find.textContaining('Reading SMS from'), findsOneWidget);
+    await tester.pump(kUndoWindow);
+  });
+
+  testWidgets('when Android refuses SMS access, the card explains restricted settings and opens App info', (tester) async {
+    phone
+      ..state = SmsAccess.denied
+      ..grantOnRequest = false;
+    await open(tester);
+    await tester.tap(find.text('Allow reading SMS'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Allow restricted settings'), findsOneWidget);
+    await tester.tap(find.text('Open App info'));
+    await tester.pumpAndSettle();
+    expect(phone.openedAppSettings, 1);
+    await tester.pump(kUndoWindow);
+  });
+
+  testWidgets('eSewa app notifications: allow access, then ones that came while closed are added on return', (tester) async {
+    await open(tester);
+    expect(find.text('Also read eSewa & Khalti notifications'), findsOneWidget);
+    await scrollAndTap(tester, find.text('Allow notification access'));
+    expect(phone.openedNotificationSettings, 1);
+    // The user turns Paisa on in Android's Notification access screen and comes back.
+    phone
+      ..notifications = true
+      ..queued = [
+        RawSms(
+          sender: 'eSewa',
+          body: 'Payment Successful. Your payment of NPR 450.00 to PATHAO is successful.',
+          receivedAt: DateTime(2026, 10, 14, 9),
+          sourceKey: 'n:1',
+        ),
+      ];
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(find.text('Pathao'), findsOneWidget);
+    expect(find.text('Also read eSewa & Khalti notifications'), findsNothing);
+    expect(find.textContaining('eSewa & Khalti notifications'), findsOneWidget);
     await tester.pump(kUndoWindow);
   });
 

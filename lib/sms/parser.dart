@@ -113,7 +113,9 @@ String _remark(String b) {
   ];
   for (final p in patterns) {
     final m = RegExp(p, caseSensitive: false).firstMatch(b);
-    if (m != null && m[1]!.trim().isNotEmpty) return m[1]!.trim();
+    // Wallet notifications end "… for NEA bill is successful".
+    final r = m?[1]?.replaceFirst(RegExp(r'\s+(?:is|was|has been)\s+success\w*.*$', caseSensitive: false), '').trim();
+    if (r != null && r.isNotEmpty) return r;
   }
   return '';
 }
@@ -223,6 +225,19 @@ SmsDraft? parseSms({
   for (final d in digits) {
     ownDestination = others.where((a) => a.maskedNumber == d).firstOrNull;
     if (ownDestination != null) break;
+  }
+  // A wallet loaded from, or sending to, one of your banks by name: "loaded
+  // to your eSewa wallet from Nabil Bank". Liquid accounts first.
+  if (ownDestination == null && account?.kind == AccountKind.wallet) {
+    final named = [
+      for (final a in others)
+        if (a.group != AccountGroup.liability &&
+            a.kind != AccountKind.cash &&
+            (a.institution ?? '').trim().length > 2 &&
+            _has(b, '\\b(?:from|to)\\s+(?:your\\s+)?${RegExp.escape(a.institution!.trim())}'))
+          a,
+    ]..sort((x, y) => x.group.index.compareTo(y.group.index));
+    ownDestination = named.firstOrNull;
   }
 
   // Date and time from the message, else when it arrived. A date that is

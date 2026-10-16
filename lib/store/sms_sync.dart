@@ -37,12 +37,34 @@ class SmsSync {
   Future<SyncReport> catchUp() => _running ??= _catchUp().whenComplete(() => _running = null);
 
   Future<SyncReport> _catchUp() async {
-    if (await source.access() != SmsAccess.granted) return const SyncReport();
+    final sms = await source.access() == SmsAccess.granted;
+    final notifications = await source.notificationAccess();
+    if (!sms && !notifications) return const SyncReport();
     final senders = await repo.trustedSenders();
     await source.setTrustedSenders(senders);
+    final results = <IngestResult>[];
+
+    // Wallet app notifications are gone once dismissed, so the phone keeps
+    // the ones that arrived while Paisa was closed until they're taken here.
+    if (notifications) {
+      final queued = await source.takeNotifications()
+        ..sort((a, b) => a.receivedAt.compareTo(b.receivedAt));
+      for (final m in queued) {
+        results.add(await repo.ingest(sender: m.sender, body: m.body, receivedAt: m.receivedAt, sourceKey: m.sourceKey));
+      }
+    }
+    if (sms) await _readInbox(senders, results);
+    final added = results.where((r) => r.outcome == IngestOutcome.inbox || r.outcome == IngestOutcome.autoSaved).toList();
+    return SyncReport(
+      added: added.length,
+      autoSaved: added.where((r) => r.outcome == IngestOutcome.autoSaved).length,
+      undo: added,
+    );
+  }
+
+  Future<void> _readInbox(List<String> senders, List<IngestResult> results) async {
     final last = await settings.smsLastScan();
     final now = clock.now();
-    final results = <IngestResult>[];
 
     // The phone inbox since the last scan (with an hour's overlap), which
     // includes anything that arrived while Paisa was closed: the receiver
@@ -62,15 +84,9 @@ class SmsSync {
       ));
     }
     await settings.saveSmsLastScan(now.millisecondsSinceEpoch);
-    final added = results.where((r) => r.outcome == IngestOutcome.inbox || r.outcome == IngestOutcome.autoSaved).toList();
-    return SyncReport(
-      added: added.length,
-      autoSaved: added.where((r) => r.outcome == IngestOutcome.autoSaved).length,
-      undo: added,
-    );
   }
 
-  /// Live messages while Paisa runs.
+  /// Live SMS and wallet notifications while Paisa runs.
   Stream<IngestResult> live() => source
       .incoming()
       .asyncMap((m) => repo.ingest(sender: m.sender, body: m.body, receivedAt: m.receivedAt, sourceKey: m.sourceKey));
@@ -103,6 +119,8 @@ final smsSyncProvider = Provider<SmsSync>((ref) => SmsSync(
 final smsMessagesProvider = StreamProvider<List<SmsMessage>>((ref) => ref.watch(smsRepoProvider).watchAll());
 
 final smsAccessProvider = FutureProvider<SmsAccess>((ref) => ref.watch(smsSourceProvider).access());
+
+final notificationAccessProvider = FutureProvider<bool>((ref) => ref.watch(smsSourceProvider).notificationAccess());
 
 final trustedSendersProvider = FutureProvider<List<String>>((ref) {
   ref.watch(accountsProvider);

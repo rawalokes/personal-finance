@@ -86,6 +86,16 @@ class MainActivity : FlutterFragmentActivity() {
                     SmsBridge.setTrustedSenders(this, (call.arguments as? List<String>) ?: emptyList())
                     result.success(null)
                 }
+                "notificationAccess" -> result.success(WalletNotifications.hasAccess(this))
+                "openNotificationAccess" -> {
+                    WalletNotifications.openAccessSettings(this)
+                    result.success(null)
+                }
+                "takeNotifications" -> result.success(WalletNotifications.take(this))
+                "openAppSettings" -> {
+                    try { WalletNotifications.openAppSettings(this) } catch (_: Exception) {}
+                    result.success(null)
+                }
                 "takeOpenInbox" -> {
                     result.success(openInbox)
                     openInbox = false

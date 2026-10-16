@@ -52,7 +52,7 @@ object SmsBridge {
             .putString(KEY_SENDERS, JSONArray(senders).toString()).apply()
     }
 
-    private fun trustedSenders(context: Context): List<String> {
+    fun trustedSenders(context: Context): List<String> {
         val raw = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_SENDERS, null) ?: return emptyList()
         val arr = JSONArray(raw)
         return (0 until arr.length()).map { norm(arr.getString(it)) }.filter { it.isNotEmpty() }
@@ -109,7 +109,7 @@ object SmsBridge {
         return out
     }
 
-    private fun notifyReview(context: Context) {
+    fun notifyReview(context: Context) {
         val manager = NotificationManagerCompat.from(context)
         if (!manager.areNotificationsEnabled()) return
         if (Build.VERSION.SDK_INT >= 26) {

@@ -88,6 +88,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
                   : 'Messages you approve or ignore will be listed here.',
             ),
           for (final m in shown) Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 0), child: SmsCard(m)),
+          const Padding(padding: EdgeInsets.fromLTRB(16, 16, 16, 0), child: _WalletNotificationsCard()),
         ]);
       },
     );
@@ -105,12 +106,17 @@ class _SmsAccessCard extends ConsumerStatefulWidget {
 class _SmsAccessCardState extends ConsumerState<_SmsAccessCard> {
   bool _busy = false;
 
+  /// Android refused without asking: on Android 13+ a sideloaded app's SMS
+  /// and notification access can be a "Restricted setting".
+  bool _refused = false;
+
   Future<void> _sync({bool ask = false}) async {
     setState(() => _busy = true);
     final toast = ref.read(toastProvider.notifier);
     final container = ProviderScope.containerOf(context, listen: false);
     try {
       if (ask && !await ref.read(smsSourceProvider).requestAccess()) {
+        if (mounted) setState(() => _refused = true);
         toast.show('Paisa can’t read SMS without permission. You can paste messages instead.');
         return;
       }
@@ -130,9 +136,10 @@ class _SmsAccessCardState extends ConsumerState<_SmsAccessCard> {
   Widget build(BuildContext context) {
     final c = context.colors;
     final access = ref.watch(smsAccessProvider).value;
+    final notifications = ref.watch(notificationAccessProvider).value ?? false;
     final senders = ref.watch(trustedSendersProvider).value ?? const <String>[];
     final paste = PaisaLink(label: 'Paste an SMS', onPressed: () => showPasteSmsSheet(context));
-    return switch (access) {
+    final smsCard = switch (access) {
       null => const SizedBox(height: 8),
       SmsAccess.unsupported => PaisaCard(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -152,20 +159,88 @@ class _SmsAccessCardState extends ConsumerState<_SmsAccessCard> {
             ),
             const SizedBox(height: 12),
             PaisaButton(label: _busy ? 'Reading…' : 'Allow reading SMS', icon: PaisaIcons.sms, onPressed: _busy ? null : () => _sync(ask: true)),
+            if (_refused) const _RestrictedHint(),
             Align(alignment: Alignment.centerLeft, child: paste),
           ]),
         ),
-      SmsAccess.granted => Row(children: [
-          Expanded(
-            child: Text(
-              'Reading SMS from ${senders.length} approved sender${senders.length == 1 ? '' : 's'}',
-              style: PaisaText.sub.copyWith(color: c.ink3),
-            ),
-          ),
-          PaisaLink(label: _busy ? 'Checking…' : 'Check now', onPressed: _busy ? null : _sync),
-          paste,
-        ]),
+      SmsAccess.granted => const SizedBox.shrink(),
     };
+    final reading = [
+      if (access == SmsAccess.granted) 'SMS from ${senders.length} approved sender${senders.length == 1 ? '' : 's'}',
+      if (notifications) 'eSewa & Khalti notifications',
+    ];
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      if (access != SmsAccess.granted) smsCard,
+      if (reading.isNotEmpty)
+        Row(children: [
+          Expanded(child: Text('Reading ${reading.join(' and ')}', style: PaisaText.sub.copyWith(color: c.ink3))),
+          PaisaLink(label: _busy ? 'Checking…' : 'Check now', onPressed: _busy ? null : _sync),
+          if (access == SmsAccess.granted) paste,
+        ]),
+    ]);
+  }
+}
+
+/// On Android 13+ a sideloaded app's SMS and notification access can be a
+/// "Restricted setting" until the user allows it in App info.
+class _RestrictedHint extends ConsumerWidget {
+  const _RestrictedHint();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        const SizedBox(height: 10),
+        const Note(
+          'If Android says “Restricted setting”, open App info, tap ⋮ (top right) → Allow restricted settings, '
+          'then come back and try again.',
+          tone: Tone.amber,
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: PaisaLink(label: 'Open App info', onPressed: ref.read(smsSourceProvider).openAppSettings),
+        ),
+      ]);
+}
+
+/// eSewa and Khalti app payments often come only as an app notification.
+class _WalletNotificationsCard extends ConsumerStatefulWidget {
+  const _WalletNotificationsCard();
+
+  @override
+  ConsumerState<_WalletNotificationsCard> createState() => _WalletNotificationsCardState();
+}
+
+class _WalletNotificationsCardState extends ConsumerState<_WalletNotificationsCard> {
+  bool _asked = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final access = ref.watch(smsAccessProvider).value;
+    final on = ref.watch(notificationAccessProvider).value;
+    if (access == null || access == SmsAccess.unsupported || on != false) return const SizedBox.shrink();
+    return PaisaCard(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text('Also read eSewa & Khalti notifications', style: PaisaText.h3.copyWith(color: c.ink)),
+        const SizedBox(height: 4),
+        Text(
+          'For payments made in the eSewa or Khalti app that send no SMS, and eSewa emails shown by Gmail. '
+          'All other notifications are ignored.',
+          style: PaisaText.sub.copyWith(color: c.ink3),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: PaisaLink(
+            label: 'Allow notification access',
+            onPressed: () {
+              setState(() => _asked = true);
+              ref.read(smsSourceProvider).openNotificationAccess();
+            },
+          ),
+        ),
+        if (_asked) const _RestrictedHint(),
+      ]),
+    );
   }
 }
 

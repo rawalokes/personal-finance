@@ -95,4 +95,43 @@ void main() {
     expect(r.outcome, IngestOutcome.inbox);
     expect(r.message!.categoryId, 'transport');
   });
+
+  group('wallet app notifications (eSewa, Khalti, eSewa emails in Gmail)', () {
+    RawSms esewa(String key) => RawSms(
+          sender: 'eSewa',
+          body: 'Payment Successful. Your payment of NPR 450.00 to PATHAO is successful.',
+          receivedAt: DateTime(2026, 10, 14, 9),
+          sourceKey: key,
+        );
+
+    test('ones that arrived while Paisa was closed are added, even without SMS permission', () async {
+      phone.state = SmsAccess.denied;
+      phone.notifications = true;
+      phone.queued = [esewa('n:1')];
+      final report = await sync.catchUp();
+      expect(report.added, 1);
+      final m = (await repo.list()).single;
+      expect(m.accountId, 'esewa');
+      expect(m.categoryId, 'transport');
+      expect(phone.queued, isEmpty, reason: 'taken off the phone once read');
+      expect(phone.trusted, contains('eSewa'), reason: 'the listener keeps only approved senders');
+    });
+
+    test('the same notification is added once', () async {
+      phone.notifications = true;
+      phone.queued = [esewa('n:1')];
+      await sync.catchUp();
+      phone.queued = [esewa('n:1')];
+      final report = await sync.catchUp();
+      expect(report.added, 0);
+      expect(await repo.list(), hasLength(1));
+    });
+
+    test('without notification access nothing is taken', () async {
+      phone.queued = [esewa('n:1')];
+      final report = await sync.catchUp();
+      expect(report.added, 0);
+      expect(phone.queued, hasLength(1));
+    });
+  });
 }

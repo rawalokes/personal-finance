@@ -36,5 +36,23 @@ class FakeSmsSource implements SmsSource {
     openInbox = false;
     return o;
   }
-}
 
+  bool notifications = false;
+  List<RawSms> queued = [];
+  int openedNotificationSettings = 0;
+  int openedAppSettings = 0;
+
+  @override
+  Future<bool> notificationAccess() async => notifications;
+  @override
+  Future<void> openNotificationAccess() async => openedNotificationSettings++;
+  @override
+  Future<List<RawSms>> takeNotifications() async {
+    final q = queued;
+    queued = [];
+    return q;
+  }
+
+  @override
+  Future<void> openAppSettings() async => openedAppSettings++;
+}

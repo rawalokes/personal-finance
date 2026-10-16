@@ -52,6 +52,20 @@ abstract class SmsSource {
 
   /// True once after Paisa was opened from the "needs review" notification.
   Future<bool> takeOpenInbox();
+
+  /// Whether Paisa may read wallet app notifications (eSewa, Khalti, and
+  /// eSewa emails shown by Gmail). Android's "Notification access".
+  Future<bool> notificationAccess();
+
+  /// Opens Android's Notification access screen.
+  Future<void> openNotificationAccess();
+
+  /// Wallet notifications that arrived while Paisa was closed. Taking them
+  /// removes them from the phone's queue.
+  Future<List<RawSms>> takeNotifications();
+
+  /// Paisa's App info screen, for a permission Android no longer asks about.
+  Future<void> openAppSettings();
 }
 
 class UnsupportedSmsSource implements SmsSource {
@@ -68,6 +82,14 @@ class UnsupportedSmsSource implements SmsSource {
   Future<void> setTrustedSenders(List<String> senders) async {}
   @override
   Future<bool> takeOpenInbox() async => false;
+  @override
+  Future<bool> notificationAccess() async => false;
+  @override
+  Future<void> openNotificationAccess() async {}
+  @override
+  Future<List<RawSms>> takeNotifications() async => const [];
+  @override
+  Future<void> openAppSettings() async {}
 }
 
 /// The Kotlin side lives in android/app/src/main/kotlin/…/SmsBridge.kt.
@@ -99,4 +121,19 @@ class AndroidSmsSource implements SmsSource {
 
   @override
   Future<bool> takeOpenInbox() async => await _methods.invokeMethod<bool>('takeOpenInbox') ?? false;
+
+  @override
+  Future<bool> notificationAccess() async => await _methods.invokeMethod<bool>('notificationAccess') ?? false;
+
+  @override
+  Future<void> openNotificationAccess() => _methods.invokeMethod<void>('openNotificationAccess');
+
+  @override
+  Future<List<RawSms>> takeNotifications() async {
+    final list = await _methods.invokeListMethod<Object?>('takeNotifications');
+    return [for (final m in list ?? const []) ?RawSms.fromMap(m)];
+  }
+
+  @override
+  Future<void> openAppSettings() => _methods.invokeMethod<void>('openAppSettings');
 }
