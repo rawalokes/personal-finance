@@ -22,6 +22,7 @@ import 'ui/screens/plans/plans_screen.dart';
 import 'ui/screens/settings/ai_settings_screen.dart';
 import 'ui/screens/settings/catalog_screens.dart';
 import 'ui/screens/settings/more_screen.dart';
+import 'ui/screens/settings/nudge_settings_screen.dart';
 import 'ui/screens/settings/salary_screen.dart';
 import 'ui/screens/settings/security_screen.dart';
 import 'ui/screens/settings/simple_settings_screens.dart';
@@ -64,7 +65,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/accounts/:id',
         builder: (context, state) => AccountDetailScreen(accountId: state.pathParameters['id']!),
       ),
-      GoRoute(path: '/search', builder: (context, state) => const SearchScreen()),
+      GoRoute(path: '/search', builder: (context, state) => SearchScreen(initialQuery: state.uri.queryParameters['q'])),
       GoRoute(path: '/inbox/:id', builder: (context, state) => ReviewScreen(smsId: state.pathParameters['id']!)),
       GoRoute(
         path: '/loans/new',
@@ -83,10 +84,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/settings/tax', builder: (context, state) => const TaxRulesScreen()),
       GoRoute(path: '/settings/security', builder: (context, state) => const SecurityScreen()),
       GoRoute(path: '/settings/ai', builder: (context, state) => const AiSettingsScreen()),
+      GoRoute(path: '/settings/nudges', builder: (context, state) => const NudgeSettingsScreen()),
       GoRoute(path: '/ai/insights', builder: (context, state) => const AiInsightsScreen()),
       GoRoute(path: '/ai/chat', builder: (context, state) => const AiChatScreen()),
       GoRoute(path: '/settings/audit', builder: (context, state) => const AuditScreen()),
-      GoRoute(path: '/loans/planner', builder: (context, state) => const PayoffPlannerScreen()),
+      GoRoute(
+        path: '/loans/planner',
+        builder: (context, state) => PayoffPlannerScreen(initialExtra: parseNpr(state.uri.queryParameters['extra'] ?? '')),
+      ),
       GoRoute(
         path: '/loans/:id',
         builder: (context, state) => LoanDetailScreen(loanId: state.pathParameters['id']!),

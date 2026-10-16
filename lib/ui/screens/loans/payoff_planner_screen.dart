@@ -43,7 +43,10 @@ const _extras = [0, 200000, 500000, 1000000, 2000000];
 /// debt-free date against today's pace, payoff order and next month's
 /// payments. Saving creates a monthly reminder for the extra payment.
 class PayoffPlannerScreen extends ConsumerStatefulWidget {
-  const PayoffPlannerScreen({super.key});
+  const PayoffPlannerScreen({super.key, this.initialExtra});
+
+  /// From a nudge link, e.g. `/loans/planner?extra=4000`; wins over the saved plan.
+  final Paisa? initialExtra;
 
   @override
   ConsumerState<PayoffPlannerScreen> createState() => _PayoffPlannerScreenState();
@@ -84,9 +87,10 @@ class _PayoffPlannerScreenState extends ConsumerState<PayoffPlannerScreen> {
           if (!_loaded) {
             _loaded = true;
             _strategy = d.saved.strategy;
-            if (d.saved.extraMonthly > 0) {
+            final extra = widget.initialExtra ?? (d.saved.extraMonthly > 0 ? d.saved.extraMonthly : null);
+            if (extra != null) {
               _filling = true;
-              _extra.text = '${toWholeRupees(d.saved.extraMonthly)}';
+              _extra.text = '${toWholeRupees(extra)}';
               _filling = false;
             }
           }

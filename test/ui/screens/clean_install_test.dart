@@ -8,7 +8,7 @@ void main() {
     await pumpPaisa(tester, cleanInstall: true);
     expect(tester.takeException(), isNull);
     expect(find.text('AVAILABLE TO SPEND'), findsOneWidget);
-    expect(find.text('0'), findsOneWidget);
+    expect(find.text('0'), findsNWidgets(2), reason: 'the balance, and the savings score ring');
     expect(find.text('Add eSewa, Khalti or bank'), findsOneWidget);
     expect(find.text('Loans remaining'), findsNothing);
     await scrollPageTo(tester, find.text('No transactions yet.'));

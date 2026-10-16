@@ -26,7 +26,10 @@ final _searchDataProvider = FutureProvider<(List<Txn>, TxnLookup)>(
 
 /// Search (spec §7): text plus type filter across all transactions.
 class SearchScreen extends ConsumerStatefulWidget {
-  const SearchScreen({super.key});
+  const SearchScreen({super.key, this.initialQuery});
+
+  /// From a nudge link, e.g. `/search?q=Daraz`.
+  final String? initialQuery;
 
   @override
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
@@ -39,6 +42,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   void initState() {
     super.initState();
+    _query.text = widget.initialQuery ?? '';
     _query.addListener(() => setState(() {}));
   }
 

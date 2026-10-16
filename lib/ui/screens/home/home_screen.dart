@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../data/records.dart';
 import '../../../finance/finance.dart';
 import '../../../store/data_providers.dart';
+import '../../../store/reports.dart';
 import '../../../store/ui_state.dart';
 import '../../components/async_view.dart';
 import '../../components/buttons.dart';
@@ -13,6 +14,8 @@ import '../../components/layout.dart';
 import '../../components/money_text.dart';
 import '../../components/surfaces.dart';
 import '../../date_line.dart';
+import '../../encourage/nudge_card.dart';
+import '../../encourage/score_card.dart';
 import '../../icons/paisa_icon.dart';
 import '../../icons/paisa_icons.dart';
 import '../../theme.dart';
@@ -191,6 +194,11 @@ class _HomeBody extends ConsumerWidget {
             child: _PendingBar(count: pending, onTap: () => context.go('/activity?seg=inbox')),
           ),
         Padding(padding: const EdgeInsets.fromLTRB(20, 12, 20, 0), child: _MonthCard(month: d.month, today: today)),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          child: ScoreCard(compact: true, onTap: () => context.go('/reports')),
+        ),
+        const _HomeNudges(),
         const AiInsightCard(),
         if (d.summary.loans > 0)
           Padding(
@@ -362,5 +370,26 @@ class _LoansCard extends StatelessWidget {
         ),
       ]),
     );
+  }
+}
+
+/// The top two nudges (spec §4.1); the rest are on Reports.
+class _HomeNudges extends ConsumerWidget {
+  const _HomeNudges();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(challengeRolloverProvider);
+    final nudges = ref.watch(nudgesProvider).value ?? const <Nudge>[];
+    if (nudges.isEmpty) return const SizedBox.shrink();
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      SectionHeader(title: 'For you', trailing: PaisaLink(label: 'See all', onPressed: () => context.go('/reports'))),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(children: [
+          for (final n in nudges.take(2)) Padding(padding: const EdgeInsets.only(bottom: 8), child: NudgeCard(n)),
+        ]),
+      ),
+    ]);
   }
 }

@@ -86,6 +86,7 @@ class MoreScreen extends ConsumerWidget {
           () => go('/settings/ai'),
           tone: Tone.blue,
         ),
+        _Item('Nudges', 'Tips to spend less, save more and clear loans', PaisaIcons.bell, () => go('/settings/nudges'), tone: Tone.blue),
       ]),
       ('Preferences', [
         _Item(
