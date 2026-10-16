@@ -18,9 +18,9 @@ AccountsCompanion _account(String id) => AccountsCompanion.insert(
     );
 
 void main() {
-  test('creates every table at schema version 2', () async {
+  test('creates every table at schema version 3', () async {
     final db = openTestDb();
-    expect(db.schemaVersion, 2);
+    expect(db.schemaVersion, 3);
     final names = (await db.customSelect("SELECT name FROM sqlite_master WHERE type = 'table'").get())
         .map((r) => r.read<String>('name'))
         .toSet();
@@ -28,7 +28,7 @@ void main() {
       names,
       containsAll([
         'accounts', 'transactions', 'loans', 'income_types', 'expense_categories', 'loan_types',
-        'recurring_rules', 'config_items', 'audit_entries', 'app_meta', 'goals', 'settings',
+        'recurring_rules', 'config_items', 'audit_entries', 'app_meta', 'goals', 'settings', 'sms_messages',
       ]),
     );
   });
@@ -61,6 +61,7 @@ void main() {
     await db.into(db.accounts).insert(_account('cash'));
     await db.customStatement('DROP TABLE goals');
     await db.customStatement('DROP TABLE settings');
+    await db.customStatement('DROP TABLE sms_messages');
     await db.customStatement('PRAGMA user_version = 1');
     await db.close();
 
@@ -69,7 +70,23 @@ void main() {
     final names = (await db.customSelect("SELECT name FROM sqlite_master WHERE type = 'table'").get())
         .map((r) => r.read<String>('name'))
         .toSet();
-    expect(names, containsAll(['goals', 'settings']));
+    expect(names, containsAll(['goals', 'settings', 'sms_messages']));
+    expect(await db.select(db.accounts).get(), hasLength(1));
+  });
+
+  test('a version-2 database upgrades to v3 (SMS inbox) and keeps its data', () async {
+    final dir = Directory.systemTemp.createTempSync('paisa_mig3');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final file = File('${dir.path}/paisa.sqlite');
+    var db = AppDatabase(NativeDatabase(file));
+    await db.into(db.accounts).insert(_account('cash'));
+    await db.customStatement('DROP TABLE sms_messages');
+    await db.customStatement('PRAGMA user_version = 2');
+    await db.close();
+
+    db = AppDatabase(NativeDatabase(file));
+    addTearDown(db.close);
+    expect(await db.select(db.smsMessages).get(), isEmpty);
     expect(await db.select(db.accounts).get(), hasLength(1));
   });
 }

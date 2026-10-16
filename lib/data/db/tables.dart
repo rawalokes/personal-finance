@@ -232,3 +232,39 @@ class Settings extends Table {
   @override
   Set<Column> get primaryKey => {key};
 }
+
+/// Detected bank and wallet SMS (spec §4 SmsMessage). Only the masked body
+/// is stored. v3.
+@DataClassName('SmsRow')
+class SmsMessages extends Table {
+  TextColumn get id => text()();
+  TextColumn get sender => text()();
+  TextColumn get receivedAt => text()();
+  TextColumn get maskedBody => text()();
+  TextColumn get bodyHash => text()();
+  TextColumn get sourceKey => text().nullable().unique()();
+  TextColumn get institution => text()();
+  TextColumn get accountId => text().nullable()();
+  TextColumn get direction => text()();
+  IntColumn get amount => integer()();
+  TextColumn get merchant => text()();
+  TextColumn get date => text()();
+  TextColumn get time => text()();
+  TextColumn get type => text()();
+  TextColumn get categoryId => text().nullable()();
+  TextColumn get incomeTypeId => text().nullable()();
+  TextColumn get counterAccountId => text().nullable()();
+  TextColumn get loanId => text().nullable()();
+  TextColumn get confidence => text()();
+  TextColumn get reason => text()();
+  TextColumn get suggestedBy => text()();
+  TextColumn get status => text()();
+  TextColumn get duplicateOfId => text().nullable()();
+  TextColumn get transactionId => text().nullable()();
+  BoolColumn get edited => boolean().withDefault(const Constant(false))();
+  BoolColumn get autoSaved => boolean().withDefault(const Constant(false))();
+  TextColumn get description => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}

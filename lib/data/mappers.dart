@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 
 import '../finance/finance.dart';
 import 'db/database.dart';
+import '../sms/sms_models.dart';
 import 'records.dart';
 
 // Rows ↔ models. Enum columns hold wire strings; `.name` is used for enums
@@ -304,4 +305,64 @@ GoalsCompanion goalToCompanion(Goal g, {int sortOrder = 0}) => GoalsCompanion.in
       linkedAccountId: Value(g.linkedAccountId),
       targetDate: Value(g.targetDate),
       sortOrder: Value(sortOrder),
+    );
+
+SmsMessage smsFromRow(SmsRow r) => SmsMessage(
+      id: r.id,
+      sender: r.sender,
+      receivedAt: r.receivedAt,
+      maskedBody: r.maskedBody,
+      bodyHash: r.bodyHash,
+      sourceKey: r.sourceKey,
+      institution: r.institution,
+      accountId: r.accountId,
+      direction: _byName(Direction.values, r.direction),
+      amount: r.amount,
+      merchant: r.merchant,
+      date: r.date,
+      time: r.time,
+      type: TxType.fromWire(r.type),
+      categoryId: r.categoryId,
+      incomeTypeId: r.incomeTypeId,
+      counterAccountId: r.counterAccountId,
+      loanId: r.loanId,
+      confidence: _byName(SmsConfidence.values, r.confidence),
+      reason: r.reason,
+      suggestedBy: _byName(SmsSuggestedBy.values, r.suggestedBy),
+      status: _byName(SmsStatus.values, r.status),
+      duplicateOfId: r.duplicateOfId,
+      transactionId: r.transactionId,
+      edited: r.edited,
+      autoSaved: r.autoSaved,
+      description: r.description,
+    );
+
+SmsMessagesCompanion smsToCompanion(SmsMessage m) => SmsMessagesCompanion.insert(
+      id: m.id,
+      sender: m.sender,
+      receivedAt: m.receivedAt,
+      maskedBody: m.maskedBody,
+      bodyHash: m.bodyHash,
+      sourceKey: Value(m.sourceKey),
+      institution: m.institution,
+      accountId: Value(m.accountId),
+      direction: m.direction.name,
+      amount: m.amount,
+      merchant: m.merchant,
+      date: m.date,
+      time: m.time,
+      type: m.type.wire,
+      categoryId: Value(m.categoryId),
+      incomeTypeId: Value(m.incomeTypeId),
+      counterAccountId: Value(m.counterAccountId),
+      loanId: Value(m.loanId),
+      confidence: m.confidence.name,
+      reason: m.reason,
+      suggestedBy: m.suggestedBy.name,
+      status: m.status.name,
+      duplicateOfId: Value(m.duplicateOfId),
+      transactionId: Value(m.transactionId),
+      edited: Value(m.edited),
+      autoSaved: Value(m.autoSaved),
+      description: Value(m.description),
     );

@@ -7590,6 +7590,1473 @@ class SettingsCompanion extends UpdateCompanion<SettingRow> {
   }
 }
 
+class $SmsMessagesTable extends SmsMessages
+    with TableInfo<$SmsMessagesTable, SmsRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SmsMessagesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _senderMeta = const VerificationMeta('sender');
+  @override
+  late final GeneratedColumn<String> sender = GeneratedColumn<String>(
+    'sender',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _receivedAtMeta = const VerificationMeta(
+    'receivedAt',
+  );
+  @override
+  late final GeneratedColumn<String> receivedAt = GeneratedColumn<String>(
+    'received_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _maskedBodyMeta = const VerificationMeta(
+    'maskedBody',
+  );
+  @override
+  late final GeneratedColumn<String> maskedBody = GeneratedColumn<String>(
+    'masked_body',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bodyHashMeta = const VerificationMeta(
+    'bodyHash',
+  );
+  @override
+  late final GeneratedColumn<String> bodyHash = GeneratedColumn<String>(
+    'body_hash',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceKeyMeta = const VerificationMeta(
+    'sourceKey',
+  );
+  @override
+  late final GeneratedColumn<String> sourceKey = GeneratedColumn<String>(
+    'source_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _institutionMeta = const VerificationMeta(
+    'institution',
+  );
+  @override
+  late final GeneratedColumn<String> institution = GeneratedColumn<String>(
+    'institution',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _directionMeta = const VerificationMeta(
+    'direction',
+  );
+  @override
+  late final GeneratedColumn<String> direction = GeneratedColumn<String>(
+    'direction',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<int> amount = GeneratedColumn<int>(
+    'amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _merchantMeta = const VerificationMeta(
+    'merchant',
+  );
+  @override
+  late final GeneratedColumn<String> merchant = GeneratedColumn<String>(
+    'merchant',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dateMeta = const VerificationMeta('date');
+  @override
+  late final GeneratedColumn<String> date = GeneratedColumn<String>(
+    'date',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timeMeta = const VerificationMeta('time');
+  @override
+  late final GeneratedColumn<String> time = GeneratedColumn<String>(
+    'time',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _categoryIdMeta = const VerificationMeta(
+    'categoryId',
+  );
+  @override
+  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
+    'category_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _incomeTypeIdMeta = const VerificationMeta(
+    'incomeTypeId',
+  );
+  @override
+  late final GeneratedColumn<String> incomeTypeId = GeneratedColumn<String>(
+    'income_type_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _counterAccountIdMeta = const VerificationMeta(
+    'counterAccountId',
+  );
+  @override
+  late final GeneratedColumn<String> counterAccountId = GeneratedColumn<String>(
+    'counter_account_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _loanIdMeta = const VerificationMeta('loanId');
+  @override
+  late final GeneratedColumn<String> loanId = GeneratedColumn<String>(
+    'loan_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _confidenceMeta = const VerificationMeta(
+    'confidence',
+  );
+  @override
+  late final GeneratedColumn<String> confidence = GeneratedColumn<String>(
+    'confidence',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _reasonMeta = const VerificationMeta('reason');
+  @override
+  late final GeneratedColumn<String> reason = GeneratedColumn<String>(
+    'reason',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _suggestedByMeta = const VerificationMeta(
+    'suggestedBy',
+  );
+  @override
+  late final GeneratedColumn<String> suggestedBy = GeneratedColumn<String>(
+    'suggested_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _duplicateOfIdMeta = const VerificationMeta(
+    'duplicateOfId',
+  );
+  @override
+  late final GeneratedColumn<String> duplicateOfId = GeneratedColumn<String>(
+    'duplicate_of_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _transactionIdMeta = const VerificationMeta(
+    'transactionId',
+  );
+  @override
+  late final GeneratedColumn<String> transactionId = GeneratedColumn<String>(
+    'transaction_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _editedMeta = const VerificationMeta('edited');
+  @override
+  late final GeneratedColumn<bool> edited = GeneratedColumn<bool>(
+    'edited',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("edited" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _autoSavedMeta = const VerificationMeta(
+    'autoSaved',
+  );
+  @override
+  late final GeneratedColumn<bool> autoSaved = GeneratedColumn<bool>(
+    'auto_saved',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("auto_saved" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sender,
+    receivedAt,
+    maskedBody,
+    bodyHash,
+    sourceKey,
+    institution,
+    accountId,
+    direction,
+    amount,
+    merchant,
+    date,
+    time,
+    type,
+    categoryId,
+    incomeTypeId,
+    counterAccountId,
+    loanId,
+    confidence,
+    reason,
+    suggestedBy,
+    status,
+    duplicateOfId,
+    transactionId,
+    edited,
+    autoSaved,
+    description,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sms_messages';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SmsRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('sender')) {
+      context.handle(
+        _senderMeta,
+        sender.isAcceptableOrUnknown(data['sender']!, _senderMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_senderMeta);
+    }
+    if (data.containsKey('received_at')) {
+      context.handle(
+        _receivedAtMeta,
+        receivedAt.isAcceptableOrUnknown(data['received_at']!, _receivedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_receivedAtMeta);
+    }
+    if (data.containsKey('masked_body')) {
+      context.handle(
+        _maskedBodyMeta,
+        maskedBody.isAcceptableOrUnknown(data['masked_body']!, _maskedBodyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_maskedBodyMeta);
+    }
+    if (data.containsKey('body_hash')) {
+      context.handle(
+        _bodyHashMeta,
+        bodyHash.isAcceptableOrUnknown(data['body_hash']!, _bodyHashMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bodyHashMeta);
+    }
+    if (data.containsKey('source_key')) {
+      context.handle(
+        _sourceKeyMeta,
+        sourceKey.isAcceptableOrUnknown(data['source_key']!, _sourceKeyMeta),
+      );
+    }
+    if (data.containsKey('institution')) {
+      context.handle(
+        _institutionMeta,
+        institution.isAcceptableOrUnknown(
+          data['institution']!,
+          _institutionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_institutionMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    }
+    if (data.containsKey('direction')) {
+      context.handle(
+        _directionMeta,
+        direction.isAcceptableOrUnknown(data['direction']!, _directionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_directionMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('merchant')) {
+      context.handle(
+        _merchantMeta,
+        merchant.isAcceptableOrUnknown(data['merchant']!, _merchantMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_merchantMeta);
+    }
+    if (data.containsKey('date')) {
+      context.handle(
+        _dateMeta,
+        date.isAcceptableOrUnknown(data['date']!, _dateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dateMeta);
+    }
+    if (data.containsKey('time')) {
+      context.handle(
+        _timeMeta,
+        time.isAcceptableOrUnknown(data['time']!, _timeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_timeMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('category_id')) {
+      context.handle(
+        _categoryIdMeta,
+        categoryId.isAcceptableOrUnknown(data['category_id']!, _categoryIdMeta),
+      );
+    }
+    if (data.containsKey('income_type_id')) {
+      context.handle(
+        _incomeTypeIdMeta,
+        incomeTypeId.isAcceptableOrUnknown(
+          data['income_type_id']!,
+          _incomeTypeIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('counter_account_id')) {
+      context.handle(
+        _counterAccountIdMeta,
+        counterAccountId.isAcceptableOrUnknown(
+          data['counter_account_id']!,
+          _counterAccountIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('loan_id')) {
+      context.handle(
+        _loanIdMeta,
+        loanId.isAcceptableOrUnknown(data['loan_id']!, _loanIdMeta),
+      );
+    }
+    if (data.containsKey('confidence')) {
+      context.handle(
+        _confidenceMeta,
+        confidence.isAcceptableOrUnknown(data['confidence']!, _confidenceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_confidenceMeta);
+    }
+    if (data.containsKey('reason')) {
+      context.handle(
+        _reasonMeta,
+        reason.isAcceptableOrUnknown(data['reason']!, _reasonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_reasonMeta);
+    }
+    if (data.containsKey('suggested_by')) {
+      context.handle(
+        _suggestedByMeta,
+        suggestedBy.isAcceptableOrUnknown(
+          data['suggested_by']!,
+          _suggestedByMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_suggestedByMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('duplicate_of_id')) {
+      context.handle(
+        _duplicateOfIdMeta,
+        duplicateOfId.isAcceptableOrUnknown(
+          data['duplicate_of_id']!,
+          _duplicateOfIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('transaction_id')) {
+      context.handle(
+        _transactionIdMeta,
+        transactionId.isAcceptableOrUnknown(
+          data['transaction_id']!,
+          _transactionIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('edited')) {
+      context.handle(
+        _editedMeta,
+        edited.isAcceptableOrUnknown(data['edited']!, _editedMeta),
+      );
+    }
+    if (data.containsKey('auto_saved')) {
+      context.handle(
+        _autoSavedMeta,
+        autoSaved.isAcceptableOrUnknown(data['auto_saved']!, _autoSavedMeta),
+      );
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SmsRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SmsRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      sender: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sender'],
+      )!,
+      receivedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}received_at'],
+      )!,
+      maskedBody: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}masked_body'],
+      )!,
+      bodyHash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}body_hash'],
+      )!,
+      sourceKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_key'],
+      ),
+      institution: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}institution'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      ),
+      direction: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}direction'],
+      )!,
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount'],
+      )!,
+      merchant: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}merchant'],
+      )!,
+      date: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}date'],
+      )!,
+      time: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}time'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      categoryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category_id'],
+      ),
+      incomeTypeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}income_type_id'],
+      ),
+      counterAccountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}counter_account_id'],
+      ),
+      loanId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}loan_id'],
+      ),
+      confidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}confidence'],
+      )!,
+      reason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reason'],
+      )!,
+      suggestedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}suggested_by'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      duplicateOfId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}duplicate_of_id'],
+      ),
+      transactionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transaction_id'],
+      ),
+      edited: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}edited'],
+      )!,
+      autoSaved: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}auto_saved'],
+      )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
+    );
+  }
+
+  @override
+  $SmsMessagesTable createAlias(String alias) {
+    return $SmsMessagesTable(attachedDatabase, alias);
+  }
+}
+
+class SmsRow extends DataClass implements Insertable<SmsRow> {
+  final String id;
+  final String sender;
+  final String receivedAt;
+  final String maskedBody;
+  final String bodyHash;
+  final String? sourceKey;
+  final String institution;
+  final String? accountId;
+  final String direction;
+  final int amount;
+  final String merchant;
+  final String date;
+  final String time;
+  final String type;
+  final String? categoryId;
+  final String? incomeTypeId;
+  final String? counterAccountId;
+  final String? loanId;
+  final String confidence;
+  final String reason;
+  final String suggestedBy;
+  final String status;
+  final String? duplicateOfId;
+  final String? transactionId;
+  final bool edited;
+  final bool autoSaved;
+  final String? description;
+  const SmsRow({
+    required this.id,
+    required this.sender,
+    required this.receivedAt,
+    required this.maskedBody,
+    required this.bodyHash,
+    this.sourceKey,
+    required this.institution,
+    this.accountId,
+    required this.direction,
+    required this.amount,
+    required this.merchant,
+    required this.date,
+    required this.time,
+    required this.type,
+    this.categoryId,
+    this.incomeTypeId,
+    this.counterAccountId,
+    this.loanId,
+    required this.confidence,
+    required this.reason,
+    required this.suggestedBy,
+    required this.status,
+    this.duplicateOfId,
+    this.transactionId,
+    required this.edited,
+    required this.autoSaved,
+    this.description,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['sender'] = Variable<String>(sender);
+    map['received_at'] = Variable<String>(receivedAt);
+    map['masked_body'] = Variable<String>(maskedBody);
+    map['body_hash'] = Variable<String>(bodyHash);
+    if (!nullToAbsent || sourceKey != null) {
+      map['source_key'] = Variable<String>(sourceKey);
+    }
+    map['institution'] = Variable<String>(institution);
+    if (!nullToAbsent || accountId != null) {
+      map['account_id'] = Variable<String>(accountId);
+    }
+    map['direction'] = Variable<String>(direction);
+    map['amount'] = Variable<int>(amount);
+    map['merchant'] = Variable<String>(merchant);
+    map['date'] = Variable<String>(date);
+    map['time'] = Variable<String>(time);
+    map['type'] = Variable<String>(type);
+    if (!nullToAbsent || categoryId != null) {
+      map['category_id'] = Variable<String>(categoryId);
+    }
+    if (!nullToAbsent || incomeTypeId != null) {
+      map['income_type_id'] = Variable<String>(incomeTypeId);
+    }
+    if (!nullToAbsent || counterAccountId != null) {
+      map['counter_account_id'] = Variable<String>(counterAccountId);
+    }
+    if (!nullToAbsent || loanId != null) {
+      map['loan_id'] = Variable<String>(loanId);
+    }
+    map['confidence'] = Variable<String>(confidence);
+    map['reason'] = Variable<String>(reason);
+    map['suggested_by'] = Variable<String>(suggestedBy);
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || duplicateOfId != null) {
+      map['duplicate_of_id'] = Variable<String>(duplicateOfId);
+    }
+    if (!nullToAbsent || transactionId != null) {
+      map['transaction_id'] = Variable<String>(transactionId);
+    }
+    map['edited'] = Variable<bool>(edited);
+    map['auto_saved'] = Variable<bool>(autoSaved);
+    if (!nullToAbsent || description != null) {
+      map['description'] = Variable<String>(description);
+    }
+    return map;
+  }
+
+  SmsMessagesCompanion toCompanion(bool nullToAbsent) {
+    return SmsMessagesCompanion(
+      id: Value(id),
+      sender: Value(sender),
+      receivedAt: Value(receivedAt),
+      maskedBody: Value(maskedBody),
+      bodyHash: Value(bodyHash),
+      sourceKey: sourceKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceKey),
+      institution: Value(institution),
+      accountId: accountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accountId),
+      direction: Value(direction),
+      amount: Value(amount),
+      merchant: Value(merchant),
+      date: Value(date),
+      time: Value(time),
+      type: Value(type),
+      categoryId: categoryId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(categoryId),
+      incomeTypeId: incomeTypeId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(incomeTypeId),
+      counterAccountId: counterAccountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(counterAccountId),
+      loanId: loanId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(loanId),
+      confidence: Value(confidence),
+      reason: Value(reason),
+      suggestedBy: Value(suggestedBy),
+      status: Value(status),
+      duplicateOfId: duplicateOfId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(duplicateOfId),
+      transactionId: transactionId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(transactionId),
+      edited: Value(edited),
+      autoSaved: Value(autoSaved),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
+    );
+  }
+
+  factory SmsRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SmsRow(
+      id: serializer.fromJson<String>(json['id']),
+      sender: serializer.fromJson<String>(json['sender']),
+      receivedAt: serializer.fromJson<String>(json['receivedAt']),
+      maskedBody: serializer.fromJson<String>(json['maskedBody']),
+      bodyHash: serializer.fromJson<String>(json['bodyHash']),
+      sourceKey: serializer.fromJson<String?>(json['sourceKey']),
+      institution: serializer.fromJson<String>(json['institution']),
+      accountId: serializer.fromJson<String?>(json['accountId']),
+      direction: serializer.fromJson<String>(json['direction']),
+      amount: serializer.fromJson<int>(json['amount']),
+      merchant: serializer.fromJson<String>(json['merchant']),
+      date: serializer.fromJson<String>(json['date']),
+      time: serializer.fromJson<String>(json['time']),
+      type: serializer.fromJson<String>(json['type']),
+      categoryId: serializer.fromJson<String?>(json['categoryId']),
+      incomeTypeId: serializer.fromJson<String?>(json['incomeTypeId']),
+      counterAccountId: serializer.fromJson<String?>(json['counterAccountId']),
+      loanId: serializer.fromJson<String?>(json['loanId']),
+      confidence: serializer.fromJson<String>(json['confidence']),
+      reason: serializer.fromJson<String>(json['reason']),
+      suggestedBy: serializer.fromJson<String>(json['suggestedBy']),
+      status: serializer.fromJson<String>(json['status']),
+      duplicateOfId: serializer.fromJson<String?>(json['duplicateOfId']),
+      transactionId: serializer.fromJson<String?>(json['transactionId']),
+      edited: serializer.fromJson<bool>(json['edited']),
+      autoSaved: serializer.fromJson<bool>(json['autoSaved']),
+      description: serializer.fromJson<String?>(json['description']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'sender': serializer.toJson<String>(sender),
+      'receivedAt': serializer.toJson<String>(receivedAt),
+      'maskedBody': serializer.toJson<String>(maskedBody),
+      'bodyHash': serializer.toJson<String>(bodyHash),
+      'sourceKey': serializer.toJson<String?>(sourceKey),
+      'institution': serializer.toJson<String>(institution),
+      'accountId': serializer.toJson<String?>(accountId),
+      'direction': serializer.toJson<String>(direction),
+      'amount': serializer.toJson<int>(amount),
+      'merchant': serializer.toJson<String>(merchant),
+      'date': serializer.toJson<String>(date),
+      'time': serializer.toJson<String>(time),
+      'type': serializer.toJson<String>(type),
+      'categoryId': serializer.toJson<String?>(categoryId),
+      'incomeTypeId': serializer.toJson<String?>(incomeTypeId),
+      'counterAccountId': serializer.toJson<String?>(counterAccountId),
+      'loanId': serializer.toJson<String?>(loanId),
+      'confidence': serializer.toJson<String>(confidence),
+      'reason': serializer.toJson<String>(reason),
+      'suggestedBy': serializer.toJson<String>(suggestedBy),
+      'status': serializer.toJson<String>(status),
+      'duplicateOfId': serializer.toJson<String?>(duplicateOfId),
+      'transactionId': serializer.toJson<String?>(transactionId),
+      'edited': serializer.toJson<bool>(edited),
+      'autoSaved': serializer.toJson<bool>(autoSaved),
+      'description': serializer.toJson<String?>(description),
+    };
+  }
+
+  SmsRow copyWith({
+    String? id,
+    String? sender,
+    String? receivedAt,
+    String? maskedBody,
+    String? bodyHash,
+    Value<String?> sourceKey = const Value.absent(),
+    String? institution,
+    Value<String?> accountId = const Value.absent(),
+    String? direction,
+    int? amount,
+    String? merchant,
+    String? date,
+    String? time,
+    String? type,
+    Value<String?> categoryId = const Value.absent(),
+    Value<String?> incomeTypeId = const Value.absent(),
+    Value<String?> counterAccountId = const Value.absent(),
+    Value<String?> loanId = const Value.absent(),
+    String? confidence,
+    String? reason,
+    String? suggestedBy,
+    String? status,
+    Value<String?> duplicateOfId = const Value.absent(),
+    Value<String?> transactionId = const Value.absent(),
+    bool? edited,
+    bool? autoSaved,
+    Value<String?> description = const Value.absent(),
+  }) => SmsRow(
+    id: id ?? this.id,
+    sender: sender ?? this.sender,
+    receivedAt: receivedAt ?? this.receivedAt,
+    maskedBody: maskedBody ?? this.maskedBody,
+    bodyHash: bodyHash ?? this.bodyHash,
+    sourceKey: sourceKey.present ? sourceKey.value : this.sourceKey,
+    institution: institution ?? this.institution,
+    accountId: accountId.present ? accountId.value : this.accountId,
+    direction: direction ?? this.direction,
+    amount: amount ?? this.amount,
+    merchant: merchant ?? this.merchant,
+    date: date ?? this.date,
+    time: time ?? this.time,
+    type: type ?? this.type,
+    categoryId: categoryId.present ? categoryId.value : this.categoryId,
+    incomeTypeId: incomeTypeId.present ? incomeTypeId.value : this.incomeTypeId,
+    counterAccountId: counterAccountId.present
+        ? counterAccountId.value
+        : this.counterAccountId,
+    loanId: loanId.present ? loanId.value : this.loanId,
+    confidence: confidence ?? this.confidence,
+    reason: reason ?? this.reason,
+    suggestedBy: suggestedBy ?? this.suggestedBy,
+    status: status ?? this.status,
+    duplicateOfId: duplicateOfId.present
+        ? duplicateOfId.value
+        : this.duplicateOfId,
+    transactionId: transactionId.present
+        ? transactionId.value
+        : this.transactionId,
+    edited: edited ?? this.edited,
+    autoSaved: autoSaved ?? this.autoSaved,
+    description: description.present ? description.value : this.description,
+  );
+  SmsRow copyWithCompanion(SmsMessagesCompanion data) {
+    return SmsRow(
+      id: data.id.present ? data.id.value : this.id,
+      sender: data.sender.present ? data.sender.value : this.sender,
+      receivedAt: data.receivedAt.present
+          ? data.receivedAt.value
+          : this.receivedAt,
+      maskedBody: data.maskedBody.present
+          ? data.maskedBody.value
+          : this.maskedBody,
+      bodyHash: data.bodyHash.present ? data.bodyHash.value : this.bodyHash,
+      sourceKey: data.sourceKey.present ? data.sourceKey.value : this.sourceKey,
+      institution: data.institution.present
+          ? data.institution.value
+          : this.institution,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      direction: data.direction.present ? data.direction.value : this.direction,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      merchant: data.merchant.present ? data.merchant.value : this.merchant,
+      date: data.date.present ? data.date.value : this.date,
+      time: data.time.present ? data.time.value : this.time,
+      type: data.type.present ? data.type.value : this.type,
+      categoryId: data.categoryId.present
+          ? data.categoryId.value
+          : this.categoryId,
+      incomeTypeId: data.incomeTypeId.present
+          ? data.incomeTypeId.value
+          : this.incomeTypeId,
+      counterAccountId: data.counterAccountId.present
+          ? data.counterAccountId.value
+          : this.counterAccountId,
+      loanId: data.loanId.present ? data.loanId.value : this.loanId,
+      confidence: data.confidence.present
+          ? data.confidence.value
+          : this.confidence,
+      reason: data.reason.present ? data.reason.value : this.reason,
+      suggestedBy: data.suggestedBy.present
+          ? data.suggestedBy.value
+          : this.suggestedBy,
+      status: data.status.present ? data.status.value : this.status,
+      duplicateOfId: data.duplicateOfId.present
+          ? data.duplicateOfId.value
+          : this.duplicateOfId,
+      transactionId: data.transactionId.present
+          ? data.transactionId.value
+          : this.transactionId,
+      edited: data.edited.present ? data.edited.value : this.edited,
+      autoSaved: data.autoSaved.present ? data.autoSaved.value : this.autoSaved,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SmsRow(')
+          ..write('id: $id, ')
+          ..write('sender: $sender, ')
+          ..write('receivedAt: $receivedAt, ')
+          ..write('maskedBody: $maskedBody, ')
+          ..write('bodyHash: $bodyHash, ')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('institution: $institution, ')
+          ..write('accountId: $accountId, ')
+          ..write('direction: $direction, ')
+          ..write('amount: $amount, ')
+          ..write('merchant: $merchant, ')
+          ..write('date: $date, ')
+          ..write('time: $time, ')
+          ..write('type: $type, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('incomeTypeId: $incomeTypeId, ')
+          ..write('counterAccountId: $counterAccountId, ')
+          ..write('loanId: $loanId, ')
+          ..write('confidence: $confidence, ')
+          ..write('reason: $reason, ')
+          ..write('suggestedBy: $suggestedBy, ')
+          ..write('status: $status, ')
+          ..write('duplicateOfId: $duplicateOfId, ')
+          ..write('transactionId: $transactionId, ')
+          ..write('edited: $edited, ')
+          ..write('autoSaved: $autoSaved, ')
+          ..write('description: $description')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    id,
+    sender,
+    receivedAt,
+    maskedBody,
+    bodyHash,
+    sourceKey,
+    institution,
+    accountId,
+    direction,
+    amount,
+    merchant,
+    date,
+    time,
+    type,
+    categoryId,
+    incomeTypeId,
+    counterAccountId,
+    loanId,
+    confidence,
+    reason,
+    suggestedBy,
+    status,
+    duplicateOfId,
+    transactionId,
+    edited,
+    autoSaved,
+    description,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SmsRow &&
+          other.id == this.id &&
+          other.sender == this.sender &&
+          other.receivedAt == this.receivedAt &&
+          other.maskedBody == this.maskedBody &&
+          other.bodyHash == this.bodyHash &&
+          other.sourceKey == this.sourceKey &&
+          other.institution == this.institution &&
+          other.accountId == this.accountId &&
+          other.direction == this.direction &&
+          other.amount == this.amount &&
+          other.merchant == this.merchant &&
+          other.date == this.date &&
+          other.time == this.time &&
+          other.type == this.type &&
+          other.categoryId == this.categoryId &&
+          other.incomeTypeId == this.incomeTypeId &&
+          other.counterAccountId == this.counterAccountId &&
+          other.loanId == this.loanId &&
+          other.confidence == this.confidence &&
+          other.reason == this.reason &&
+          other.suggestedBy == this.suggestedBy &&
+          other.status == this.status &&
+          other.duplicateOfId == this.duplicateOfId &&
+          other.transactionId == this.transactionId &&
+          other.edited == this.edited &&
+          other.autoSaved == this.autoSaved &&
+          other.description == this.description);
+}
+
+class SmsMessagesCompanion extends UpdateCompanion<SmsRow> {
+  final Value<String> id;
+  final Value<String> sender;
+  final Value<String> receivedAt;
+  final Value<String> maskedBody;
+  final Value<String> bodyHash;
+  final Value<String?> sourceKey;
+  final Value<String> institution;
+  final Value<String?> accountId;
+  final Value<String> direction;
+  final Value<int> amount;
+  final Value<String> merchant;
+  final Value<String> date;
+  final Value<String> time;
+  final Value<String> type;
+  final Value<String?> categoryId;
+  final Value<String?> incomeTypeId;
+  final Value<String?> counterAccountId;
+  final Value<String?> loanId;
+  final Value<String> confidence;
+  final Value<String> reason;
+  final Value<String> suggestedBy;
+  final Value<String> status;
+  final Value<String?> duplicateOfId;
+  final Value<String?> transactionId;
+  final Value<bool> edited;
+  final Value<bool> autoSaved;
+  final Value<String?> description;
+  final Value<int> rowid;
+  const SmsMessagesCompanion({
+    this.id = const Value.absent(),
+    this.sender = const Value.absent(),
+    this.receivedAt = const Value.absent(),
+    this.maskedBody = const Value.absent(),
+    this.bodyHash = const Value.absent(),
+    this.sourceKey = const Value.absent(),
+    this.institution = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.direction = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.merchant = const Value.absent(),
+    this.date = const Value.absent(),
+    this.time = const Value.absent(),
+    this.type = const Value.absent(),
+    this.categoryId = const Value.absent(),
+    this.incomeTypeId = const Value.absent(),
+    this.counterAccountId = const Value.absent(),
+    this.loanId = const Value.absent(),
+    this.confidence = const Value.absent(),
+    this.reason = const Value.absent(),
+    this.suggestedBy = const Value.absent(),
+    this.status = const Value.absent(),
+    this.duplicateOfId = const Value.absent(),
+    this.transactionId = const Value.absent(),
+    this.edited = const Value.absent(),
+    this.autoSaved = const Value.absent(),
+    this.description = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SmsMessagesCompanion.insert({
+    required String id,
+    required String sender,
+    required String receivedAt,
+    required String maskedBody,
+    required String bodyHash,
+    this.sourceKey = const Value.absent(),
+    required String institution,
+    this.accountId = const Value.absent(),
+    required String direction,
+    required int amount,
+    required String merchant,
+    required String date,
+    required String time,
+    required String type,
+    this.categoryId = const Value.absent(),
+    this.incomeTypeId = const Value.absent(),
+    this.counterAccountId = const Value.absent(),
+    this.loanId = const Value.absent(),
+    required String confidence,
+    required String reason,
+    required String suggestedBy,
+    required String status,
+    this.duplicateOfId = const Value.absent(),
+    this.transactionId = const Value.absent(),
+    this.edited = const Value.absent(),
+    this.autoSaved = const Value.absent(),
+    this.description = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       sender = Value(sender),
+       receivedAt = Value(receivedAt),
+       maskedBody = Value(maskedBody),
+       bodyHash = Value(bodyHash),
+       institution = Value(institution),
+       direction = Value(direction),
+       amount = Value(amount),
+       merchant = Value(merchant),
+       date = Value(date),
+       time = Value(time),
+       type = Value(type),
+       confidence = Value(confidence),
+       reason = Value(reason),
+       suggestedBy = Value(suggestedBy),
+       status = Value(status);
+  static Insertable<SmsRow> custom({
+    Expression<String>? id,
+    Expression<String>? sender,
+    Expression<String>? receivedAt,
+    Expression<String>? maskedBody,
+    Expression<String>? bodyHash,
+    Expression<String>? sourceKey,
+    Expression<String>? institution,
+    Expression<String>? accountId,
+    Expression<String>? direction,
+    Expression<int>? amount,
+    Expression<String>? merchant,
+    Expression<String>? date,
+    Expression<String>? time,
+    Expression<String>? type,
+    Expression<String>? categoryId,
+    Expression<String>? incomeTypeId,
+    Expression<String>? counterAccountId,
+    Expression<String>? loanId,
+    Expression<String>? confidence,
+    Expression<String>? reason,
+    Expression<String>? suggestedBy,
+    Expression<String>? status,
+    Expression<String>? duplicateOfId,
+    Expression<String>? transactionId,
+    Expression<bool>? edited,
+    Expression<bool>? autoSaved,
+    Expression<String>? description,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sender != null) 'sender': sender,
+      if (receivedAt != null) 'received_at': receivedAt,
+      if (maskedBody != null) 'masked_body': maskedBody,
+      if (bodyHash != null) 'body_hash': bodyHash,
+      if (sourceKey != null) 'source_key': sourceKey,
+      if (institution != null) 'institution': institution,
+      if (accountId != null) 'account_id': accountId,
+      if (direction != null) 'direction': direction,
+      if (amount != null) 'amount': amount,
+      if (merchant != null) 'merchant': merchant,
+      if (date != null) 'date': date,
+      if (time != null) 'time': time,
+      if (type != null) 'type': type,
+      if (categoryId != null) 'category_id': categoryId,
+      if (incomeTypeId != null) 'income_type_id': incomeTypeId,
+      if (counterAccountId != null) 'counter_account_id': counterAccountId,
+      if (loanId != null) 'loan_id': loanId,
+      if (confidence != null) 'confidence': confidence,
+      if (reason != null) 'reason': reason,
+      if (suggestedBy != null) 'suggested_by': suggestedBy,
+      if (status != null) 'status': status,
+      if (duplicateOfId != null) 'duplicate_of_id': duplicateOfId,
+      if (transactionId != null) 'transaction_id': transactionId,
+      if (edited != null) 'edited': edited,
+      if (autoSaved != null) 'auto_saved': autoSaved,
+      if (description != null) 'description': description,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SmsMessagesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? sender,
+    Value<String>? receivedAt,
+    Value<String>? maskedBody,
+    Value<String>? bodyHash,
+    Value<String?>? sourceKey,
+    Value<String>? institution,
+    Value<String?>? accountId,
+    Value<String>? direction,
+    Value<int>? amount,
+    Value<String>? merchant,
+    Value<String>? date,
+    Value<String>? time,
+    Value<String>? type,
+    Value<String?>? categoryId,
+    Value<String?>? incomeTypeId,
+    Value<String?>? counterAccountId,
+    Value<String?>? loanId,
+    Value<String>? confidence,
+    Value<String>? reason,
+    Value<String>? suggestedBy,
+    Value<String>? status,
+    Value<String?>? duplicateOfId,
+    Value<String?>? transactionId,
+    Value<bool>? edited,
+    Value<bool>? autoSaved,
+    Value<String?>? description,
+    Value<int>? rowid,
+  }) {
+    return SmsMessagesCompanion(
+      id: id ?? this.id,
+      sender: sender ?? this.sender,
+      receivedAt: receivedAt ?? this.receivedAt,
+      maskedBody: maskedBody ?? this.maskedBody,
+      bodyHash: bodyHash ?? this.bodyHash,
+      sourceKey: sourceKey ?? this.sourceKey,
+      institution: institution ?? this.institution,
+      accountId: accountId ?? this.accountId,
+      direction: direction ?? this.direction,
+      amount: amount ?? this.amount,
+      merchant: merchant ?? this.merchant,
+      date: date ?? this.date,
+      time: time ?? this.time,
+      type: type ?? this.type,
+      categoryId: categoryId ?? this.categoryId,
+      incomeTypeId: incomeTypeId ?? this.incomeTypeId,
+      counterAccountId: counterAccountId ?? this.counterAccountId,
+      loanId: loanId ?? this.loanId,
+      confidence: confidence ?? this.confidence,
+      reason: reason ?? this.reason,
+      suggestedBy: suggestedBy ?? this.suggestedBy,
+      status: status ?? this.status,
+      duplicateOfId: duplicateOfId ?? this.duplicateOfId,
+      transactionId: transactionId ?? this.transactionId,
+      edited: edited ?? this.edited,
+      autoSaved: autoSaved ?? this.autoSaved,
+      description: description ?? this.description,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (sender.present) {
+      map['sender'] = Variable<String>(sender.value);
+    }
+    if (receivedAt.present) {
+      map['received_at'] = Variable<String>(receivedAt.value);
+    }
+    if (maskedBody.present) {
+      map['masked_body'] = Variable<String>(maskedBody.value);
+    }
+    if (bodyHash.present) {
+      map['body_hash'] = Variable<String>(bodyHash.value);
+    }
+    if (sourceKey.present) {
+      map['source_key'] = Variable<String>(sourceKey.value);
+    }
+    if (institution.present) {
+      map['institution'] = Variable<String>(institution.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (direction.present) {
+      map['direction'] = Variable<String>(direction.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<int>(amount.value);
+    }
+    if (merchant.present) {
+      map['merchant'] = Variable<String>(merchant.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<String>(date.value);
+    }
+    if (time.present) {
+      map['time'] = Variable<String>(time.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (categoryId.present) {
+      map['category_id'] = Variable<String>(categoryId.value);
+    }
+    if (incomeTypeId.present) {
+      map['income_type_id'] = Variable<String>(incomeTypeId.value);
+    }
+    if (counterAccountId.present) {
+      map['counter_account_id'] = Variable<String>(counterAccountId.value);
+    }
+    if (loanId.present) {
+      map['loan_id'] = Variable<String>(loanId.value);
+    }
+    if (confidence.present) {
+      map['confidence'] = Variable<String>(confidence.value);
+    }
+    if (reason.present) {
+      map['reason'] = Variable<String>(reason.value);
+    }
+    if (suggestedBy.present) {
+      map['suggested_by'] = Variable<String>(suggestedBy.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (duplicateOfId.present) {
+      map['duplicate_of_id'] = Variable<String>(duplicateOfId.value);
+    }
+    if (transactionId.present) {
+      map['transaction_id'] = Variable<String>(transactionId.value);
+    }
+    if (edited.present) {
+      map['edited'] = Variable<bool>(edited.value);
+    }
+    if (autoSaved.present) {
+      map['auto_saved'] = Variable<bool>(autoSaved.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SmsMessagesCompanion(')
+          ..write('id: $id, ')
+          ..write('sender: $sender, ')
+          ..write('receivedAt: $receivedAt, ')
+          ..write('maskedBody: $maskedBody, ')
+          ..write('bodyHash: $bodyHash, ')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('institution: $institution, ')
+          ..write('accountId: $accountId, ')
+          ..write('direction: $direction, ')
+          ..write('amount: $amount, ')
+          ..write('merchant: $merchant, ')
+          ..write('date: $date, ')
+          ..write('time: $time, ')
+          ..write('type: $type, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('incomeTypeId: $incomeTypeId, ')
+          ..write('counterAccountId: $counterAccountId, ')
+          ..write('loanId: $loanId, ')
+          ..write('confidence: $confidence, ')
+          ..write('reason: $reason, ')
+          ..write('suggestedBy: $suggestedBy, ')
+          ..write('status: $status, ')
+          ..write('duplicateOfId: $duplicateOfId, ')
+          ..write('transactionId: $transactionId, ')
+          ..write('edited: $edited, ')
+          ..write('autoSaved: $autoSaved, ')
+          ..write('description: $description, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7606,6 +9073,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $AppMetaTable appMeta = $AppMetaTable(this);
   late final $GoalsTable goals = $GoalsTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
+  late final $SmsMessagesTable smsMessages = $SmsMessagesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7623,6 +9091,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     appMeta,
     goals,
     settings,
+    smsMessages,
   ];
 }
 
@@ -11551,6 +13020,649 @@ typedef $$SettingsTableProcessedTableManager =
       SettingRow,
       PrefetchHooks Function()
     >;
+typedef $$SmsMessagesTableCreateCompanionBuilder =
+    SmsMessagesCompanion Function({
+      required String id,
+      required String sender,
+      required String receivedAt,
+      required String maskedBody,
+      required String bodyHash,
+      Value<String?> sourceKey,
+      required String institution,
+      Value<String?> accountId,
+      required String direction,
+      required int amount,
+      required String merchant,
+      required String date,
+      required String time,
+      required String type,
+      Value<String?> categoryId,
+      Value<String?> incomeTypeId,
+      Value<String?> counterAccountId,
+      Value<String?> loanId,
+      required String confidence,
+      required String reason,
+      required String suggestedBy,
+      required String status,
+      Value<String?> duplicateOfId,
+      Value<String?> transactionId,
+      Value<bool> edited,
+      Value<bool> autoSaved,
+      Value<String?> description,
+      Value<int> rowid,
+    });
+typedef $$SmsMessagesTableUpdateCompanionBuilder =
+    SmsMessagesCompanion Function({
+      Value<String> id,
+      Value<String> sender,
+      Value<String> receivedAt,
+      Value<String> maskedBody,
+      Value<String> bodyHash,
+      Value<String?> sourceKey,
+      Value<String> institution,
+      Value<String?> accountId,
+      Value<String> direction,
+      Value<int> amount,
+      Value<String> merchant,
+      Value<String> date,
+      Value<String> time,
+      Value<String> type,
+      Value<String?> categoryId,
+      Value<String?> incomeTypeId,
+      Value<String?> counterAccountId,
+      Value<String?> loanId,
+      Value<String> confidence,
+      Value<String> reason,
+      Value<String> suggestedBy,
+      Value<String> status,
+      Value<String?> duplicateOfId,
+      Value<String?> transactionId,
+      Value<bool> edited,
+      Value<bool> autoSaved,
+      Value<String?> description,
+      Value<int> rowid,
+    });
+
+class $$SmsMessagesTableFilterComposer
+    extends Composer<_$AppDatabase, $SmsMessagesTable> {
+  $$SmsMessagesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sender => $composableBuilder(
+    column: $table.sender,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get receivedAt => $composableBuilder(
+    column: $table.receivedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get maskedBody => $composableBuilder(
+    column: $table.maskedBody,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bodyHash => $composableBuilder(
+    column: $table.bodyHash,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get institution => $composableBuilder(
+    column: $table.institution,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get merchant => $composableBuilder(
+    column: $table.merchant,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get time => $composableBuilder(
+    column: $table.time,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get incomeTypeId => $composableBuilder(
+    column: $table.incomeTypeId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get counterAccountId => $composableBuilder(
+    column: $table.counterAccountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get loanId => $composableBuilder(
+    column: $table.loanId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get confidence => $composableBuilder(
+    column: $table.confidence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get suggestedBy => $composableBuilder(
+    column: $table.suggestedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get duplicateOfId => $composableBuilder(
+    column: $table.duplicateOfId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get transactionId => $composableBuilder(
+    column: $table.transactionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get edited => $composableBuilder(
+    column: $table.edited,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get autoSaved => $composableBuilder(
+    column: $table.autoSaved,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SmsMessagesTableOrderingComposer
+    extends Composer<_$AppDatabase, $SmsMessagesTable> {
+  $$SmsMessagesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sender => $composableBuilder(
+    column: $table.sender,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get receivedAt => $composableBuilder(
+    column: $table.receivedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get maskedBody => $composableBuilder(
+    column: $table.maskedBody,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bodyHash => $composableBuilder(
+    column: $table.bodyHash,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get institution => $composableBuilder(
+    column: $table.institution,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get merchant => $composableBuilder(
+    column: $table.merchant,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get time => $composableBuilder(
+    column: $table.time,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get incomeTypeId => $composableBuilder(
+    column: $table.incomeTypeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get counterAccountId => $composableBuilder(
+    column: $table.counterAccountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get loanId => $composableBuilder(
+    column: $table.loanId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get confidence => $composableBuilder(
+    column: $table.confidence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get suggestedBy => $composableBuilder(
+    column: $table.suggestedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get duplicateOfId => $composableBuilder(
+    column: $table.duplicateOfId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get transactionId => $composableBuilder(
+    column: $table.transactionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get edited => $composableBuilder(
+    column: $table.edited,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get autoSaved => $composableBuilder(
+    column: $table.autoSaved,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SmsMessagesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SmsMessagesTable> {
+  $$SmsMessagesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get sender =>
+      $composableBuilder(column: $table.sender, builder: (column) => column);
+
+  GeneratedColumn<String> get receivedAt => $composableBuilder(
+    column: $table.receivedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get maskedBody => $composableBuilder(
+    column: $table.maskedBody,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get bodyHash =>
+      $composableBuilder(column: $table.bodyHash, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceKey =>
+      $composableBuilder(column: $table.sourceKey, builder: (column) => column);
+
+  GeneratedColumn<String> get institution => $composableBuilder(
+    column: $table.institution,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<String> get direction =>
+      $composableBuilder(column: $table.direction, builder: (column) => column);
+
+  GeneratedColumn<int> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<String> get merchant =>
+      $composableBuilder(column: $table.merchant, builder: (column) => column);
+
+  GeneratedColumn<String> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<String> get time =>
+      $composableBuilder(column: $table.time, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get incomeTypeId => $composableBuilder(
+    column: $table.incomeTypeId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get counterAccountId => $composableBuilder(
+    column: $table.counterAccountId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get loanId =>
+      $composableBuilder(column: $table.loanId, builder: (column) => column);
+
+  GeneratedColumn<String> get confidence => $composableBuilder(
+    column: $table.confidence,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get reason =>
+      $composableBuilder(column: $table.reason, builder: (column) => column);
+
+  GeneratedColumn<String> get suggestedBy => $composableBuilder(
+    column: $table.suggestedBy,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get duplicateOfId => $composableBuilder(
+    column: $table.duplicateOfId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get transactionId => $composableBuilder(
+    column: $table.transactionId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get edited =>
+      $composableBuilder(column: $table.edited, builder: (column) => column);
+
+  GeneratedColumn<bool> get autoSaved =>
+      $composableBuilder(column: $table.autoSaved, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
+}
+
+class $$SmsMessagesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SmsMessagesTable,
+          SmsRow,
+          $$SmsMessagesTableFilterComposer,
+          $$SmsMessagesTableOrderingComposer,
+          $$SmsMessagesTableAnnotationComposer,
+          $$SmsMessagesTableCreateCompanionBuilder,
+          $$SmsMessagesTableUpdateCompanionBuilder,
+          (SmsRow, BaseReferences<_$AppDatabase, $SmsMessagesTable, SmsRow>),
+          SmsRow,
+          PrefetchHooks Function()
+        > {
+  $$SmsMessagesTableTableManager(_$AppDatabase db, $SmsMessagesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SmsMessagesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SmsMessagesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SmsMessagesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> sender = const Value.absent(),
+                Value<String> receivedAt = const Value.absent(),
+                Value<String> maskedBody = const Value.absent(),
+                Value<String> bodyHash = const Value.absent(),
+                Value<String?> sourceKey = const Value.absent(),
+                Value<String> institution = const Value.absent(),
+                Value<String?> accountId = const Value.absent(),
+                Value<String> direction = const Value.absent(),
+                Value<int> amount = const Value.absent(),
+                Value<String> merchant = const Value.absent(),
+                Value<String> date = const Value.absent(),
+                Value<String> time = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<String?> categoryId = const Value.absent(),
+                Value<String?> incomeTypeId = const Value.absent(),
+                Value<String?> counterAccountId = const Value.absent(),
+                Value<String?> loanId = const Value.absent(),
+                Value<String> confidence = const Value.absent(),
+                Value<String> reason = const Value.absent(),
+                Value<String> suggestedBy = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> duplicateOfId = const Value.absent(),
+                Value<String?> transactionId = const Value.absent(),
+                Value<bool> edited = const Value.absent(),
+                Value<bool> autoSaved = const Value.absent(),
+                Value<String?> description = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SmsMessagesCompanion(
+                id: id,
+                sender: sender,
+                receivedAt: receivedAt,
+                maskedBody: maskedBody,
+                bodyHash: bodyHash,
+                sourceKey: sourceKey,
+                institution: institution,
+                accountId: accountId,
+                direction: direction,
+                amount: amount,
+                merchant: merchant,
+                date: date,
+                time: time,
+                type: type,
+                categoryId: categoryId,
+                incomeTypeId: incomeTypeId,
+                counterAccountId: counterAccountId,
+                loanId: loanId,
+                confidence: confidence,
+                reason: reason,
+                suggestedBy: suggestedBy,
+                status: status,
+                duplicateOfId: duplicateOfId,
+                transactionId: transactionId,
+                edited: edited,
+                autoSaved: autoSaved,
+                description: description,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String sender,
+                required String receivedAt,
+                required String maskedBody,
+                required String bodyHash,
+                Value<String?> sourceKey = const Value.absent(),
+                required String institution,
+                Value<String?> accountId = const Value.absent(),
+                required String direction,
+                required int amount,
+                required String merchant,
+                required String date,
+                required String time,
+                required String type,
+                Value<String?> categoryId = const Value.absent(),
+                Value<String?> incomeTypeId = const Value.absent(),
+                Value<String?> counterAccountId = const Value.absent(),
+                Value<String?> loanId = const Value.absent(),
+                required String confidence,
+                required String reason,
+                required String suggestedBy,
+                required String status,
+                Value<String?> duplicateOfId = const Value.absent(),
+                Value<String?> transactionId = const Value.absent(),
+                Value<bool> edited = const Value.absent(),
+                Value<bool> autoSaved = const Value.absent(),
+                Value<String?> description = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SmsMessagesCompanion.insert(
+                id: id,
+                sender: sender,
+                receivedAt: receivedAt,
+                maskedBody: maskedBody,
+                bodyHash: bodyHash,
+                sourceKey: sourceKey,
+                institution: institution,
+                accountId: accountId,
+                direction: direction,
+                amount: amount,
+                merchant: merchant,
+                date: date,
+                time: time,
+                type: type,
+                categoryId: categoryId,
+                incomeTypeId: incomeTypeId,
+                counterAccountId: counterAccountId,
+                loanId: loanId,
+                confidence: confidence,
+                reason: reason,
+                suggestedBy: suggestedBy,
+                status: status,
+                duplicateOfId: duplicateOfId,
+                transactionId: transactionId,
+                edited: edited,
+                autoSaved: autoSaved,
+                description: description,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$SmsMessagesTable, SmsRow>(table),
+                  BaseReferences<_$AppDatabase, $SmsMessagesTable, SmsRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SmsMessagesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SmsMessagesTable,
+      SmsRow,
+      $$SmsMessagesTableFilterComposer,
+      $$SmsMessagesTableOrderingComposer,
+      $$SmsMessagesTableAnnotationComposer,
+      $$SmsMessagesTableCreateCompanionBuilder,
+      $$SmsMessagesTableUpdateCompanionBuilder,
+      (SmsRow, BaseReferences<_$AppDatabase, $SmsMessagesTable, SmsRow>),
+      SmsRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -11579,4 +13691,6 @@ class $AppDatabaseManager {
       $$GoalsTableTableManager(_db, _db.goals);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
+  $$SmsMessagesTableTableManager get smsMessages =>
+      $$SmsMessagesTableTableManager(_db, _db.smsMessages);
 }
