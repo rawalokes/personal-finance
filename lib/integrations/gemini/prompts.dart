@@ -85,3 +85,40 @@ figures from the data. Takeaway: one action for this week, under 20 words. Encou
 
 DATA:
 ${_json(summary)}''';
+
+const _realityAsks = {
+  'afford': '''
+The user is thinking of buying something. FACTS holds Paisa's own verdict (yes / wait / no), the price, what is
+free to spend this month after saving and EMIs, the hours of work it costs, how long it delays their nearest goal
+and what the money becomes in 10 years. Give an honest reality check: agree with the verdict unless the facts
+clearly say otherwise, explain it in their numbers, and say what to do instead if it is wait or no (for example
+a cheaper option, saving for it over N months, or the wish list). Verdict must be yes, wait or no.''',
+  'habits': '''
+Give a frank reality check of the user's money habits from FACTS (EMI load, total debt in months of income,
+savings rate, cash left after EMIs, emergency fund months, interest cost, biggest spending leaks, debt-free
+date). Name the habit hurting them most. Verdict must be good, watch or bad. Actions: the three fixes that
+matter most, each with a number.''',
+  'goals': '''
+Check whether the user's goals are realistic. FACTS lists each goal with Paisa's verdict, what it needs per month
+and what the user really puts aside. For each goal that is a stretch or not realistic, say the trade-off: a later
+date, a smaller target, or which spending to cut and by how much. Verdict must be good, watch or bad.''',
+  'review': '''
+Review this month: plan vs reality. FACTS has the savings target and what was saved, each budget against
+spending, EMIs paid or missed, and Paisa's suggested fixes. Say what went well, what went wrong, and give next
+month's fix in concrete numbers. Verdict must be good, watch or bad.''',
+  'budget': '''
+Explain this budget plan built by Paisa with the named method (50/30/20, zero-based or debt-first avalanche) from
+the user's real spending. Say why this method suits them, which cuts matter most and how to stick to it. Do not
+change the numbers. Verdict must be good, watch or bad (how hard the plan will be to keep).''',
+};
+
+String realityPrompt(String topic, Map<String, Object?> facts, Map<String, Object?> summary, {String? question}) => '''
+${_realityAsks[topic] ?? _realityAsks['habits']!}
+Headline: one honest sentence, at most 14 words. Points: up to 5 short sentences, each with a real figure.
+Actions: up to 3 short steps. Be kind but never sugar-coat.
+${question == null ? '' : '\nTHE USER ASKS: $question\n'}
+FACTS (computed by Paisa's engine — do not recompute):
+${_json(facts)}
+
+DATA:
+${_json(summary)}''';

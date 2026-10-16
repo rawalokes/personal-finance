@@ -24,3 +24,4 @@ export 'calendar.dart';
 export 'plan.dart';
 export 'waitlist.dart';
 export 'category_detail.dart';
+export 'reality.dart';

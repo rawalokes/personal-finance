@@ -97,10 +97,10 @@ class AiService {
     return (k, model, s);
   }
 
-  Future<Map<String, Object?>> _ask(String task, String prompt, Map<String, Object?> schema) async {
+  Future<Map<String, Object?>> _ask(String task, String prompt, Map<String, Object?> schema, {String? auditText}) async {
     final (k, model, _) = await _admit();
     final out = await client.generateJson(apiKey: k, model: model, system: kSystemPrompt, prompt: prompt, schema: schema);
-    await audit.write(action: 'ai.$task', entity: 'analysis', summary: _auditText(task), actor: AuditActor.ai);
+    await audit.write(action: 'ai.$task', entity: 'analysis', summary: auditText ?? _auditText(task), actor: AuditActor.ai);
     return out;
   }
 
@@ -111,6 +111,7 @@ class AiService {
         'budgets' => 'AI suggested budgets',
         'sms' => 'AI suggested a type for an unclear SMS',
         'lesson' => 'AI wrote today’s lesson',
+        'reality' => 'AI reality check',
         _ => 'AI checked the salary breakdown',
       };
 
@@ -144,6 +145,46 @@ class AiService {
     final lesson = AiLesson.fromJson({...raw, 'date': today});
     await settings.saveAiLesson(today, lesson.toJson());
     return lesson;
+  }
+
+  /// An honest check built on facts the engine computed. Purchases are
+  /// asked fresh every time; the other topics are cached for the month
+  /// unless [force].
+  Future<RealityAnswer> reality(RealityTopic topic, Map<String, Object?> facts, {String? question, bool force = false}) async {
+    final month = monthKey(clock.today());
+    final cacheable = topic != RealityTopic.afford;
+    if (cacheable && !force) {
+      final cached = await cachedReality(topic);
+      if (cached != null) return cached;
+    }
+    final s = await settings.ai();
+    final summary = buildSummaryPayload(await summaryInput(s.privacy));
+    final raw = await _ask(
+      'reality',
+      realityPrompt(topic.wire, facts, summary, question: question),
+      realitySchema,
+      auditText: switch (topic) {
+        RealityTopic.afford => 'AI reality check: can I afford ${question ?? 'this'}',
+        RealityTopic.habits => 'AI reality check of money habits',
+        RealityTopic.goals => 'AI reality check of goals',
+        RealityTopic.review => 'AI review of the month',
+        RealityTopic.budget => 'AI explained the budget plan',
+      },
+    );
+    final answer = RealityAnswer.fromJson({...raw, 'at': clock.stamp()});
+    if (cacheable) await settings.saveAiReality(topic.wire, month, answer.toJson());
+    return answer;
+  }
+
+  /// This month's cached answer for [topic], without any request.
+  Future<RealityAnswer?> cachedReality(RealityTopic topic) async {
+    final cached = await settings.aiReality(topic.wire, monthKey(clock.today()));
+    if (cached == null) return null;
+    try {
+      return RealityAnswer.fromJson(cached);
+    } on AiError {
+      return null;
+    }
   }
 
   /// Today's cached lesson, without any request.

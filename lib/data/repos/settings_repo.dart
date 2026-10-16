@@ -27,6 +27,7 @@ abstract final class SettingKey {
   static const aiChat = 'ai.chat';
   static String aiCache(String month) => 'ai.analysis.$month';
   static String aiLesson(String day) => 'ai.lesson.$day';
+  static String aiReality(String topic, String month) => 'ai.reality.$topic.$month';
   static const learnRead = 'learn.read';
   static const waitList = 'waitlist';
   static const smsLastScan = 'sms.last_scan';
@@ -199,6 +200,9 @@ class SettingsRepository {
 
   Future<Json?> aiLesson(String day) async => (await _read(SettingKey.aiLesson(day)) as Map?)?.cast<String, Object?>();
   Future<void> saveAiLesson(String day, Json lesson) => _write(SettingKey.aiLesson(day), lesson);
+
+  Future<Json?> aiReality(String topic, String month) async => (await _read(SettingKey.aiReality(topic, month)) as Map?)?.cast<String, Object?>();
+  Future<void> saveAiReality(String topic, String month, Json answer) => _write(SettingKey.aiReality(topic, month), answer);
 
   /// Ids of the Learn lessons the user has read.
   Stream<Set<String>> watchLearnRead() =>

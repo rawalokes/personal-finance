@@ -99,4 +99,19 @@ void main() {
       expect(audit.summary, contains('"widgets":5'));
     });
   });
+
+  test('wish list items round-trip; old saved items read as 24-hour waits with normal priority', () {
+    const w = WaitList(items: [
+      WaitItem(id: 'a', title: 'Perfume', amount: 650000, addedAt: '2026-10-14T10:00:00', wish: true, priority: 1),
+      WaitItem(id: 'b', title: 'Phone', amount: 9000000, addedAt: '2026-10-14T10:00:00'),
+    ], savedByWaiting: 5);
+    final back = waitListFromJson(jsonDecode(jsonEncode(waitListToJson(w))) as Map<String, Object?>);
+    expect([for (final i in back.items) (i.id, i.wish, i.priority)], [('a', true, 1), ('b', false, 2)]);
+    final old = waitListFromJson({
+      'items': [
+        {'id': 'o', 'title': 'Old', 'amount': 1, 'addedAt': '2026-10-01T00:00:00'},
+      ],
+    });
+    expect((old.items.single.wish, old.items.single.priority), (false, 2));
+  });
 }

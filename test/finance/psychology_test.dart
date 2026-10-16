@@ -63,6 +63,18 @@ void main() {
       expect(w.savedByWaiting, 850000);
       expect((const WaitList(items: [item])).bought('w1').savedByWaiting, 0);
     });
+    test('wish list items have no timer, a priority, and sort by priority then age', () {
+      const wish = WaitItem(id: 'w2', title: 'Perfume', amount: 650000, addedAt: '2026-10-14T10:00:00', wish: true, priority: 1);
+      expect(wish.isReady('2026-10-14T10:00:00'), isTrue);
+      expect(wish.hoursLeft('2026-10-14T10:00:00'), 0);
+      expect(item.priority, 2, reason: 'normal by default');
+      final w = const WaitList(items: [item]).add(wish).add(const WaitItem(id: 'w3', title: 'Shoes', amount: 1, addedAt: '2026-10-13T10:00:00', wish: true));
+      expect([for (final i in w.wishes) i.id], ['w2', 'w3']);
+      expect([for (final i in w.waiting) i.id], ['w1']);
+      final moved = w.setPriority('w3', 1);
+      expect([for (final i in moved.wishes) i.id], ['w3', 'w2'], reason: 'same priority: older first');
+      expect(moved.wishes.first.priority, 1);
+    });
     test('suggested for wants of NPR 5,000 or more only', () {
       expect(shouldSuggestWaiting(amount: fromRupees(5000), essential: false), isTrue);
       expect(shouldSuggestWaiting(amount: fromRupees(4999), essential: false), isFalse);

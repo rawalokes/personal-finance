@@ -284,7 +284,10 @@ ChallengeState challengeStateFromJson(Json j) => ChallengeState(
 Json waitListToJson(WaitList w) => {
       'items': [
         for (final i in w.items)
-          {'id': i.id, 'title': i.title, 'amount': i.amount, 'addedAt': i.addedAt, 'categoryId': i.categoryId, 'accountId': i.accountId},
+          {
+            'id': i.id, 'title': i.title, 'amount': i.amount, 'addedAt': i.addedAt, 'categoryId': i.categoryId, 'accountId': i.accountId,
+            'wish': i.wish, 'priority': i.priority,
+          },
       ],
       'savedByWaiting': w.savedByWaiting,
     };
@@ -300,6 +303,8 @@ WaitList waitListFromJson(Json j) => WaitList(
               addedAt: raw['addedAt'] as String,
               categoryId: raw['categoryId'] as String?,
               accountId: raw['accountId'] as String?,
+              wish: raw['wish'] == true,
+              priority: ((raw['priority'] as num?)?.toInt() ?? 2).clamp(1, 3),
             ),
       ],
       savedByWaiting: (j['savedByWaiting'] as num?)?.toInt() ?? 0,

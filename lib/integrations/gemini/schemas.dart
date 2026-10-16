@@ -318,3 +318,56 @@ class AiLesson {
 
   JsonMap toJson() => {'title': title, 'body': body, 'takeaway': takeaway, 'date': date};
 }
+
+/// What a reality check is about.
+enum RealityTopic {
+  afford('afford'),
+  habits('habits'),
+  goals('goals'),
+  review('review'),
+  budget('budget');
+
+  const RealityTopic(this.wire);
+  final String wire;
+}
+
+const _verdicts = ['yes', 'wait', 'no', 'good', 'watch', 'bad'];
+
+const Map<String, Object?> realitySchema = {
+  'type': 'OBJECT',
+  'properties': {
+    'verdict': {'type': 'STRING', 'enum': _verdicts},
+    'headline': {'type': 'STRING'},
+    'points': {'type': 'ARRAY', 'maxItems': 5, 'items': {'type': 'STRING'}},
+    'actions': {'type': 'ARRAY', 'maxItems': 3, 'items': {'type': 'STRING'}},
+  },
+  'required': ['verdict', 'headline', 'points', 'actions'],
+};
+
+/// An honest answer from the AI, built on facts Paisa computed.
+class RealityAnswer {
+  const RealityAnswer({required this.verdict, required this.headline, required this.points, required this.actions, this.at});
+
+  /// yes | wait | no (purchases) or good | watch | bad (everything else).
+  final String verdict;
+  final String headline;
+  final List<String> points;
+  final List<String> actions;
+
+  /// When it was written (cached answers).
+  final String? at;
+
+  static RealityAnswer fromJson(JsonMap j) {
+    final verdict = _req<String>(j, 'verdict');
+    if (!_verdicts.contains(verdict)) throw AiError(AiErrorCode.badResponse);
+    List<String> strings(String k) {
+      final v = j[k];
+      if (v is! List) throw AiError(AiErrorCode.badResponse);
+      return [for (final e in v) if (e is String && e.trim().isNotEmpty) e];
+    }
+
+    return RealityAnswer(verdict: verdict, headline: _req<String>(j, 'headline'), points: strings('points'), actions: strings('actions'), at: j['at'] as String?);
+  }
+
+  JsonMap toJson() => {'verdict': verdict, 'headline': headline, 'points': points, 'actions': actions, 'at': at};
+}

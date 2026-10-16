@@ -9,6 +9,7 @@ import 'package:paisa/data/repos/settings_repo.dart';
 import 'package:paisa/data/secret_store.dart';
 import 'package:paisa/data/settings_models.dart';
 import 'package:paisa/integrations/gemini/client.dart';
+import 'package:paisa/integrations/gemini/schemas.dart';
 import 'package:paisa/store/ai.dart';
 
 import '../data/data_fixtures.dart';
@@ -107,5 +108,54 @@ void main() {
     expect((await db.select(db.settings).get()).any((r) => r.value.contains('AIzaSyD')), isFalse);
     await s.removeKey();
     expect(await secrets.read(AiService.keyName), isNull);
+  });
+
+  group('reality checks', () {
+    const answer = {
+      'verdict': 'wait',
+      'headline': 'Wait a week',
+      'points': ['It is 9 hours of work', 'Bike moves back 5 days'],
+      'actions': ['Put it on your wish list'],
+    };
+
+    setUp(() async {
+      await settings.saveAi(const AiSettings(enabled: true, model: 'models/x-flash'));
+      await secrets.write(AiService.keyName, 'AIza-k');
+      respond = (_) => jsonEncode(reply(jsonEncode(answer)));
+    });
+
+    test('can I afford it sends the computed facts and the question, every time', () async {
+      String? sent;
+      respond = (req) {
+        sent = req.body;
+        return jsonEncode(reply(jsonEncode(answer)));
+      };
+      final s = service();
+      final a = await s.reality(RealityTopic.afford, {'priceNpr': 6500, 'verdict': 'wait'}, question: 'Perfume');
+      expect((a.verdict, a.headline, a.points.length, a.actions.single), ('wait', 'Wait a week', 2, 'Put it on your wish list'));
+      expect(sent, contains('priceNpr'));
+      expect(sent, contains('Perfume'));
+      await s.reality(RealityTopic.afford, {'priceNpr': 6500}, question: 'Perfume');
+      expect(calls, 2, reason: 'purchases are never cached');
+      expect(await auditSummaries(db), contains('AI reality check: can I afford Perfume'));
+    });
+
+    test('habit, goal, review and budget checks are cached for the month', () async {
+      final s = service();
+      expect(await s.cachedReality(RealityTopic.habits), isNull);
+      await s.reality(RealityTopic.habits, {'emiLoad': 0.4});
+      await s.reality(RealityTopic.habits, {'emiLoad': 0.4});
+      expect(calls, 1);
+      expect((await s.cachedReality(RealityTopic.habits))!.headline, 'Wait a week');
+      await s.reality(RealityTopic.habits, {'emiLoad': 0.4}, force: true);
+      expect(calls, 2);
+      await s.reality(RealityTopic.goals, const {});
+      expect(calls, 3, reason: 'each topic has its own cache');
+    });
+
+    test('a malformed answer is an error, never half-shown', () async {
+      respond = (_) => jsonEncode(reply(jsonEncode({'verdict': 'yes'})));
+      await expectLater(service().reality(RealityTopic.afford, const {}, question: 'x'), throwsA(isA<AiError>()));
+    });
   });
 }

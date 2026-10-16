@@ -38,6 +38,17 @@ class WaitListController {
     );
   }
 
+  Future<void> addWish({required String title, required Paisa amount, int priority = 2, String? categoryId}) async {
+    final w = await _repo.waitList();
+    await _repo.saveWaitList(
+      w.add(WaitItem(id: _newId(), title: title, amount: amount, addedAt: _clock.stamp(), categoryId: categoryId, wish: true, priority: priority)),
+      summary: 'Added $title to the wish list',
+    );
+  }
+
+  Future<void> setPriority(String id, int priority) async =>
+      _repo.saveWaitList((await _repo.waitList()).setPriority(id, priority), summary: 'Changed a wish list priority');
+
   /// Not buying it after all: counted as saved. Returns the amount.
   Future<Paisa> skip(String id) async {
     final w = await _repo.waitList();
