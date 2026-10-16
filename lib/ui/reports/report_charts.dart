@@ -204,22 +204,29 @@ class LegendRow extends StatelessWidget {
 
 /// Slices as legend rows with their share of the total.
 class SliceList extends StatelessWidget {
-  const SliceList({super.key, required this.slices, required this.colors});
+  const SliceList({super.key, required this.slices, required this.colors, this.onTap});
 
   final List<ReportSlice> slices;
   final List<Color> colors;
+
+  /// When set, each row opens that slice (e.g. a category's own report).
+  final ValueChanged<ReportSlice>? onTap;
 
   @override
   Widget build(BuildContext context) {
     final total = slices.fold<Paisa>(0, (t, s) => t + s.value);
     return Column(children: [
       for (var i = 0; i < slices.length; i++)
-        LegendRow(
-          label: slices[i].label,
-          amount: slices[i].value,
-          color: colors[i % colors.length],
-          trailing: total > 0 ? '${(slices[i].value * 100 / total).round()}%' : null,
-        ),
+        () {
+          final row = LegendRow(
+            label: slices[i].label,
+            amount: slices[i].value,
+            color: colors[i % colors.length],
+            trailing: total > 0 ? '${(slices[i].value * 100 / total).round()}%' : null,
+          );
+          final tap = onTap;
+          return tap == null || slices[i].id == 'other' ? row : InkWell(onTap: () => tap(slices[i]), child: row);
+        }(),
     ]);
   }
 }

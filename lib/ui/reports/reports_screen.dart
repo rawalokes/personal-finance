@@ -9,6 +9,8 @@ import '../components/inputs.dart';
 import '../components/layout.dart';
 import '../components/top_bar.dart';
 import '../encourage/nudge_card.dart';
+import '../../store/ui_state.dart';
+import '../components/money_text.dart';
 import 'report_widget_card.dart';
 import '../../store/data_providers.dart';
 import '../components/buttons.dart';
@@ -150,6 +152,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         child: AsyncView(
           value: ref.watch(dashboardProvider),
           data: (d) => _editing ? _editList(d.widgets) : ListView(padding: const EdgeInsets.fromLTRB(16, 0, 16, 28), children: [
+            _SummaryStrip(period: _override ?? ReportPeriod.thisMonth),
             if (nudges.isNotEmpty) ...[
               const SectionHeader(title: 'For you', padding: EdgeInsets.fromLTRB(0, 12, 0, 8)),
               for (final n in nudges) Padding(padding: const EdgeInsets.only(bottom: 8), child: NudgeCard(n)),
@@ -182,5 +185,48 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       out.add(const SizedBox(height: 10));
     }
     return out;
+  }
+}
+
+/// Money in, spent, saved and the savings rate for the period, at a glance.
+class _SummaryStrip extends ConsumerWidget {
+  const _SummaryStrip({required this.period});
+  final ReportPeriod period;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final i = ref.watch(reportInputsProvider).value;
+    if (i == null) return const SizedBox(height: 76);
+    final today = ref.watch(clockProvider).today();
+    final cal = ref.watch(monthCalendarProvider);
+    final range = resolvePeriod(period, today, fyStart: ref.watch(fyStartProvider), cal: cal);
+    final pts = cashFlow(i.txs, range, cal: cal);
+    final income = pts.fold<Paisa>(0, (s, p) => s + p.income);
+    final spent = pts.fold<Paisa>(0, (s, p) => s + p.expenses);
+    final saved = income - spent;
+    final rate = income > 0 ? (saved * 100 / income).round() : null;
+    Widget tile(String label, Widget value) => Expanded(
+          child: PaisaCard(
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(label, style: PaisaText.hint.copyWith(color: c.ink3)),
+              const SizedBox(height: 2),
+              FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: value),
+            ]),
+          ),
+        );
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(children: [
+        tile('In', MoneyText(income, short: true, style: PaisaText.h3, color: c.positive)),
+        const SizedBox(width: 6),
+        tile('Spent', MoneyText(spent, short: true, style: PaisaText.h3)),
+        const SizedBox(width: 6),
+        tile('Saved', MoneyText(saved, short: true, style: PaisaText.h3, color: saved < 0 ? c.red : c.positive)),
+        const SizedBox(width: 6),
+        tile('Rate', Text(rate == null ? '—' : '$rate%', style: PaisaText.h3.copyWith(color: (rate ?? 0) >= 20 ? c.positive : c.ink))),
+      ]),
+    );
   }
 }

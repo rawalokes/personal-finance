@@ -2,10 +2,11 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'finance/money.dart';
+import 'finance/finance.dart';
 
 import 'ui/ai/ai_chat_screen.dart';
 import 'ui/ai/ai_insights_screen.dart';
+import 'ui/reports/category_screens.dart';
 import 'ui/reports/reports_screen.dart';
 import 'ui/screens/accounts/account_detail_screen.dart';
 import 'ui/screens/accounts/accounts_screen.dart';
@@ -87,6 +88,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/settings/ai', builder: (context, state) => const AiSettingsScreen()),
       GoRoute(path: '/settings/nudges', builder: (context, state) => const NudgeSettingsScreen()),
       GoRoute(path: '/learn', builder: (context, state) => const LearnScreen()),
+      GoRoute(
+        path: '/reports/categories',
+        builder: (context, state) => CategoriesReportScreen(initial: ReportPeriod.fromWire(state.uri.queryParameters['period'] ?? '')),
+      ),
+      GoRoute(
+        path: '/reports/category/:id',
+        builder: (context, state) => CategoryReportScreen(
+          categoryId: state.pathParameters['id']!,
+          initial: ReportPeriod.fromWire(state.uri.queryParameters['period'] ?? ''),
+        ),
+      ),
       GoRoute(path: '/learn/:id', builder: (context, state) => LessonScreen(lessonId: state.pathParameters['id']!)),
       GoRoute(path: '/ai/insights', builder: (context, state) => const AiInsightsScreen()),
       GoRoute(path: '/ai/chat', builder: (context, state) => const AiChatScreen()),

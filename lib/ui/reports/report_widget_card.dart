@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../data/report_settings.dart';
 import '../../finance/finance.dart';
 import '../../store/data_providers.dart';
 import '../../store/reports.dart';
 import '../../store/ui_state.dart';
+import '../components/buttons.dart';
 import '../components/indicators.dart';
 import '../components/money_text.dart';
 import '../components/surfaces.dart';
@@ -129,7 +131,19 @@ class ReportWidgetCard extends ConsumerWidget {
                 colors: [palette.first],
               ),
             const SizedBox(height: 8),
-            SliceList(slices: slices, colors: palette),
+            SliceList(
+              slices: slices,
+              colors: palette,
+              onTap: spending ? (s) => context.push('/reports/category/${s.id}?period=${(periodOverride ?? config.period).wire}') : null,
+            ),
+            if (spending)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: PaisaLink(
+                  label: 'See all categories',
+                  onPressed: () => context.push('/reports/categories?period=${(periodOverride ?? config.period).wire}'),
+                ),
+              ),
             if (config.compare) _compare(context, 'Total', total, slicesFor(previousRange(range, cal: cal)).fold<Paisa>(0, (t, s) => t + s.value)),
           ]),
           false,
