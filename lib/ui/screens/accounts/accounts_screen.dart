@@ -13,7 +13,7 @@ import '../../components/layout.dart';
 import '../../components/money_text.dart';
 import '../../components/surfaces.dart';
 import '../../components/tone.dart';
-import '../../components/top_bar.dart';
+import '../../shell/detail_page.dart';
 import '../../icons/paisa_icon.dart';
 import '../../icons/paisa_icons.dart';
 import '../../theme.dart';
@@ -41,17 +41,14 @@ class AccountsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      PaisaTopBar(title: 'Accounts', actions: [
-        PaisaIconButton(icon: PaisaIcons.plus, label: 'Add account', onPressed: () => showAddAccountSheet(context)),
-      ]),
-      Expanded(
-        child: AsyncView(
-          value: ref.watch(_accountsDataProvider),
-          data: (d) => _AccountsBody(d),
-        ),
+    return DetailPage(
+      title: 'Accounts',
+      actions: [PaisaIconButton(icon: PaisaIcons.plus, label: 'Add account', onPressed: () => showAddAccountSheet(context))],
+      body: AsyncView(
+        value: ref.watch(_accountsDataProvider),
+        data: (d) => _AccountsBody(d),
       ),
-    ]);
+    );
   }
 }
 

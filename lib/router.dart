@@ -37,7 +37,6 @@ final initialLocationProvider = Provider<String>((ref) => kTabs.first.path);
 Widget _rootScreen(TabDef tab, GoRouterState state) => switch (tab.path) {
       '/home' => const HomeScreen(),
       '/activity' => ActivityScreen(initial: state.uri.queryParameters['seg']),
-      '/accounts' => const AccountsScreen(),
       '/plans' => PlansScreen(initial: state.uri.queryParameters['seg']),
       '/more' => const MoreScreen(),
       _ => PlaceholderScreen(title: tab.screenTitle),
@@ -58,6 +57,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             ]),
         ],
       ),
+      GoRoute(path: '/accounts', builder: (context, state) => const AccountsScreen()),
       GoRoute(
         path: '/accounts/:id',
         builder: (context, state) => AccountDetailScreen(accountId: state.pathParameters['id']!),

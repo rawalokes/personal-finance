@@ -13,8 +13,8 @@ class TabDef {
 const kTabs = [
   TabDef('Home', PaisaIcons.home, '/home', 'Home'),
   TabDef('Activity', PaisaIcons.list, '/activity', 'Transactions'),
-  TabDef('Accounts', PaisaIcons.wallet, '/accounts', 'Accounts'),
   TabDef('Plans', PaisaIcons.target, '/plans', 'Plans'),
+  TabDef('Reports', PaisaIcons.chart, '/reports', 'Reports'),
   TabDef('More', PaisaIcons.gear, '/more', 'Settings'),
 ];
 

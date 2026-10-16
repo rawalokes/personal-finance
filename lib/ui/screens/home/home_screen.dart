@@ -181,7 +181,7 @@ class _HomeBody extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(20, 22, 16, 8),
           child: Row(children: [
             Expanded(child: Text('Your accounts · swipe or scroll', style: PaisaText.sub.copyWith(color: c.ink3))),
-            PaisaLink(label: 'See all', onPressed: () => context.go('/accounts')),
+            PaisaLink(label: 'See all', onPressed: () => context.push('/accounts')),
           ]),
         ),
         AccountCarousel(accounts: cards, types: d.types),

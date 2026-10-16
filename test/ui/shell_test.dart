@@ -13,7 +13,7 @@ Finder navLabel(String text) => find.descendant(of: find.byType(PaisaNavBar), ma
 void main() {
   testWidgets('shows five tabs and switches between them', (tester) async {
     await pumpPaisa(tester);
-    for (final label in ['Home', 'Activity', 'Accounts', 'Plans', 'More']) {
+    for (final label in ['Home', 'Activity', 'Plans', 'Reports', 'More']) {
       expect(navLabel(label), findsOneWidget);
     }
     expect(find.text('AVAILABLE TO SPEND'), findsOneWidget);
@@ -59,5 +59,24 @@ void main() {
     await tester.pumpWidget(wrap(PaisaTopBar(title: 'Review transaction', onBack: () => back++)));
     await tester.tap(find.bySemanticsLabel('Back'));
     expect(back, 1);
+  });
+
+  testWidgets('Accounts moved off the tab bar: Home → See all opens it, Back returns', (tester) async {
+    await pumpPaisa(tester);
+    expect(navLabel('Accounts'), findsNothing);
+    await tester.tap(find.text('See all').first);
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(PaisaTopBar, 'Accounts'), findsOneWidget);
+    expect(find.byType(PaisaNavBar), findsNothing, reason: 'a detail page, outside the tab shell');
+    await tester.tap(find.bySemanticsLabel('Back'));
+    await tester.pumpAndSettle();
+    expect(find.text('AVAILABLE TO SPEND'), findsOneWidget);
+  });
+
+  testWidgets('the Reports tab opens', (tester) async {
+    await pumpPaisa(tester);
+    await tester.tap(navLabel('Reports'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(PaisaTopBar, 'Reports'), findsOneWidget);
   });
 }
