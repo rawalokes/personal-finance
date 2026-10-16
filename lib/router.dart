@@ -6,6 +6,7 @@ import 'finance/money.dart';
 
 import 'ui/ai/ai_chat_screen.dart';
 import 'ui/ai/ai_insights_screen.dart';
+import 'ui/reports/reports_screen.dart';
 import 'ui/screens/accounts/account_detail_screen.dart';
 import 'ui/screens/accounts/accounts_screen.dart';
 import 'ui/screens/activity/activity_screen.dart';
@@ -37,6 +38,7 @@ final initialLocationProvider = Provider<String>((ref) => kTabs.first.path);
 Widget _rootScreen(TabDef tab, GoRouterState state) => switch (tab.path) {
       '/home' => const HomeScreen(),
       '/activity' => ActivityScreen(initial: state.uri.queryParameters['seg']),
+      '/reports' => const ReportsScreen(),
       '/plans' => PlansScreen(initial: state.uri.queryParameters['seg']),
       '/more' => const MoreScreen(),
       _ => PlaceholderScreen(title: tab.screenTitle),
