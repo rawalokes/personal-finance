@@ -27,7 +27,7 @@ class Tag extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 9),
       alignment: Alignment.center,
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
-      child: Text(label, maxLines: 1, style: PaisaText.tag.copyWith(color: fg)),
+      child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: PaisaText.tag.copyWith(color: fg)),
     );
   }
 }

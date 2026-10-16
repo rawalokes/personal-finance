@@ -16,6 +16,7 @@ import '../integrations/gemini/client.dart';
 import '../integrations/gemini/prompts.dart';
 import '../integrations/gemini/redact.dart';
 import '../integrations/gemini/schemas.dart';
+import '../sms/sms_models.dart';
 import 'app_lock.dart';
 import 'data_providers.dart';
 
@@ -108,6 +109,7 @@ class AiService {
         'chat' => 'Asked Paisa AI a question',
         'explain' => 'AI explained the payoff plan',
         'budgets' => 'AI suggested budgets',
+        'sms' => 'AI suggested a type for an unclear SMS',
         _ => 'AI checked the salary breakdown',
       };
 
@@ -169,6 +171,29 @@ class AiService {
     final s = await settings.ai();
     final summary = buildSummaryPayload(await summaryInput(s.privacy));
     return BudgetSuggestions.fromJson(await _ask('budgets', budgetPrompt(summary), budgetSchema));
+  }
+
+  /// Low-confidence SMS help (spec §9.4). Sends the masked SMS only when
+  /// the privacy level allows SMS text; the answer is only a suggestion.
+  Future<SmsAiSuggestion> suggestSms(SmsMessage m) async {
+    final s = await settings.ai();
+    if (s.privacy != AiPrivacy.sms) throw AiError(AiErrorCode.disabled, 'Allow “Include SMS text” in Settings → AI assistant first.');
+    final categories = (await db.select(db.expenseCategories).get()).map(categoryFromRow).where((c) => c.active && c.isTopLevel && c.system == null);
+    final incomeTypes = (await db.select(db.incomeTypes).get()).map(incomeTypeFromRow).where((t) => t.active);
+    final accounts = (await db.select(db.accounts).get()).map(accountFromRow).where((a) => !a.archived);
+    final raw = await _ask(
+      'sms',
+      smsHelpPrompt(
+        maskedSms: m.maskedBody,
+        direction: m.direction.name,
+        amountNpr: toWholeRupees(m.amount),
+        categories: [for (final c in categories) {'id': c.id, 'name': c.name}],
+        incomeTypes: [for (final t in incomeTypes) {'id': t.id, 'name': t.name}],
+        accounts: [for (final a in accounts) {'id': a.id, 'name': a.shortName}],
+      ),
+      smsHelpSchema,
+    );
+    return SmsAiSuggestion.fromJson(raw);
   }
 
   Future<SalaryCheck> checkSalary(Map<String, Object?> salary) async =>

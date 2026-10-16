@@ -188,7 +188,7 @@ class _HomeBody extends ConsumerWidget {
         if (pending > 0)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-            child: _PendingBar(count: pending, onTap: () => context.go('/activity')),
+            child: _PendingBar(count: pending, onTap: () => context.go('/activity?seg=inbox')),
           ),
         Padding(padding: const EdgeInsets.fromLTRB(20, 12, 20, 0), child: _MonthCard(month: d.month, today: today)),
         const AiInsightCard(),

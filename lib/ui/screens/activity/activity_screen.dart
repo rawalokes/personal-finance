@@ -8,10 +8,12 @@ import '../../../store/ui_state.dart';
 import '../../components/async_view.dart';
 import '../../components/buttons.dart';
 import '../../components/empty_state.dart';
+import '../../components/indicators.dart';
 import '../../components/inputs.dart';
 import '../../components/layout.dart';
 import '../../components/money_text.dart';
 import '../../components/surfaces.dart';
+import '../../components/tone.dart';
 import '../../components/top_bar.dart';
 import '../../icons/paisa_icons.dart';
 import '../../theme.dart';
@@ -20,15 +22,19 @@ import '../../txn/transaction_tile.dart';
 import '../../txn/txn_presentation.dart';
 import '../../txn/txn_query.dart';
 import '../../txn/txn_sheet.dart';
+import '../inbox/inbox_view.dart';
 
 final _historyDataProvider = FutureProvider<(List<Txn>, TxnLookup)>(
   (ref) async => (await ref.watch(transactionsProvider.future), await ref.watch(txnLookupProvider.future)),
 );
 
 /// Activity tab, titled "Transactions": History with type and date filters,
-/// grouped by day. Plan 3 adds the Transaction Inbox segment.
+/// grouped by day, and the Transaction Inbox of detected SMS.
 class ActivityScreen extends ConsumerStatefulWidget {
-  const ActivityScreen({super.key});
+  const ActivityScreen({super.key, this.initial});
+
+  /// 'inbox' opens the Transaction Inbox (`/activity?seg=inbox`).
+  final String? initial;
 
   @override
   ConsumerState<ActivityScreen> createState() => _ActivityScreenState();
@@ -37,15 +43,36 @@ class ActivityScreen extends ConsumerStatefulWidget {
 class _ActivityScreenState extends ConsumerState<ActivityScreen> {
   TxnFilter _filter = TxnFilter.all;
   TxnRange _range = TxnRange.month;
+  late bool _inbox = widget.initial == 'inbox';
+
+  @override
+  void didUpdateWidget(ActivityScreen old) {
+    super.didUpdateWidget(old);
+    if (old.initial != widget.initial && widget.initial != null) _inbox = widget.initial == 'inbox';
+  }
 
   @override
   Widget build(BuildContext context) {
+    final pending = ref.watch(inboxPendingCountProvider);
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       PaisaTopBar(title: 'Transactions', actions: [
         PaisaIconButton(icon: PaisaIcons.search, label: 'Search and filter', onPressed: () => context.push('/search')),
         PaisaIconButton(icon: PaisaIcons.plus, label: 'Add expense', onPressed: () => context.push('/expense/new')),
       ]),
-      Expanded(child: AsyncView(value: ref.watch(_historyDataProvider), data: (d) => _history(d.$1, d.$2))),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+        child: Segmented<bool>(
+          segments: const [(false, 'History'), (true, 'Transaction Inbox')],
+          selected: _inbox,
+          onChanged: (v) => setState(() => _inbox = v),
+          badges: {if (pending > 0) true: Tag('$pending', tone: Tone.amber)},
+        ),
+      ),
+      Expanded(
+        child: _inbox
+            ? const InboxView()
+            : AsyncView(value: ref.watch(_historyDataProvider), data: (d) => _history(d.$1, d.$2)),
+      ),
     ]);
   }
 

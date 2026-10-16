@@ -3,6 +3,12 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
     <!-- AI assistant: Google Gemini, only when the user turns it on. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Transaction Inbox: read bank and wallet SMS from approved senders only.
+         Sideloaded build; Google Play restricts these (spec §6). -->
+    <uses-permission android:name="android.permission.READ_SMS"/>
+    <uses-permission android:name="android.permission.RECEIVE_SMS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-feature android:name="android.hardware.telephony" android:required="false"/>
     <application
         android:allowBackup="false"
         android:fullBackupContent="false"
@@ -32,6 +38,14 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <receiver
+            android:name=".SmsReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED"/>
+            </intent-filter>
+        </receiver>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

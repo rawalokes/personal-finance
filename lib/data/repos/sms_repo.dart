@@ -89,6 +89,8 @@ class SmsRepository {
       .watch()
       .map((rows) => rows.map(smsFromRow).toList());
 
+  Future<List<SmsMessage>> list() async => (await _db.select(_db.smsMessages).get()).map(smsFromRow).toList();
+
   Stream<int> watchPendingCount() {
     final n = _db.smsMessages.id.count();
     return (_db.selectOnly(_db.smsMessages)

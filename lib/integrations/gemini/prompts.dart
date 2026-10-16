@@ -55,3 +55,24 @@ the user to verify sample tax and contribution rates with their payslip. Do not 
 
 SALARY (computed by Paisa's engine):
 ${_json(salary)}''';
+
+String smsHelpPrompt({
+  required String maskedSms,
+  required String direction,
+  required int amountNpr,
+  required List<Map<String, String>> categories,
+  required List<Map<String, String>> incomeTypes,
+  required List<Map<String, String>> accounts,
+}) => '''
+A bank or wallet SMS could not be classified with confidence. Suggest the transaction type and, where it
+applies, the category (expenses, refunds), income type (income) or the user's other account (transfers,
+card payments, cash withdrawals). Use only the ids listed. Give a one-sentence reason. Account numbers
+and balances in the SMS are masked.
+
+SMS (masked): $maskedSms
+DIRECTION: $direction
+AMOUNT: NPR $amountNpr
+
+CATEGORIES: ${_json(categories)}
+INCOME TYPES: ${_json(incomeTypes)}
+ACCOUNTS: ${_json(accounts)}''';

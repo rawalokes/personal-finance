@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/settings_models.dart';
 import '../finance/money.dart';
+import 'sms_sync.dart';
 
 /// Preferences saved last time, loaded in main.dart before the first frame
 /// (so the app opens in the right theme). Defaults in tests.
@@ -66,6 +67,7 @@ class CalendarController extends Notifier<CalendarPref> {
 
 final calendarProvider = NotifierProvider<CalendarController, CalendarPref>(CalendarController.new);
 
+final _pendingSmsProvider = StreamProvider<int>((ref) => ref.watch(smsRepoProvider).watchPendingCount());
+
 /// Messages waiting in the Transaction Inbox (Needs review + Later).
-/// Plan 3 replaces this body with a query on the SMS repository.
-final inboxPendingCountProvider = Provider<int>((ref) => 0);
+final inboxPendingCountProvider = Provider<int>((ref) => ref.watch(_pendingSmsProvider).value ?? 0);

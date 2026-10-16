@@ -26,6 +26,7 @@ class PaisaTextField extends StatelessWidget {
     this.autofocus = false,
     this.showLabel = true,
     this.obscure = false,
+    this.maxLines = 1,
   });
 
   final String label;
@@ -47,6 +48,9 @@ class PaisaTextField extends StatelessWidget {
   /// Hide what is typed (PINs).
   final bool obscure;
 
+  /// More than 1 for longer text such as a pasted SMS.
+  final int maxLines;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -66,6 +70,8 @@ class PaisaTextField extends StatelessWidget {
         autofocus: autofocus,
         keyboardType: keyboardType,
         obscureText: obscure,
+        maxLines: maxLines,
+        minLines: 1,
         style: textStyle.copyWith(color: c.ink),
         decoration: InputDecoration(
           isDense: true,

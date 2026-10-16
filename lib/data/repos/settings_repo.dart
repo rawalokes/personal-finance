@@ -23,6 +23,7 @@ abstract final class SettingKey {
   static const payoff = 'payoff.plan';
   static const aiChat = 'ai.chat';
   static String aiCache(String month) => 'ai.analysis.$month';
+  static const smsLastScan = 'sms.last_scan';
 }
 
 /// Typed access to the `settings` table. A missing document means "use the
@@ -126,4 +127,8 @@ class SettingsRepository {
 
   Future<List<Object?>> aiChat() async => (await _read(SettingKey.aiChat) as List?) ?? const [];
   Future<void> saveAiChat(List<Object?> messages) => _write(SettingKey.aiChat, messages);
+
+  /// When Paisa last read the phone's SMS inbox (ms since epoch).
+  Future<int?> smsLastScan() async => await _read(SettingKey.smsLastScan) as int?;
+  Future<void> saveSmsLastScan(int millis) => _write(SettingKey.smsLastScan, millis);
 }

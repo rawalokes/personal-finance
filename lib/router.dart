@@ -12,6 +12,7 @@ import 'ui/screens/activity/activity_screen.dart';
 import 'ui/screens/entry/add_expense_screen.dart';
 import 'ui/screens/entry/add_income_screen.dart';
 import 'ui/screens/home/home_screen.dart';
+import 'ui/screens/inbox/review_screen.dart';
 import 'ui/screens/loans/loan_detail_screen.dart';
 import 'ui/screens/loans/loan_form_screen.dart';
 import 'ui/screens/loans/loan_types_screen.dart';
@@ -35,7 +36,7 @@ final initialLocationProvider = Provider<String>((ref) => kTabs.first.path);
 /// The screen at the root of each tab.
 Widget _rootScreen(TabDef tab, GoRouterState state) => switch (tab.path) {
       '/home' => const HomeScreen(),
-      '/activity' => const ActivityScreen(),
+      '/activity' => ActivityScreen(initial: state.uri.queryParameters['seg']),
       '/accounts' => const AccountsScreen(),
       '/plans' => PlansScreen(initial: state.uri.queryParameters['seg']),
       '/more' => const MoreScreen(),
@@ -62,6 +63,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => AccountDetailScreen(accountId: state.pathParameters['id']!),
       ),
       GoRoute(path: '/search', builder: (context, state) => const SearchScreen()),
+      GoRoute(path: '/inbox/:id', builder: (context, state) => ReviewScreen(smsId: state.pathParameters['id']!)),
       GoRoute(
         path: '/loans/new',
         builder: (context, state) => LoanFormScreen(typeId: state.uri.queryParameters['type']),

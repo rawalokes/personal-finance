@@ -244,3 +244,47 @@ class SalaryCheck {
         [for (final f in (j['flags'] as List? ?? const [])) if (f is String) f],
       );
 }
+
+const _smsTypes = [
+  'expense', 'income', 'transfer', 'loan_repayment', 'cc_payment', 'cash_withdrawal', 'refund', 'reversal', 'loan_disbursement',
+];
+
+/// Spec §9.4 low-confidence SMS help.
+const Map<String, Object?> smsHelpSchema = {
+  'type': 'OBJECT',
+  'properties': {
+    'type': {'type': 'STRING', 'enum': _smsTypes},
+    'categoryId': {'type': 'STRING'},
+    'incomeTypeId': {'type': 'STRING'},
+    'counterAccountId': {'type': 'STRING'},
+    'confidence': {'type': 'STRING', 'enum': ['high', 'medium', 'low']},
+    'reason': {'type': 'STRING'},
+  },
+  'required': ['type', 'confidence', 'reason'],
+};
+
+class SmsAiSuggestion {
+  const SmsAiSuggestion({required this.type, this.categoryId, this.incomeTypeId, this.counterAccountId, required this.confidence, required this.reason});
+
+  /// A wire type, e.g. 'expense'.
+  final String type;
+  final String? categoryId;
+  final String? incomeTypeId;
+  final String? counterAccountId;
+  final String confidence;
+  final String reason;
+
+  static SmsAiSuggestion fromJson(JsonMap j) {
+    final type = _req<String>(j, 'type');
+    if (!_smsTypes.contains(type)) throw AiError(AiErrorCode.badResponse);
+    String? opt(String k) => j[k] is String && (j[k]! as String).isNotEmpty ? j[k]! as String : null;
+    return SmsAiSuggestion(
+      type: type,
+      categoryId: opt('categoryId'),
+      incomeTypeId: opt('incomeTypeId'),
+      counterAccountId: opt('counterAccountId'),
+      confidence: ['high', 'medium', 'low'].contains(j['confidence']) ? j['confidence']! as String : 'low',
+      reason: _req<String>(j, 'reason'),
+    );
+  }
+}
