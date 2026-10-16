@@ -63,7 +63,10 @@ class ChallengeSummary extends ConsumerWidget {
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                Text(challengeTitle(ch, i, money), style: PaisaText.sub.copyWith(color: c.ink)),
+                Text(
+                  challengeTracked(ch, i.categories, i.loans) ? challengeTitle(ch, i, money) : '${challengeTitle(ch, i, money)} · no longer tracked',
+                  style: PaisaText.sub.copyWith(color: c.ink),
+                ),
                 const SizedBox(height: 4),
                 ProgressBar(value: p.ratio, color: cap ? (p.met ? c.positive : c.red) : (p.met ? c.positive : c.primary)),
                 const SizedBox(height: 2),

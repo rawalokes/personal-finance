@@ -1,7 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paisa/data/audit_log.dart';
+import 'package:paisa/data/repos/settings_repo.dart';
+import 'package:paisa/finance/finance.dart';
 import 'package:paisa/ui/components/buttons.dart';
 import 'package:paisa/ui/components/toast.dart';
 
+import '../../data/data_fixtures.dart';
 import '../app_harness.dart';
 
 void main() {
@@ -32,5 +36,16 @@ void main() {
     await pumpPaisa(tester, location: '/plans?seg=challenges');
     await scrollPageTo(tester, find.text('Badges'));
     expect(find.text('First challenge done'), findsOneWidget);
+  });
+
+  testWidgets('a challenge whose category was deleted says "No longer tracked"', (tester) async {
+    final db = await pumpPaisa(tester, location: '/plans?seg=challenges');
+    await SettingsRepository(db, AuditLog(db, clock: testClock, newId: counterIds('x'))).saveChallengeState(const ChallengeState(
+      lastSuggestedMonth: '2026-10',
+      active: [Challenge(id: 'gone', template: ChallengeTemplate.categoryCap, month: '2026-10', target: 100000, categoryId: 'deleted')],
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('No longer tracked'), findsOneWidget);
+    expect(find.text('On track'), findsNothing);
   });
 }

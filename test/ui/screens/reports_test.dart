@@ -105,4 +105,20 @@ void main() {
     expect(await saved(db), isNull);
     await tester.pump(kUndoWindow);
   });
+
+  testWidgets('review fix: Undo while a settings sheet is open, then Save, keeps the restored widget', (tester) async {
+    final db = await pumpPaisa(tester, location: '/reports');
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.bySemanticsLabel('Remove Loan progress'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.bySemanticsLabel('Settings for Cash flow'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(PaisaButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect((await saved(db))!.widgets.map((w) => w.type), contains(ReportWidgetType.loanProgress));
+    await tester.pump(kUndoWindow);
+  });
 }

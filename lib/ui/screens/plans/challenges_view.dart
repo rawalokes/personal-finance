@@ -96,6 +96,7 @@ class ChallengesView extends ConsumerWidget {
             Builder(builder: (context) {
               final p = challengeProgress(ch, i.txs, i.loans, today);
               final cap = ch.template == ChallengeTemplate.categoryCap;
+              final tracked = challengeTracked(ch, i.categories, i.loans);
               return InkWell(
                 onTap: () => showChallengeSheet(context, existing: ch),
                 child: Padding(
@@ -103,10 +104,13 @@ class ChallengesView extends ConsumerWidget {
                   child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                     Row(children: [
                       Expanded(child: Text(challengeTitle(ch, i, money), style: PaisaText.h3.copyWith(color: c.ink))),
-                      Tag(
-                        cap ? (p.met ? 'On track' : 'Over') : (p.met ? 'Done' : 'In progress'),
-                        tone: p.met ? Tone.positive : (cap ? Tone.red : Tone.neutral),
-                      ),
+                      if (!tracked)
+                        const Tag('No longer tracked')
+                      else
+                        Tag(
+                          cap ? (p.met ? 'On track' : 'Over') : (p.met ? 'Done' : 'In progress'),
+                          tone: p.met ? Tone.positive : (cap ? Tone.red : Tone.neutral),
+                        ),
                     ]),
                     const SizedBox(height: 6),
                     ProgressBar(value: p.ratio, color: cap ? (p.met ? c.positive : c.red) : (p.met ? c.positive : c.primary)),

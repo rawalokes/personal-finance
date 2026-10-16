@@ -116,4 +116,9 @@ void main() {
     expect('${n.title} ${n.body}', isNot(contains('12,500')));
     expect('${n.title} ${n.body}', isNot(contains('2,500')));
   });
+
+  test('review fix: a new user with one month of history is compared with that month, not a 3-month average', () {
+    final txs = [tx(TxType.expense, 'a', 10000, cat: 'food', date: '2026-09-20'), tx(TxType.expense, 'a', 5000, cat: 'food', date: '2026-10-05')];
+    expect(run(categories: [c('food')], txs: txs), isEmpty);
+  });
 }

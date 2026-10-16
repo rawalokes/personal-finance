@@ -59,7 +59,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   Future<void> _configure(List<ReportWidgetConfig> widgets, ReportWidgetConfig w) async {
     final next = await showReportWidgetSheet(context, w);
     if (next == null) return;
-    await _save([for (final x in widgets) x.id == w.id ? next : x]);
+    // Re-read: an Undo may have changed the layout while the sheet was open.
+    final current = (await ref.read(dashboardProvider.future)).widgets;
+    await _save([for (final x in current) x.id == w.id ? next : x]);
   }
 
   Future<void> _reset() async {

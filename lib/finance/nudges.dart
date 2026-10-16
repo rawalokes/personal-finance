@@ -148,8 +148,11 @@ List<Nudge> buildNudges(
   final previous = [for (var k = 1; k <= 3; k++) monthlyTotals(posted, monthKey(addMonths(firstOfMonth(today), -k)))];
   for (final c in i.categories) {
     if (!c.active || !c.isTopLevel || c.isAutomatic) continue;
-    final avg = previous.fold<int>(0, (s, t) => s + (t.byCategory[c.id] ?? 0)) / 3;
-    if (avg <= 0) continue;
+    // Average the months that have spending, so a new user isn't compared
+    // with empty months.
+    final months = [for (final t in previous) if ((t.byCategory[c.id] ?? 0) > 0) t.byCategory[c.id]!];
+    if (months.isEmpty) continue;
+    final avg = months.reduce((a, b) => a + b) / months.length;
     final now = thisMonth.byCategory[c.id] ?? 0;
     final expected = avg * day / dim;
     final diff = now - expected;

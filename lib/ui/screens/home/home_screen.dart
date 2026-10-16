@@ -134,6 +134,8 @@ class _HomeBody extends ConsumerWidget {
     final money = ref.watch(moneyFormatProvider);
     final pending = ref.watch(inboxPendingCountProvider);
     final cards = d.accounts.where((a) => !a.archived && a.group != AccountGroup.locked).toList();
+    // Owing more than you own is a warning, not good news.
+    final netWorthColor = d.summary.netWorth < 0 ? c.red : c.primary;
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 28),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -158,8 +160,8 @@ class _HomeBody extends ConsumerWidget {
             ]),
             const SizedBox(height: 4),
             Row(children: [
-              Text('Net worth ', style: PaisaText.body.copyWith(fontSize: 14, color: c.primary)),
-              Flexible(child: MoneyText(d.summary.netWorth, color: c.primary, style: PaisaText.body.copyWith(fontSize: 14))),
+              Text('Net worth ', style: PaisaText.body.copyWith(fontSize: 14, color: netWorthColor)),
+              Flexible(child: MoneyText(d.summary.netWorth, color: netWorthColor, style: PaisaText.body.copyWith(fontSize: 14))),
             ]),
           ]),
         ),

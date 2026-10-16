@@ -202,7 +202,8 @@ List<Challenge> suggestChallenges(Iterable<Txn> txs, Iterable<ExpenseCategory> c
   return out;
 }
 
-bool _tracked(Challenge c, Iterable<ExpenseCategory> categories, Iterable<Loan> loans) =>
+/// False when the challenge's category or loan has been deleted.
+bool challengeTracked(Challenge c, Iterable<ExpenseCategory> categories, Iterable<Loan> loans) =>
     (c.categoryId == null || categories.any((x) => x.id == c.categoryId)) && (c.loanId == null || loans.any((l) => l.id == c.loanId));
 
 /// Run on first open each day: finishes past months (unaccepted suggestions
@@ -222,7 +223,7 @@ ChallengeState rollOverChallenges(
   for (final c in s.active) {
     if (c.month.compareTo(month) >= 0) {
       keep.add(c);
-    } else if (c.accepted && _tracked(c, categories, loans)) {
+    } else if (c.accepted && challengeTracked(c, categories, loans)) {
       finished.add(ChallengeResult(c, challengeProgress(c, txs, loans, lastOfMonth(c.month)).met));
     }
   }

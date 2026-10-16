@@ -1,4 +1,7 @@
-import 'package:flutter/widgets.dart' show EditableText;
+import 'package:flutter/material.dart';
+import 'package:paisa/data/clock.dart';
+import 'package:paisa/data/db/database.dart';
+import 'package:paisa/ui/tokens.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paisa/data/audit_log.dart';
 import 'package:paisa/data/repos/settings_repo.dart';
@@ -41,5 +44,26 @@ void main() {
   testWidgets('a nudge link to the payoff planner fills the extra amount', (tester) async {
     await pumpPaisa(tester, location: '/loans/planner?extra=4000');
     expect(find.text('4000'), findsOneWidget);
+  });
+
+  testWidgets('a negative net worth is shown in red, not green', (tester) async {
+    final db = await pumpPaisa(tester, cleanInstall: true);
+    await db.into(db.accounts).insert(AccountsCompanion.insert(
+        id: 'cc', name: 'Card', shortName: 'Card', accountGroup: 'liability', kind: 'credit_card', openingBalance: 0, balance: 1900000));
+    await tester.pumpAndSettle();
+    final label = tester.widget<Text>(find.text('Net worth '));
+    final c = Theme.of(tester.element(find.text('Net worth '))).extension<PaisaColors>()!;
+    expect(label.style!.color, c.red);
+  });
+
+  testWidgets('a new month on resume finishes last month and suggests new challenges', (tester) async {
+    var now = DateTime(2026, 10, 14, 10, 30);
+    await pumpPaisa(tester, location: '/plans?seg=challenges', clock: Clock(() => now));
+    expect(find.text('Suggested for October'), findsOneWidget);
+    now = DateTime(2026, 11, 2, 9);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(find.text('Suggested for November'), findsOneWidget);
   });
 }

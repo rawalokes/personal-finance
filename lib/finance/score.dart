@@ -93,15 +93,21 @@ SavingsScore scoreForMonth(
   ];
   if (open.isNotEmpty) {
     bool paid(Loan l) => posted.any((x) => x.type == TxType.loanRepayment && x.loanId == l.id && monthKey(x.date) == month);
-    final unpaid = open.where((l) => !paid(l)).toList();
+    final paidLoans = open.where(paid).toList();
+    // Due = paid this month, or its due date has passed and it is still unpaid.
+    final overdue = [
+      for (final l in open)
+        if (!paid(l) && l.nextDueDate != null && l.nextDueDate!.compareTo(end) <= 0) l,
+    ];
+    final due = paidLoans.length + overdue.length;
     final principal = posted
         .where((x) => x.type == TxType.loanRepayment && monthKey(x.date) == month)
         .fold<Paisa>(0, (s, x) => s + (x.principal ?? 0));
     final borrowed = posted
         .where((x) => x.type == TxType.loanDisbursement && monthKey(x.date) == month)
         .fold<Paisa>(0, (s, x) => s + x.amount);
-    raw[ScorePartKind.loans] = 10 * (open.length - unpaid.length) / open.length + (principal > borrowed ? 10 : 0);
-    if (unpaid.isNotEmpty) tips.add(('Record the ${unpaid.first.name} installment', 10 / open.length));
+    raw[ScorePartKind.loans] = (due == 0 ? 10 : 10 * paidLoans.length / due) + (principal > borrowed ? 10 : 0);
+    if (overdue.isNotEmpty) tips.add(('Record the ${overdue.first.name} installment', 10 / due));
   }
 
   // Spending vs your normal (15).

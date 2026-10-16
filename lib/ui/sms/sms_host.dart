@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repos/sms_repo.dart';
 import '../../router.dart';
 import '../../store/data_providers.dart';
+import '../../store/reports.dart';
 import '../../store/sms_sync.dart';
 import '../components/toast.dart';
 import '../feedback.dart';
@@ -46,7 +47,11 @@ class _SmsHostState extends ConsumerState<SmsHost> with WidgetsBindingObserver {
     // Back from Android settings: access may have been turned on or off.
     ref
       ..invalidate(smsAccessProvider)
-      ..invalidate(notificationAccessProvider);
+      ..invalidate(notificationAccessProvider)
+      // A new day or month: roll challenges over, refresh nudges and score.
+      ..invalidate(challengeRolloverProvider)
+      ..invalidate(nudgesProvider)
+      ..invalidate(savingsScoreProvider);
     _catchUp();
   }
 

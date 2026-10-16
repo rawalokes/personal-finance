@@ -29,8 +29,10 @@ void main() {
     });
 
     test('the previous range has the same number of months just before', () {
-      expect(previousRange(const DateRange('2026-10-01', today)), const DateRange('2026-09-01', '2026-09-30'));
-      expect(previousRange(const DateRange('2026-08-01', today)), const DateRange('2026-05-01', '2026-07-31'));
+      expect(previousRange(const DateRange('2026-10-01', today)), const DateRange('2026-09-01', '2026-09-14'), reason: 'same point last month');
+      expect(previousRange(const DateRange('2026-08-01', today)), const DateRange('2026-05-01', '2026-07-14'));
+      expect(previousRange(const DateRange('2026-09-01', '2026-09-30')), const DateRange('2026-08-01', '2026-08-31'));
+      expect(previousRange(const DateRange(fy, today)), const DateRange('2025-07-17', '2025-10-14'), reason: 'same span of last fiscal year');
     });
 
     test('wire names round-trip and unknown falls back to this month', () {
@@ -96,7 +98,7 @@ void main() {
       tx(TxType.income, 'a', 50000, date: '2026-09-10'),
     ];
     final s = netWorthSeries(accounts, const [], txs, const DateRange('2026-08-01', today), today);
-    expect(s.map((p) => p.value), [fromRupees(52000), fromRupees(102000), fromRupees(100000)]);
+    expect(s.where((p) => p.kind == PointKind.actual).map((p) => p.value), [fromRupees(52000), fromRupees(102000), fromRupees(100000)]);
   });
 
   test('interest paid per month with a loan filter', () {
@@ -131,5 +133,17 @@ void main() {
 
     final top = topPayees(txs, const DateRange('2026-09-01', today), {'p1': 'Daraz', 'p2': 'Bhatbhateni'});
     expect(top.map((s) => s.label), ['Daraz', 'Bhatbhateni']);
+  });
+
+  test('review fix: net worth forecasts the next 3 months from recurring rules', () {
+    final accounts = [acct('a', AccountGroup.liquid, 100000)];
+    const rules = [RecurringRule(id: 'r', name: 'Salary', kind: RecurringKind.income, amount: 1000000, accountId: 'a', frequency: RecurringFrequency.monthly, nextDate: '2026-11-01')];
+    final s = netWorthSeries(accounts, const [], const [], const DateRange('2026-10-01', today), today, recurring: rules);
+    expect(s.map((p) => (p.label, p.value, p.kind)), [
+      ('2026-10', fromRupees(100000), PointKind.actual),
+      ('2026-11', fromRupees(110000), PointKind.forecast),
+      ('2026-12', fromRupees(120000), PointKind.forecast),
+      ('2027-01', fromRupees(130000), PointKind.forecast),
+    ]);
   });
 }

@@ -71,11 +71,17 @@ DateRange resolvePeriod(ReportPeriod p, IsoDate today, {required IsoDate fyStart
   };
 }
 
-/// The range with the same number of months just before [r] ("compare").
-DateRange previousRange(DateRange r) => DateRange(
-      addMonths(firstOfMonth(r.start), -r.months.length),
-      toIsoDate(parseIsoDate(r.start).subtract(const Duration(days: 1))),
-    );
+/// The same span one period earlier ("compare"): this month so far vs the
+/// same days last month; a fiscal year vs the same days a year before.
+DateRange previousRange(DateRange r) {
+  if (r.start != firstOfMonth(r.start)) return DateRange(addMonths(r.start, -12), addMonths(r.end, -12));
+  final n = r.months.length;
+  final wholeMonth = r.end == lastOfMonth(monthKey(r.end));
+  return DateRange(
+    addMonths(r.start, -n),
+    wholeMonth ? lastOfMonth(monthKey(addMonths(firstOfMonth(r.end), -n))) : addMonths(r.end, -n),
+  );
+}
 
 enum PointKind { actual, forecast }
 
@@ -224,14 +230,18 @@ Paisa netWorthEffect(Txn t) => switch (t.type) {
       _ => 0,
     };
 
-/// Net worth at each month end in [r] (today for the current month).
+/// Net worth at each month end in [r] (today for the current month); when
+/// [r] ends this month, the next [forecastMonths] are projected from
+/// recurring rules and loan interest.
 List<ReportPoint> netWorthSeries(
   Iterable<Account> accounts,
   Iterable<Loan> loans,
   Iterable<Txn> txs,
   DateRange r,
-  IsoDate today,
-) {
+  IsoDate today, {
+  Iterable<RecurringRule> recurring = const [],
+  int forecastMonths = 3,
+}) {
   final now = summarizeBalances(accounts, loans).netWorth;
   final posted = [for (final t in txs) if (t.isPosted) t];
   final out = <ReportPoint>[];
@@ -239,6 +249,12 @@ List<ReportPoint> netWorthSeries(
     final end = monthKey(today) == m ? today : lastOfMonth(m);
     final later = posted.where((t) => t.date.compareTo(end) > 0).fold<Paisa>(0, (s, t) => s + netWorthEffect(t));
     out.add(ReportPoint(m, now - later, PointKind.actual));
+  }
+  if (monthKey(r.end) == monthKey(today) && forecastMonths > 0) {
+    final f = monthlyForecast(recurring, loans);
+    for (var i = 1; i <= forecastMonths; i++) {
+      out.add(ReportPoint(monthKey(addMonths(firstOfMonth(today), i)), now + i * (f.income - f.expenses), PointKind.forecast));
+    }
   }
   return out;
 }

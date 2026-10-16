@@ -133,19 +133,23 @@ class ReportWidgetCard extends ConsumerWidget {
           false,
         );
       case ReportWidgetType.netWorth:
-        final pts = netWorthSeries(i.accounts, i.loans, i.txs, range, today);
+        if (i.accounts.isEmpty && i.loans.isEmpty) return (_empty(context, 'Add accounts to see your net worth.'), false);
+        final pts = netWorthSeries(i.accounts, i.loans, i.txs, range, today, recurring: i.recurring);
+        final actual = pts.where((p) => p.kind == PointKind.actual).toList();
+        final firstForecast = pts.indexWhere((p) => p.kind == PointKind.forecast);
         final labels = [for (final p in pts) shortMonth(p.label)];
         final series = [[for (final p in pts) p.value / 100]];
         return (
           Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             config.chart == ReportChart.bar
-                ? PaisaBarChart(labels: labels, series: series, colors: [palette.first])
-                : PaisaLineChart(labels: labels, series: series, colors: [palette.first]),
+                ? PaisaBarChart(labels: labels, series: series, colors: [palette.first], faded: {for (var k = 0; k < pts.length; k++) if (pts[k].kind == PointKind.forecast) k})
+                : PaisaLineChart(labels: labels, series: series, colors: [palette.first], forecastFrom: firstForecast < 0 ? null : firstForecast),
             const SizedBox(height: 8),
-            LegendRow(label: 'Now', amount: pts.last.value),
-            LegendRow(label: 'Change in period', amount: pts.last.value - pts.first.value),
+            LegendRow(label: 'Now', amount: actual.last.value),
+            LegendRow(label: 'Change in period', amount: actual.last.value - actual.first.value),
+            if (firstForecast >= 0) LegendRow(label: 'In 3 months (forecast)', amount: pts.last.value),
           ]),
-          false,
+          firstForecast >= 0,
         );
       case ReportWidgetType.assetsLiabilities:
         final b = summarizeBalances(i.accounts, i.loans);

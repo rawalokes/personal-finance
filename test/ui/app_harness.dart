@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paisa/app.dart';
+import 'package:paisa/data/clock.dart';
 import 'package:paisa/data/db/database.dart';
 import 'package:paisa/data/seed.dart';
 import 'package:paisa/router.dart';
@@ -24,6 +25,7 @@ Future<AppDatabase> pumpPaisa(
   bool seed = true,
   bool cleanInstall = false,
   List<Override> overrides = const [],
+  Clock? clock,
 }) async {
   final db = openTestDb();
   if (cleanInstall) {
@@ -37,7 +39,7 @@ Future<AppDatabase> pumpPaisa(
   await tester.pumpWidget(ProviderScope(
     overrides: [
       databaseProvider.overrideWithValue(db),
-      clockProvider.overrideWithValue(testClock),
+      clockProvider.overrideWithValue(clock ?? testClock),
       idGenProvider.overrideWithValue(counterIds('new')),
       initialLocationProvider.overrideWithValue(location),
       ...overrides,

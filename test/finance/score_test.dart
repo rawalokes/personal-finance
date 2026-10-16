@@ -66,4 +66,17 @@ void main() {
     final t = scoreTrend(txs: const [], categories: const [], loans: const [], today: today);
     expect(t.map((s) => s.month), ['2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10']);
   });
+
+  test('review fix: an EMI due later this month is not counted as missed', () {
+    final loan = Loan(id: 'L1', loanTypeId: 'p', name: 'Scooter', lender: 'Bank', principal: fromRupees(100000),
+        outstanding: fromRupees(50000), ratePct: 12, method: InterestMethod.reducing, installment: fromRupees(5000),
+        frequency: LoanFrequency.monthly, nextDueDate: '2026-10-28');
+    final s = scoreForMonth('2026-10', txs: const [], categories: const [], loans: [loan], today: today);
+    expect(s.parts[ScorePartKind.loans]! / s.maxima[ScorePartKind.loans]!, closeTo(0.5, 1e-9), reason: 'nothing due yet: installment half full, balance half empty');
+    expect(s.tip?.text ?? '', isNot(contains('Record the')));
+    final overdue = scoreForMonth('2026-10', txs: const [], categories: const [], loans: [Loan(id: 'L1', loanTypeId: 'p', name: 'Scooter', lender: 'Bank', principal: fromRupees(100000),
+        outstanding: fromRupees(50000), ratePct: 12, method: InterestMethod.reducing, installment: fromRupees(5000),
+        frequency: LoanFrequency.monthly, nextDueDate: '2026-10-10')], today: today);
+    expect(overdue.parts[ScorePartKind.loans], 0);
+  });
 }
