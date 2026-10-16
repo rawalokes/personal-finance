@@ -40,10 +40,10 @@ void main() {
       biometricAuthProvider.overrideWithValue(FakeBiometric(ok: false)),
     ]);
     expect(find.text('Enter your PIN'), findsOneWidget);
-    expect(find.text('AVAILABLE TO SPEND'), findsNothing, reason: 'nothing behind the lock is visible');
+    expect(find.text('FREE TO SPEND'), findsNothing, reason: 'nothing behind the lock is visible');
     await typePin(tester, '4821');
     expect(find.text('Enter your PIN'), findsNothing);
-    expect(find.text('AVAILABLE TO SPEND'), findsOneWidget);
+    expect(find.text('FREE TO SPEND'), findsOneWidget);
   });
 
   testWidgets('a wrong PIN is refused and cleared', (tester) async {
@@ -67,7 +67,7 @@ void main() {
       biometricAuthProvider.overrideWithValue(bio),
     ]);
     expect(bio.prompts, 1);
-    expect(find.text('AVAILABLE TO SPEND'), findsOneWidget);
+    expect(find.text('FREE TO SPEND'), findsOneWidget);
   });
 
   testWidgets('a failed fingerprint leaves the PIN pad and a button to try again', (tester) async {

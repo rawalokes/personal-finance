@@ -89,7 +89,7 @@ void main() {
         const LoansCompanion(outstanding: Value(13145075), installment: Value(679050), nextDueDate: Value(null)),
       );
       await tester.pumpAndSettle();
-      GoRouter.of(tester.element(find.text('AVAILABLE TO SPEND'))).push('/loans/L2/edit');
+      GoRouter.of(tester.element(find.text('FREE TO SPEND'))).push('/loans/L2/edit');
       await tester.pumpAndSettle();
       await tester.enterText(fieldLabelled('Loan name'), 'Personal loan (NIC)');
       await scrollAndTap(tester, find.widgetWithText(PaisaButton, 'Save changes'));

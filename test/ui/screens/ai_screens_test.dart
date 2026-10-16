@@ -160,7 +160,7 @@ void main() {
     expect(find.text('Try again'), findsOneWidget);
     await tester.tap(find.bySemanticsLabel('Back'));
     await tester.pumpAndSettle();
-    expect(find.text('AVAILABLE TO SPEND'), findsOneWidget);
+    expect(find.text('FREE TO SPEND'), findsOneWidget);
   });
 
   testWidgets('Ask Paisa: a suggested question gets an answer, kept on the phone', (tester) async {

@@ -7,7 +7,7 @@ void main() {
   testWidgets('Home starts at zero, invites adding an account, and shows no loans', (tester) async {
     await pumpPaisa(tester, cleanInstall: true);
     expect(tester.takeException(), isNull);
-    expect(find.text('AVAILABLE TO SPEND'), findsOneWidget);
+    expect(find.text('FREE TO SPEND'), findsOneWidget);
     expect(find.text('0'), findsNWidgets(2), reason: 'the balance, and the savings score ring');
     expect(find.text('Add eSewa, Khalti or bank'), findsOneWidget);
     expect(find.text('Loans remaining'), findsNothing);

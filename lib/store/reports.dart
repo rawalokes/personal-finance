@@ -198,3 +198,17 @@ final challengeRolloverProvider = FutureProvider<void>((ref) async {
   final inputs = await ref.read(reportInputsProvider.future);
   await ref.read(challengeControllerProvider).rollOver(inputs, cal: ref.watch(monthCalendarProvider));
 });
+
+/// Home's month plan: save, repay, budgets, free to spend.
+final monthPlanProvider = FutureProvider<MonthPlan>((ref) async {
+  final i = await ref.watch(reportInputsProvider.future);
+  return monthPlan(
+    txs: i.txs,
+    accounts: i.accounts,
+    loans: i.loans,
+    categories: i.categories,
+    goals: i.goals,
+    today: ref.watch(clockProvider).today(),
+    cal: ref.watch(monthCalendarProvider),
+  );
+});

@@ -16,7 +16,7 @@ void main() {
     for (final label in ['Home', 'Activity', 'Plans', 'Reports', 'More']) {
       expect(navLabel(label), findsOneWidget);
     }
-    expect(find.text('AVAILABLE TO SPEND'), findsOneWidget);
+    expect(find.text('FREE TO SPEND'), findsOneWidget);
 
     await tester.tap(navLabel('Activity'));
     await tester.pumpAndSettle();
@@ -70,7 +70,7 @@ void main() {
     expect(find.byType(PaisaNavBar), findsNothing, reason: 'a detail page, outside the tab shell');
     await tester.tap(find.bySemanticsLabel('Back'));
     await tester.pumpAndSettle();
-    expect(find.text('AVAILABLE TO SPEND'), findsOneWidget);
+    expect(find.text('FREE TO SPEND'), findsOneWidget);
   });
 
   testWidgets('the Reports tab opens', (tester) async {

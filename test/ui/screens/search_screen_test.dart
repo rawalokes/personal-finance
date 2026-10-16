@@ -38,7 +38,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.bySemanticsLabel('Back'));
       await tester.pumpAndSettle();
-      expect(find.text('AVAILABLE TO SPEND'), findsOneWidget);
+      expect(find.text('FREE TO SPEND'), findsOneWidget);
     });
   });
 }

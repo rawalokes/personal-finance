@@ -17,12 +17,19 @@ ScrollPosition carouselPosition(WidgetTester tester) => tester
     .position;
 
 void main() {
-  testWidgets('hero shows available to spend and net worth; three actions', (tester) async {
+  testWidgets('hero is the month plan: save, repay, budgets, what you have and what is free to spend', (tester) async {
     await pumpPaisa(tester);
     expect(find.text('Good morning'), findsOneWidget);
-    expect(find.text('AVAILABLE TO SPEND'), findsOneWidget);
-    expect(find.text('1,84,020'), findsOneWidget);
-    expect(find.text('NPR 10,87,327'), findsOneWidget);
+    expect(find.text('OCTOBER PLAN'), findsOneWidget);
+    expect(find.text('17 days left'), findsOneWidget);
+    for (final row in ['Save', 'Repay loans', 'Budgets', 'You have', 'Net worth']) {
+      expect(find.text(row), findsOneWidget, reason: row);
+    }
+    expect(find.text('FREE TO SPEND'), findsOneWidget);
+    expect(find.text('after saving and EMIs'), findsOneWidget);
+    expect(find.text('NPR 1,84,020'), findsOneWidget, reason: 'you have');
+    expect(find.text('NPR 10,87,327'), findsOneWidget, reason: 'net worth');
+    expect(find.text('AVAILABLE TO SPEND'), findsNothing);
     for (final label in ['Income', 'Expense', 'Loans']) {
       expect(find.bySemanticsLabel(label), findsOneWidget);
     }
@@ -110,7 +117,7 @@ void main() {
     expect(find.text('Add expense'), findsOneWidget);
     await tester.tap(find.bySemanticsLabel('Cancel'));
     await tester.pumpAndSettle();
-    expect(find.text('AVAILABLE TO SPEND'), findsOneWidget);
+    expect(find.text('FREE TO SPEND'), findsOneWidget);
   });
 
   testWidgets('the SMS bar appears when messages wait for review', (tester) async {

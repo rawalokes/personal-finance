@@ -26,6 +26,7 @@ import '../../txn/txn_presentation.dart';
 import '../../txn/txn_sheet.dart';
 import '../../ai/ai_insight_card.dart';
 import 'account_carousel.dart';
+import 'plan_hero.dart';
 
 class HomeData {
   const HomeData({
@@ -135,37 +136,10 @@ class _HomeBody extends ConsumerWidget {
     final money = ref.watch(moneyFormatProvider);
     final pending = ref.watch(inboxPendingCountProvider);
     final cards = d.accounts.where((a) => !a.archived && a.group != AccountGroup.locked).toList();
-    // Owing more than you own is a warning, not good news.
-    final netWorthColor = d.summary.netWorth < 0 ? c.red : c.primary;
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 28),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(
-              'AVAILABLE TO SPEND',
-              style: PaisaText.hint.copyWith(color: c.ink3, letterSpacing: 12.5 * 0.08),
-            ),
-            const SizedBox(height: 6),
-            Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: MoneyText(d.summary.availableToSpend, withCurrency: false, style: PaisaText.balance),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text('NPR', style: PaisaText.h2.copyWith(color: c.ink3, letterSpacing: 0)),
-            ]),
-            const SizedBox(height: 4),
-            Row(children: [
-              Text('Net worth ', style: PaisaText.body.copyWith(fontSize: 14, color: netWorthColor)),
-              Flexible(child: MoneyText(d.summary.netWorth, color: netWorthColor, style: PaisaText.body.copyWith(fontSize: 14))),
-            ]),
-          ]),
-        ),
+        const PlanHero(),
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
           child: Row(children: [

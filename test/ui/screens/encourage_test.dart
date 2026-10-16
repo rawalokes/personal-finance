@@ -51,8 +51,8 @@ void main() {
     await db.into(db.accounts).insert(AccountsCompanion.insert(
         id: 'cc', name: 'Card', shortName: 'Card', accountGroup: 'liability', kind: 'credit_card', openingBalance: 0, balance: 1900000));
     await tester.pumpAndSettle();
-    final label = tester.widget<Text>(find.text('Net worth '));
-    final c = Theme.of(tester.element(find.text('Net worth '))).extension<PaisaColors>()!;
+    final label = tester.widget<Text>(find.text('Net worth'));
+    final c = Theme.of(tester.element(find.text('Net worth'))).extension<PaisaColors>()!;
     expect(label.style!.color, c.red);
   });
 

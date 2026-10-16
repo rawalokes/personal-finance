@@ -37,4 +37,9 @@ void main() {
     await pumpPaisa(tester, location: '/plans', prefs: bs);
     expect(find.text('Asoj budget'), findsOneWidget);
   });
+
+  testWidgets('the Home plan is for the BS month', (tester) async {
+    await pumpPaisa(tester, prefs: bs);
+    expect(find.text('ASOJ PLAN'), findsOneWidget);
+  });
 }
