@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import '../../components/inputs.dart';
 import '../../components/top_bar.dart';
 import 'budgets_view.dart';
+import 'challenges_view.dart';
 import 'goals_view.dart';
 import 'loans_view.dart';
 
-enum PlansSegment { budgets, loans, goals }
+enum PlansSegment { budgets, loans, goals, challenges }
 
 /// Plans tab (spec §7): Budgets | Loans | Goals. [initial] comes from the
 /// route (`/plans?seg=loans`), so Home's "Loans" opens the right segment.
@@ -44,6 +45,7 @@ class _PlansScreenState extends State<PlansScreen> {
             (PlansSegment.budgets, 'Budgets'),
             (PlansSegment.loans, 'Loans'),
             (PlansSegment.goals, 'Goals'),
+            (PlansSegment.challenges, 'Challenges'),
           ],
           selected: _seg,
           onChanged: (s) => setState(() => _seg = s),
@@ -54,6 +56,7 @@ class _PlansScreenState extends State<PlansScreen> {
           PlansSegment.budgets => const BudgetsView(),
           PlansSegment.loans => const LoansView(),
           PlansSegment.goals => const GoalsView(),
+          PlansSegment.challenges => const ChallengesView(),
         },
       ),
     ]);
