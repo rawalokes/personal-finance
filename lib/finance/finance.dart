@@ -22,3 +22,4 @@ export 'nudges.dart';
 export 'challenges.dart';
 export 'calendar.dart';
 export 'plan.dart';
+export 'waitlist.dart';

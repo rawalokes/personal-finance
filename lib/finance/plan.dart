@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'budgets.dart';
 import 'calendar.dart';
 import 'catalog.dart';
+import 'loans.dart';
 import 'dates.dart';
 import 'models.dart';
 import 'money.dart';
@@ -30,6 +31,7 @@ class MonthPlan {
     required this.closestBudget,
     required this.youHave,
     required this.netWorth,
+    required this.interestThisMonth,
   });
 
   /// Month key in the chosen calendar.
@@ -62,6 +64,9 @@ class MonthPlan {
   /// Money in spendable accounts.
   final Paisa youHave;
   final Paisa netWorth;
+
+  /// What the open loans cost in interest this month (spec: loss framing).
+  final Paisa interestThisMonth;
 
   Paisa get saveLeft => math.max(0, saveTarget - saved);
 
@@ -126,5 +131,15 @@ MonthPlan monthPlan({
     closestBudget: under.isEmpty ? null : (under.first.categoryId, under.first.ratio),
     youHave: balances.availableToSpend,
     netWorth: balances.netWorth,
+    interestThisMonth: open.fold<Paisa>(0, (s, l) => s + (periodInterest(l) / l.frequency.monthsPerPeriod).round()),
   );
+}
+
+/// What saving [monthly] every month for [years] grows to at [annualRate]
+/// (compounded monthly) — "future you".
+Paisa futureValue({required Paisa monthly, required int years, double annualRate = 0.08}) {
+  if (monthly <= 0 || years <= 0) return 0;
+  final r = annualRate / 12;
+  final n = years * 12;
+  return (monthly * (math.pow(1 + r, n) - 1) / r).round();
 }

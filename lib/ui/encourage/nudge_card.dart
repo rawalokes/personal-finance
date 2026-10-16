@@ -32,6 +32,7 @@ class NudgeCard extends ConsumerWidget {
     final c = context.colors;
     final (icon, tone) = switch (nudge.kind) {
       NudgeKind.emiDue => (PaisaIcons.calendar, Tone.amber),
+      NudgeKind.payYourselfFirst => (PaisaIcons.moneyIn, Tone.positive),
       NudgeKind.budgetPace => (PaisaIcons.pie, Tone.amber),
       NudgeKind.categorySpike => (PaisaIcons.trend, Tone.red),
       NudgeKind.payeeRepeat => (PaisaIcons.repeat, Tone.red),

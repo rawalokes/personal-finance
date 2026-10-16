@@ -12,6 +12,7 @@ import '../../typography.dart';
 
 const _help = {
   NudgeKind.emiDue: 'Loan installments due within 3 days',
+  NudgeKind.payYourselfFirst: 'When income arrives, move 20% to savings first',
   NudgeKind.budgetPace: '85% of a budget used, or on pace to go over',
   NudgeKind.categorySpike: 'A category well above your usual',
   NudgeKind.loanExtra: 'How much sooner an extra payment clears a loan',

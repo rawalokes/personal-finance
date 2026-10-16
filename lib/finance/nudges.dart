@@ -13,6 +13,7 @@ import 'totals.dart';
 /// Declaration order is priority: the first kinds show first (spec §4.1).
 enum NudgeKind {
   emiDue('emi_due', 'EMI reminders'),
+  payYourselfFirst('pay_first', 'Pay yourself first'),
   budgetPace('budget_pace', 'Budget pace'),
   categorySpike('category_spike', 'Spending spikes'),
   loanExtra('loan_extra', 'Pay loans off sooner'),
@@ -123,6 +124,30 @@ List<Nudge> buildNudges(
       actionLabel: 'Open loan',
       route: '/loans/${l.id}',
     ));
+  }
+
+  // Pay yourself first: income in the last 7 days, nothing moved to a
+  // savings (reserved) account since.
+  final reserved = {for (final a in i.accounts) if (a.group == AccountGroup.reserved) a.id};
+  final weekAgo = toIsoDate(parseIsoDate(today).subtract(const Duration(days: 6)));
+  final pay = [
+    for (final t in posted)
+      if (t.type == TxType.income && t.amount >= 500000 && t.date.compareTo(weekAgo) >= 0 && t.date.compareTo(today) <= 0) t,
+  ]..sort((a, b) => b.date.compareTo(a.date));
+  if (pay.isNotEmpty) {
+    final income = pay.first;
+    final moved = posted.any((t) => t.type == TxType.transfer && reserved.contains(t.counterAccountId) && t.date.compareTo(income.date) >= 0);
+    if (!moved) {
+      all.add(Nudge(
+        id: 'pay_first:${income.id}',
+        kind: NudgeKind.payYourselfFirst,
+        topic: 'payfirst',
+        title: 'Income came in — pay yourself first',
+        body: 'Move ${money.npr((income.amount * 0.2).round())} (20%) to savings now, before it gets spent.',
+        actionLabel: 'Open goals',
+        route: '/plans?seg=goals',
+      ));
+    }
   }
 
   // Budget pace.
