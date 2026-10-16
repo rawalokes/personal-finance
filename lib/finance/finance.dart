@@ -19,3 +19,4 @@ export 'catalog.dart';
 export 'reports.dart';
 export 'score.dart';
 export 'nudges.dart';
+export 'challenges.dart';
