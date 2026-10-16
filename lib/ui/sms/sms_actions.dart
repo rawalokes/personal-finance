@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/records.dart';
 import '../../data/repos/sms_repo.dart';
 import '../../finance/finance.dart';
 import '../../sms/sms_models.dart';
@@ -19,6 +20,7 @@ import '../icons/paisa_icon.dart';
 import '../icons/paisa_icons.dart';
 import '../theme.dart';
 import '../typography.dart';
+import '../txn/party_field.dart';
 import '../txn/txn_presentation.dart';
 import 'sms_presentation.dart';
 
@@ -167,10 +169,18 @@ class _EditForm extends ChangeNotifier {
         account = m.accountId,
         counter = m.counterAccountId,
         loan = m.loanId,
+        party = m.partyId,
         date = m.date;
 
   final TextEditingController amount, time, merchant, description;
-  String? account, counter, loan;
+  String? account, counter, loan, party;
+
+  /// False until the user picks a party; until then a party whose name is
+  /// in the merchant text is suggested.
+  bool partyPicked = false;
+
+  String? partyOr(List<ConfigItem> parties, SmsMessage m) =>
+      partyPicked || party != null ? party : guessParty(parties, m.merchant);
   IsoDate date;
   Map<String, String> errors = const {};
 
@@ -189,7 +199,7 @@ class _EditForm extends ChangeNotifier {
   }
 }
 
-/// Edit details: amount, account, other account, loan, date, time,
+/// Edit details: amount, account, other account, loan, party, date, time,
 /// merchant and description (spec §7 Edit bottom sheet).
 Future<void> showSmsEditSheet(BuildContext context, SmsMessage m) => showPaisaFormSheet<void, _EditForm>(
       context,
@@ -200,6 +210,7 @@ Future<void> showSmsEditSheet(BuildContext context, SmsMessage m) => showPaisaFo
         final loans = [for (final l in ref.watch(loansProvider).value ?? const <Loan>[]) if (!l.closed) l];
         final needsCounter = {TxType.transfer, TxType.cashWithdrawal, TxType.ccPayment}.contains(m.type);
         final needsLoan = m.type == TxType.loanRepayment || m.type == TxType.loanDisbursement;
+        final parties = ref.watch(configListProvider(ConfigList.parties)).value ?? const <ConfigItem>[];
         Widget gap() => const SizedBox(height: 14);
         return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           PaisaTextField(
@@ -212,10 +223,24 @@ Future<void> showSmsEditSheet(BuildContext context, SmsMessage m) => showPaisaFo
           FieldGroup(
             label: 'Account',
             footer: f.errors['account'] == null ? null : Text(f.errors['account']!, style: PaisaText.hint.copyWith(color: ctx.colors.red)),
-            child: ChipWrap(children: [
-              for (final a in accounts) PaisaChip(label: a.shortName, selected: a.id == f.account, onTap: () => f.set(() => f.account = a.id)),
-            ]),
+            child: accounts.isEmpty
+                ? Text('No accounts yet. Add one in the Accounts tab first.', style: PaisaText.sub.copyWith(color: ctx.colors.ink3))
+                : ChipWrap(children: [
+                    for (final a in accounts)
+                      PaisaChip(label: a.shortName, selected: a.id == f.account, onTap: () => f.set(() => f.account = a.id)),
+                  ]),
           ),
+          if (hasParty(m.type)) ...[
+            gap(),
+            PartyField(
+              label: partyLabel(m.type),
+              value: f.partyOr(parties, m),
+              onChanged: (id) => f.set(() {
+                f.party = id;
+                f.partyPicked = true;
+              }),
+            ),
+          ],
           if (needsCounter) ...[
             gap(),
             FieldGroup(
@@ -277,6 +302,7 @@ Future<void> showSmsEditSheet(BuildContext context, SmsMessage m) => showPaisaFo
                         accountId: f.account!,
                         counterAccountId: needsCounter ? f.counter : null,
                         loanId: needsLoan ? f.loan : null,
+                        partyId: f.partyOr(ref.read(configListProvider(ConfigList.parties)).value ?? const [], m),
                         date: f.date,
                         time: f.time.text.trim(),
                         merchant: f.merchant.text,

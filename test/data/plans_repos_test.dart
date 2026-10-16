@@ -193,6 +193,19 @@ void main() {
       expect(after.firstWhere((b) => b.id == laxmi.id).active, isFalse);
     });
 
+    test('parties: added, renamed, and a name is never used twice in a list', () async {
+      final id = await catalog.addConfigItem(ConfigList.parties, ' Smartloan ', '');
+      await expectLater(catalog.addConfigItem(ConfigList.parties, 'smartloan', ''), throwsA(isA<DuplicateName>()));
+      await catalog.addConfigItem(ConfigList.parties, 'Office', 'Employer');
+      await expectLater(catalog.editConfigItem(id, 'OFFICE', ''), throwsA(isA<DuplicateName>()));
+      await catalog.editConfigItem(id, 'Smart Loan Pvt', 'Lender');
+      final parties = await catalog.watchConfig(ConfigList.parties).first;
+      expect(parties.map((p) => p.name), ['Smart Loan Pvt', 'Office']);
+      expect(parties.first.description, 'Lender');
+      // The same name may live in another list.
+      await catalog.addConfigItem(ConfigList.banks, 'Office', '');
+    });
+
     test('recurring rules pause and resume', () async {
       await catalog.setRecurringActive('r1', false);
       expect((await catalog.watchRecurring().first).firstWhere((r) => r.id == 'r1').active, isFalse);
@@ -214,7 +227,7 @@ void main() {
     test('CSV export has a header and one line per transaction, amounts in rupees', () async {
       final csv = await DataRepository(db, audit, clock: testClock).exportTransactionsCsv();
       final lines = const LineSplitter().convert(csv);
-      expect(lines.first, 'date,time,title,type,account,counter_account,category,income_type,amount_npr,status,source');
+      expect(lines.first, 'date,time,title,type,account,counter_account,category,income_type,amount_npr,status,source,party');
       expect(lines, hasLength(18));
       expect(lines.any((l) => l.startsWith('2026-10-01,09:00,House rent — October,expense,nabil,,housing,,22000.00')), isTrue);
     });

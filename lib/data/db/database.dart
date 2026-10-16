@@ -23,9 +23,9 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   /// Bump this and add a step in [migration] whenever a table changes.
-  /// v2: goals and settings. v3: SMS messages.
+  /// v2: goals and settings. v3: SMS messages. v4: parties.
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -44,6 +44,11 @@ class AppDatabase extends _$AppDatabase {
           if (from < 3) {
             await m.createTable(smsMessages);
             await customStatement('CREATE INDEX idx_sms_status ON sms_messages (status, date, time)');
+          }
+          if (from < 4) {
+            await m.addColumn(transactions, transactions.partyId);
+            // A v2 database just got sms_messages at v4 already.
+            if (from >= 3) await m.addColumn(smsMessages, smsMessages.partyId);
           }
         },
         beforeOpen: (details) async {

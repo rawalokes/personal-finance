@@ -1169,6 +1169,17 @@ class $TransactionsTable extends Transactions
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _partyIdMeta = const VerificationMeta(
+    'partyId',
+  );
+  @override
+  late final GeneratedColumn<String> partyId = GeneratedColumn<String>(
+    'party_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _amountMeta = const VerificationMeta('amount');
   @override
   late final GeneratedColumn<int> amount = GeneratedColumn<int>(
@@ -1271,6 +1282,7 @@ class $TransactionsTable extends Transactions
     categoryId,
     incomeTypeId,
     loanId,
+    partyId,
     amount,
     principal,
     interest,
@@ -1372,6 +1384,12 @@ class $TransactionsTable extends Transactions
       context.handle(
         _loanIdMeta,
         loanId.isAcceptableOrUnknown(data['loan_id']!, _loanIdMeta),
+      );
+    }
+    if (data.containsKey('party_id')) {
+      context.handle(
+        _partyIdMeta,
+        partyId.isAcceptableOrUnknown(data['party_id']!, _partyIdMeta),
       );
     }
     if (data.containsKey('amount')) {
@@ -1491,6 +1509,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.string,
         data['${effectivePrefix}loan_id'],
       ),
+      partyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}party_id'],
+      ),
       amount: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}amount'],
@@ -1548,6 +1570,9 @@ class TxnRow extends DataClass implements Insertable<TxnRow> {
   final String? categoryId;
   final String? incomeTypeId;
   final String? loanId;
+
+  /// Who paid or was paid: a ConfigItem in the 'parties' list. v4.
+  final String? partyId;
   final int amount;
   final int? principal;
   final int? interest;
@@ -1569,6 +1594,7 @@ class TxnRow extends DataClass implements Insertable<TxnRow> {
     this.categoryId,
     this.incomeTypeId,
     this.loanId,
+    this.partyId,
     required this.amount,
     this.principal,
     this.interest,
@@ -1602,6 +1628,9 @@ class TxnRow extends DataClass implements Insertable<TxnRow> {
     }
     if (!nullToAbsent || loanId != null) {
       map['loan_id'] = Variable<String>(loanId);
+    }
+    if (!nullToAbsent || partyId != null) {
+      map['party_id'] = Variable<String>(partyId);
     }
     map['amount'] = Variable<int>(amount);
     if (!nullToAbsent || principal != null) {
@@ -1646,6 +1675,9 @@ class TxnRow extends DataClass implements Insertable<TxnRow> {
       loanId: loanId == null && nullToAbsent
           ? const Value.absent()
           : Value(loanId),
+      partyId: partyId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(partyId),
       amount: Value(amount),
       principal: principal == null && nullToAbsent
           ? const Value.absent()
@@ -1681,6 +1713,7 @@ class TxnRow extends DataClass implements Insertable<TxnRow> {
       categoryId: serializer.fromJson<String?>(json['categoryId']),
       incomeTypeId: serializer.fromJson<String?>(json['incomeTypeId']),
       loanId: serializer.fromJson<String?>(json['loanId']),
+      partyId: serializer.fromJson<String?>(json['partyId']),
       amount: serializer.fromJson<int>(json['amount']),
       principal: serializer.fromJson<int?>(json['principal']),
       interest: serializer.fromJson<int?>(json['interest']),
@@ -1707,6 +1740,7 @@ class TxnRow extends DataClass implements Insertable<TxnRow> {
       'categoryId': serializer.toJson<String?>(categoryId),
       'incomeTypeId': serializer.toJson<String?>(incomeTypeId),
       'loanId': serializer.toJson<String?>(loanId),
+      'partyId': serializer.toJson<String?>(partyId),
       'amount': serializer.toJson<int>(amount),
       'principal': serializer.toJson<int?>(principal),
       'interest': serializer.toJson<int?>(interest),
@@ -1731,6 +1765,7 @@ class TxnRow extends DataClass implements Insertable<TxnRow> {
     Value<String?> categoryId = const Value.absent(),
     Value<String?> incomeTypeId = const Value.absent(),
     Value<String?> loanId = const Value.absent(),
+    Value<String?> partyId = const Value.absent(),
     int? amount,
     Value<int?> principal = const Value.absent(),
     Value<int?> interest = const Value.absent(),
@@ -1754,6 +1789,7 @@ class TxnRow extends DataClass implements Insertable<TxnRow> {
     categoryId: categoryId.present ? categoryId.value : this.categoryId,
     incomeTypeId: incomeTypeId.present ? incomeTypeId.value : this.incomeTypeId,
     loanId: loanId.present ? loanId.value : this.loanId,
+    partyId: partyId.present ? partyId.value : this.partyId,
     amount: amount ?? this.amount,
     principal: principal.present ? principal.value : this.principal,
     interest: interest.present ? interest.value : this.interest,
@@ -1783,6 +1819,7 @@ class TxnRow extends DataClass implements Insertable<TxnRow> {
           ? data.incomeTypeId.value
           : this.incomeTypeId,
       loanId: data.loanId.present ? data.loanId.value : this.loanId,
+      partyId: data.partyId.present ? data.partyId.value : this.partyId,
       amount: data.amount.present ? data.amount.value : this.amount,
       principal: data.principal.present ? data.principal.value : this.principal,
       interest: data.interest.present ? data.interest.value : this.interest,
@@ -1809,6 +1846,7 @@ class TxnRow extends DataClass implements Insertable<TxnRow> {
           ..write('categoryId: $categoryId, ')
           ..write('incomeTypeId: $incomeTypeId, ')
           ..write('loanId: $loanId, ')
+          ..write('partyId: $partyId, ')
           ..write('amount: $amount, ')
           ..write('principal: $principal, ')
           ..write('interest: $interest, ')
@@ -1823,7 +1861,7 @@ class TxnRow extends DataClass implements Insertable<TxnRow> {
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     date,
     time,
@@ -1835,6 +1873,7 @@ class TxnRow extends DataClass implements Insertable<TxnRow> {
     categoryId,
     incomeTypeId,
     loanId,
+    partyId,
     amount,
     principal,
     interest,
@@ -1844,7 +1883,7 @@ class TxnRow extends DataClass implements Insertable<TxnRow> {
     note,
     createdAt,
     updatedAt,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1860,6 +1899,7 @@ class TxnRow extends DataClass implements Insertable<TxnRow> {
           other.categoryId == this.categoryId &&
           other.incomeTypeId == this.incomeTypeId &&
           other.loanId == this.loanId &&
+          other.partyId == this.partyId &&
           other.amount == this.amount &&
           other.principal == this.principal &&
           other.interest == this.interest &&
@@ -1883,6 +1923,7 @@ class TransactionsCompanion extends UpdateCompanion<TxnRow> {
   final Value<String?> categoryId;
   final Value<String?> incomeTypeId;
   final Value<String?> loanId;
+  final Value<String?> partyId;
   final Value<int> amount;
   final Value<int?> principal;
   final Value<int?> interest;
@@ -1905,6 +1946,7 @@ class TransactionsCompanion extends UpdateCompanion<TxnRow> {
     this.categoryId = const Value.absent(),
     this.incomeTypeId = const Value.absent(),
     this.loanId = const Value.absent(),
+    this.partyId = const Value.absent(),
     this.amount = const Value.absent(),
     this.principal = const Value.absent(),
     this.interest = const Value.absent(),
@@ -1928,6 +1970,7 @@ class TransactionsCompanion extends UpdateCompanion<TxnRow> {
     this.categoryId = const Value.absent(),
     this.incomeTypeId = const Value.absent(),
     this.loanId = const Value.absent(),
+    this.partyId = const Value.absent(),
     required int amount,
     this.principal = const Value.absent(),
     this.interest = const Value.absent(),
@@ -1961,6 +2004,7 @@ class TransactionsCompanion extends UpdateCompanion<TxnRow> {
     Expression<String>? categoryId,
     Expression<String>? incomeTypeId,
     Expression<String>? loanId,
+    Expression<String>? partyId,
     Expression<int>? amount,
     Expression<int>? principal,
     Expression<int>? interest,
@@ -1984,6 +2028,7 @@ class TransactionsCompanion extends UpdateCompanion<TxnRow> {
       if (categoryId != null) 'category_id': categoryId,
       if (incomeTypeId != null) 'income_type_id': incomeTypeId,
       if (loanId != null) 'loan_id': loanId,
+      if (partyId != null) 'party_id': partyId,
       if (amount != null) 'amount': amount,
       if (principal != null) 'principal': principal,
       if (interest != null) 'interest': interest,
@@ -2009,6 +2054,7 @@ class TransactionsCompanion extends UpdateCompanion<TxnRow> {
     Value<String?>? categoryId,
     Value<String?>? incomeTypeId,
     Value<String?>? loanId,
+    Value<String?>? partyId,
     Value<int>? amount,
     Value<int?>? principal,
     Value<int?>? interest,
@@ -2032,6 +2078,7 @@ class TransactionsCompanion extends UpdateCompanion<TxnRow> {
       categoryId: categoryId ?? this.categoryId,
       incomeTypeId: incomeTypeId ?? this.incomeTypeId,
       loanId: loanId ?? this.loanId,
+      partyId: partyId ?? this.partyId,
       amount: amount ?? this.amount,
       principal: principal ?? this.principal,
       interest: interest ?? this.interest,
@@ -2081,6 +2128,9 @@ class TransactionsCompanion extends UpdateCompanion<TxnRow> {
     if (loanId.present) {
       map['loan_id'] = Variable<String>(loanId.value);
     }
+    if (partyId.present) {
+      map['party_id'] = Variable<String>(partyId.value);
+    }
     if (amount.present) {
       map['amount'] = Variable<int>(amount.value);
     }
@@ -2128,6 +2178,7 @@ class TransactionsCompanion extends UpdateCompanion<TxnRow> {
           ..write('categoryId: $categoryId, ')
           ..write('incomeTypeId: $incomeTypeId, ')
           ..write('loanId: $loanId, ')
+          ..write('partyId: $partyId, ')
           ..write('amount: $amount, ')
           ..write('principal: $principal, ')
           ..write('interest: $interest, ')
@@ -7781,6 +7832,17 @@ class $SmsMessagesTable extends SmsMessages
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _partyIdMeta = const VerificationMeta(
+    'partyId',
+  );
+  @override
+  late final GeneratedColumn<String> partyId = GeneratedColumn<String>(
+    'party_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _confidenceMeta = const VerificationMeta(
     'confidence',
   );
@@ -7902,6 +7964,7 @@ class $SmsMessagesTable extends SmsMessages
     incomeTypeId,
     counterAccountId,
     loanId,
+    partyId,
     confidence,
     reason,
     suggestedBy,
@@ -8060,6 +8123,12 @@ class $SmsMessagesTable extends SmsMessages
       context.handle(
         _loanIdMeta,
         loanId.isAcceptableOrUnknown(data['loan_id']!, _loanIdMeta),
+      );
+    }
+    if (data.containsKey('party_id')) {
+      context.handle(
+        _partyIdMeta,
+        partyId.isAcceptableOrUnknown(data['party_id']!, _partyIdMeta),
       );
     }
     if (data.containsKey('confidence')) {
@@ -8221,6 +8290,10 @@ class $SmsMessagesTable extends SmsMessages
         DriftSqlType.string,
         data['${effectivePrefix}loan_id'],
       ),
+      partyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}party_id'],
+      ),
       confidence: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}confidence'],
@@ -8285,6 +8358,7 @@ class SmsRow extends DataClass implements Insertable<SmsRow> {
   final String? incomeTypeId;
   final String? counterAccountId;
   final String? loanId;
+  final String? partyId;
   final String confidence;
   final String reason;
   final String suggestedBy;
@@ -8313,6 +8387,7 @@ class SmsRow extends DataClass implements Insertable<SmsRow> {
     this.incomeTypeId,
     this.counterAccountId,
     this.loanId,
+    this.partyId,
     required this.confidence,
     required this.reason,
     required this.suggestedBy,
@@ -8355,6 +8430,9 @@ class SmsRow extends DataClass implements Insertable<SmsRow> {
     }
     if (!nullToAbsent || loanId != null) {
       map['loan_id'] = Variable<String>(loanId);
+    }
+    if (!nullToAbsent || partyId != null) {
+      map['party_id'] = Variable<String>(partyId);
     }
     map['confidence'] = Variable<String>(confidence);
     map['reason'] = Variable<String>(reason);
@@ -8406,6 +8484,9 @@ class SmsRow extends DataClass implements Insertable<SmsRow> {
       loanId: loanId == null && nullToAbsent
           ? const Value.absent()
           : Value(loanId),
+      partyId: partyId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(partyId),
       confidence: Value(confidence),
       reason: Value(reason),
       suggestedBy: Value(suggestedBy),
@@ -8448,6 +8529,7 @@ class SmsRow extends DataClass implements Insertable<SmsRow> {
       incomeTypeId: serializer.fromJson<String?>(json['incomeTypeId']),
       counterAccountId: serializer.fromJson<String?>(json['counterAccountId']),
       loanId: serializer.fromJson<String?>(json['loanId']),
+      partyId: serializer.fromJson<String?>(json['partyId']),
       confidence: serializer.fromJson<String>(json['confidence']),
       reason: serializer.fromJson<String>(json['reason']),
       suggestedBy: serializer.fromJson<String>(json['suggestedBy']),
@@ -8481,6 +8563,7 @@ class SmsRow extends DataClass implements Insertable<SmsRow> {
       'incomeTypeId': serializer.toJson<String?>(incomeTypeId),
       'counterAccountId': serializer.toJson<String?>(counterAccountId),
       'loanId': serializer.toJson<String?>(loanId),
+      'partyId': serializer.toJson<String?>(partyId),
       'confidence': serializer.toJson<String>(confidence),
       'reason': serializer.toJson<String>(reason),
       'suggestedBy': serializer.toJson<String>(suggestedBy),
@@ -8512,6 +8595,7 @@ class SmsRow extends DataClass implements Insertable<SmsRow> {
     Value<String?> incomeTypeId = const Value.absent(),
     Value<String?> counterAccountId = const Value.absent(),
     Value<String?> loanId = const Value.absent(),
+    Value<String?> partyId = const Value.absent(),
     String? confidence,
     String? reason,
     String? suggestedBy,
@@ -8542,6 +8626,7 @@ class SmsRow extends DataClass implements Insertable<SmsRow> {
         ? counterAccountId.value
         : this.counterAccountId,
     loanId: loanId.present ? loanId.value : this.loanId,
+    partyId: partyId.present ? partyId.value : this.partyId,
     confidence: confidence ?? this.confidence,
     reason: reason ?? this.reason,
     suggestedBy: suggestedBy ?? this.suggestedBy,
@@ -8588,6 +8673,7 @@ class SmsRow extends DataClass implements Insertable<SmsRow> {
           ? data.counterAccountId.value
           : this.counterAccountId,
       loanId: data.loanId.present ? data.loanId.value : this.loanId,
+      partyId: data.partyId.present ? data.partyId.value : this.partyId,
       confidence: data.confidence.present
           ? data.confidence.value
           : this.confidence,
@@ -8631,6 +8717,7 @@ class SmsRow extends DataClass implements Insertable<SmsRow> {
           ..write('incomeTypeId: $incomeTypeId, ')
           ..write('counterAccountId: $counterAccountId, ')
           ..write('loanId: $loanId, ')
+          ..write('partyId: $partyId, ')
           ..write('confidence: $confidence, ')
           ..write('reason: $reason, ')
           ..write('suggestedBy: $suggestedBy, ')
@@ -8664,6 +8751,7 @@ class SmsRow extends DataClass implements Insertable<SmsRow> {
     incomeTypeId,
     counterAccountId,
     loanId,
+    partyId,
     confidence,
     reason,
     suggestedBy,
@@ -8696,6 +8784,7 @@ class SmsRow extends DataClass implements Insertable<SmsRow> {
           other.incomeTypeId == this.incomeTypeId &&
           other.counterAccountId == this.counterAccountId &&
           other.loanId == this.loanId &&
+          other.partyId == this.partyId &&
           other.confidence == this.confidence &&
           other.reason == this.reason &&
           other.suggestedBy == this.suggestedBy &&
@@ -8726,6 +8815,7 @@ class SmsMessagesCompanion extends UpdateCompanion<SmsRow> {
   final Value<String?> incomeTypeId;
   final Value<String?> counterAccountId;
   final Value<String?> loanId;
+  final Value<String?> partyId;
   final Value<String> confidence;
   final Value<String> reason;
   final Value<String> suggestedBy;
@@ -8755,6 +8845,7 @@ class SmsMessagesCompanion extends UpdateCompanion<SmsRow> {
     this.incomeTypeId = const Value.absent(),
     this.counterAccountId = const Value.absent(),
     this.loanId = const Value.absent(),
+    this.partyId = const Value.absent(),
     this.confidence = const Value.absent(),
     this.reason = const Value.absent(),
     this.suggestedBy = const Value.absent(),
@@ -8785,6 +8876,7 @@ class SmsMessagesCompanion extends UpdateCompanion<SmsRow> {
     this.incomeTypeId = const Value.absent(),
     this.counterAccountId = const Value.absent(),
     this.loanId = const Value.absent(),
+    this.partyId = const Value.absent(),
     required String confidence,
     required String reason,
     required String suggestedBy,
@@ -8830,6 +8922,7 @@ class SmsMessagesCompanion extends UpdateCompanion<SmsRow> {
     Expression<String>? incomeTypeId,
     Expression<String>? counterAccountId,
     Expression<String>? loanId,
+    Expression<String>? partyId,
     Expression<String>? confidence,
     Expression<String>? reason,
     Expression<String>? suggestedBy,
@@ -8860,6 +8953,7 @@ class SmsMessagesCompanion extends UpdateCompanion<SmsRow> {
       if (incomeTypeId != null) 'income_type_id': incomeTypeId,
       if (counterAccountId != null) 'counter_account_id': counterAccountId,
       if (loanId != null) 'loan_id': loanId,
+      if (partyId != null) 'party_id': partyId,
       if (confidence != null) 'confidence': confidence,
       if (reason != null) 'reason': reason,
       if (suggestedBy != null) 'suggested_by': suggestedBy,
@@ -8892,6 +8986,7 @@ class SmsMessagesCompanion extends UpdateCompanion<SmsRow> {
     Value<String?>? incomeTypeId,
     Value<String?>? counterAccountId,
     Value<String?>? loanId,
+    Value<String?>? partyId,
     Value<String>? confidence,
     Value<String>? reason,
     Value<String>? suggestedBy,
@@ -8922,6 +9017,7 @@ class SmsMessagesCompanion extends UpdateCompanion<SmsRow> {
       incomeTypeId: incomeTypeId ?? this.incomeTypeId,
       counterAccountId: counterAccountId ?? this.counterAccountId,
       loanId: loanId ?? this.loanId,
+      partyId: partyId ?? this.partyId,
       confidence: confidence ?? this.confidence,
       reason: reason ?? this.reason,
       suggestedBy: suggestedBy ?? this.suggestedBy,
@@ -8992,6 +9088,9 @@ class SmsMessagesCompanion extends UpdateCompanion<SmsRow> {
     if (loanId.present) {
       map['loan_id'] = Variable<String>(loanId.value);
     }
+    if (partyId.present) {
+      map['party_id'] = Variable<String>(partyId.value);
+    }
     if (confidence.present) {
       map['confidence'] = Variable<String>(confidence.value);
     }
@@ -9046,6 +9145,7 @@ class SmsMessagesCompanion extends UpdateCompanion<SmsRow> {
           ..write('incomeTypeId: $incomeTypeId, ')
           ..write('counterAccountId: $counterAccountId, ')
           ..write('loanId: $loanId, ')
+          ..write('partyId: $partyId, ')
           ..write('confidence: $confidence, ')
           ..write('reason: $reason, ')
           ..write('suggestedBy: $suggestedBy, ')
@@ -9581,6 +9681,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<String?> categoryId,
       Value<String?> incomeTypeId,
       Value<String?> loanId,
+      Value<String?> partyId,
       required int amount,
       Value<int?> principal,
       Value<int?> interest,
@@ -9605,6 +9706,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<String?> categoryId,
       Value<String?> incomeTypeId,
       Value<String?> loanId,
+      Value<String?> partyId,
       Value<int> amount,
       Value<int?> principal,
       Value<int?> interest,
@@ -9707,6 +9809,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<String> get loanId => $composableBuilder(
     column: $table.loanId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get partyId => $composableBuilder(
+    column: $table.partyId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9856,6 +9963,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get partyId => $composableBuilder(
+    column: $table.partyId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get amount => $composableBuilder(
     column: $table.amount,
     builder: (column) => ColumnOrderings(column),
@@ -9988,6 +10100,9 @@ class $$TransactionsTableAnnotationComposer
   GeneratedColumn<String> get loanId =>
       $composableBuilder(column: $table.loanId, builder: (column) => column);
 
+  GeneratedColumn<String> get partyId =>
+      $composableBuilder(column: $table.partyId, builder: (column) => column);
+
   GeneratedColumn<int> get amount =>
       $composableBuilder(column: $table.amount, builder: (column) => column);
 
@@ -10101,6 +10216,7 @@ class $$TransactionsTableTableManager
                 Value<String?> categoryId = const Value.absent(),
                 Value<String?> incomeTypeId = const Value.absent(),
                 Value<String?> loanId = const Value.absent(),
+                Value<String?> partyId = const Value.absent(),
                 Value<int> amount = const Value.absent(),
                 Value<int?> principal = const Value.absent(),
                 Value<int?> interest = const Value.absent(),
@@ -10123,6 +10239,7 @@ class $$TransactionsTableTableManager
                 categoryId: categoryId,
                 incomeTypeId: incomeTypeId,
                 loanId: loanId,
+                partyId: partyId,
                 amount: amount,
                 principal: principal,
                 interest: interest,
@@ -10147,6 +10264,7 @@ class $$TransactionsTableTableManager
                 Value<String?> categoryId = const Value.absent(),
                 Value<String?> incomeTypeId = const Value.absent(),
                 Value<String?> loanId = const Value.absent(),
+                Value<String?> partyId = const Value.absent(),
                 required int amount,
                 Value<int?> principal = const Value.absent(),
                 Value<int?> interest = const Value.absent(),
@@ -10169,6 +10287,7 @@ class $$TransactionsTableTableManager
                 categoryId: categoryId,
                 incomeTypeId: incomeTypeId,
                 loanId: loanId,
+                partyId: partyId,
                 amount: amount,
                 principal: principal,
                 interest: interest,
@@ -13044,6 +13163,7 @@ typedef $$SmsMessagesTableCreateCompanionBuilder =
       Value<String?> incomeTypeId,
       Value<String?> counterAccountId,
       Value<String?> loanId,
+      Value<String?> partyId,
       required String confidence,
       required String reason,
       required String suggestedBy,
@@ -13075,6 +13195,7 @@ typedef $$SmsMessagesTableUpdateCompanionBuilder =
       Value<String?> incomeTypeId,
       Value<String?> counterAccountId,
       Value<String?> loanId,
+      Value<String?> partyId,
       Value<String> confidence,
       Value<String> reason,
       Value<String> suggestedBy,
@@ -13183,6 +13304,11 @@ class $$SmsMessagesTableFilterComposer
 
   ColumnFilters<String> get loanId => $composableBuilder(
     column: $table.loanId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get partyId => $composableBuilder(
+    column: $table.partyId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13331,6 +13457,11 @@ class $$SmsMessagesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get partyId => $composableBuilder(
+    column: $table.partyId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get confidence => $composableBuilder(
     column: $table.confidence,
     builder: (column) => ColumnOrderings(column),
@@ -13452,6 +13583,9 @@ class $$SmsMessagesTableAnnotationComposer
   GeneratedColumn<String> get loanId =>
       $composableBuilder(column: $table.loanId, builder: (column) => column);
 
+  GeneratedColumn<String> get partyId =>
+      $composableBuilder(column: $table.partyId, builder: (column) => column);
+
   GeneratedColumn<String> get confidence => $composableBuilder(
     column: $table.confidence,
     builder: (column) => column,
@@ -13536,6 +13670,7 @@ class $$SmsMessagesTableTableManager
                 Value<String?> incomeTypeId = const Value.absent(),
                 Value<String?> counterAccountId = const Value.absent(),
                 Value<String?> loanId = const Value.absent(),
+                Value<String?> partyId = const Value.absent(),
                 Value<String> confidence = const Value.absent(),
                 Value<String> reason = const Value.absent(),
                 Value<String> suggestedBy = const Value.absent(),
@@ -13565,6 +13700,7 @@ class $$SmsMessagesTableTableManager
                 incomeTypeId: incomeTypeId,
                 counterAccountId: counterAccountId,
                 loanId: loanId,
+                partyId: partyId,
                 confidence: confidence,
                 reason: reason,
                 suggestedBy: suggestedBy,
@@ -13596,6 +13732,7 @@ class $$SmsMessagesTableTableManager
                 Value<String?> incomeTypeId = const Value.absent(),
                 Value<String?> counterAccountId = const Value.absent(),
                 Value<String?> loanId = const Value.absent(),
+                Value<String?> partyId = const Value.absent(),
                 required String confidence,
                 required String reason,
                 required String suggestedBy,
@@ -13625,6 +13762,7 @@ class $$SmsMessagesTableTableManager
                 incomeTypeId: incomeTypeId,
                 counterAccountId: counterAccountId,
                 loanId: loanId,
+                partyId: partyId,
                 confidence: confidence,
                 reason: reason,
                 suggestedBy: suggestedBy,

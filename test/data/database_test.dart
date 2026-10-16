@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull;
 import 'dart:io';
 
 import 'package:drift/native.dart' show NativeDatabase, SqliteException;
@@ -19,9 +19,9 @@ AccountsCompanion _account(String id) => AccountsCompanion.insert(
     );
 
 void main() {
-  test('creates every table at schema version 3', () async {
+  test('creates every table at schema version 4', () async {
     final db = openTestDb();
-    expect(db.schemaVersion, 3);
+    expect(db.schemaVersion, 4);
     final names = (await db.customSelect("SELECT name FROM sqlite_master WHERE type = 'table'").get())
         .map((r) => r.read<String>('name'))
         .toSet();
@@ -63,6 +63,7 @@ void main() {
     await db.customStatement('DROP TABLE goals');
     await db.customStatement('DROP TABLE settings');
     await db.customStatement('DROP TABLE sms_messages');
+    await db.customStatement('ALTER TABLE transactions DROP COLUMN party_id');
     await db.customStatement('PRAGMA user_version = 1');
     await db.close();
 
@@ -82,6 +83,7 @@ void main() {
     var db = AppDatabase(NativeDatabase(file));
     await db.into(db.accounts).insert(_account('cash'));
     await db.customStatement('DROP TABLE sms_messages');
+    await db.customStatement('ALTER TABLE transactions DROP COLUMN party_id');
     await db.customStatement('PRAGMA user_version = 2');
     await db.close();
 
@@ -113,5 +115,31 @@ void main() {
     expect(await desc('b5'), startsWith('Sender eSewa, eSewa_Alert'));
     expect(await desc('b8'), startsWith('Sender NIMB, NIMB_ALERT'));
     expect(await (db.select(db.configItems)..where((c) => c.id.equals('b8'))).get(), hasLength(1));
+  });
+
+  test('a version-3 database upgrades to v4 (parties) and keeps its transactions and SMS', () async {
+    final dir = Directory.systemTemp.createTempSync('paisa_mig4');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final file = File('${dir.path}/paisa.sqlite');
+    var db = AppDatabase(NativeDatabase(file));
+    await db.into(db.accounts).insert(_account('cash'));
+    await db.into(db.transactions).insert(TransactionsCompanion.insert(
+          id: 't1', date: '2026-10-14', time: '09:00', title: 'Tea', type: 'expense',
+          accountId: 'cash', amount: 5000, status: 'posted', source: 'manual',
+          createdAt: '2026-10-14T09:00:00', updatedAt: '2026-10-14T09:00:00',
+        ));
+    await db.customStatement('ALTER TABLE transactions DROP COLUMN party_id');
+    await db.customStatement('ALTER TABLE sms_messages DROP COLUMN party_id');
+    await db.customStatement('PRAGMA user_version = 3');
+    await db.close();
+
+    db = AppDatabase(NativeDatabase(file));
+    addTearDown(db.close);
+    final tx = await db.select(db.transactions).getSingle();
+    expect(tx.title, 'Tea');
+    expect(tx.partyId, isNull);
+    await (db.update(db.transactions)..where((t) => t.id.equals('t1'))).write(const TransactionsCompanion(partyId: Value('p1')));
+    expect((await db.select(db.transactions).getSingle()).partyId, 'p1');
+    expect(await db.select(db.smsMessages).get(), isEmpty);
   });
 }

@@ -19,6 +19,7 @@ import '../../shell/detail_page.dart';
 import '../accounts/add_account_sheet.dart';
 import '../../theme.dart';
 import '../../typography.dart';
+import '../../txn/party_field.dart';
 import 'entry_data.dart';
 
 enum _SalaryMode { takeHome, gross }
@@ -45,6 +46,7 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
   final _desc = TextEditingController();
   late String _typeId = widget.typeId ?? (widget.accountId == null ? 'salary' : 'other_inc');
   String? _accountId;
+  String? _partyId;
   _SalaryMode _mode = _SalaryMode.takeHome;
   bool _pending = false;
   late IsoDate _date = ref.read(clockProvider).today();
@@ -177,6 +179,8 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
         ),
       ]),
       gap,
+      PartyField(label: partyLabel(TxType.income), value: _partyId, onChanged: (id) => setState(() => _partyId = id)),
+      gap,
       PaisaTextField(label: 'Description (optional)', controller: _desc, hint: 'e.g. Asoj salary'),
       if (_pending) ...[
         const SizedBox(height: 10),
@@ -282,6 +286,7 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
       type: TxType.income,
       accountId: _accountFor(d, choices),
       incomeTypeId: _typeId,
+      partyId: _partyId,
       amount: amount,
       status: _pending ? TxStatus.pending : TxStatus.posted,
     );

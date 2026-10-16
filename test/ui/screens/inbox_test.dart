@@ -1,8 +1,10 @@
-import 'package:flutter/widgets.dart' show AppLifecycleState;
+import 'package:flutter/widgets.dart' show AppLifecycleState, ValueKey;
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paisa/data/audit_log.dart';
 import 'package:paisa/data/db/database.dart';
+import 'package:paisa/data/records.dart';
+import 'package:paisa/data/repos/catalog_repo.dart';
 import 'package:paisa/data/repos/sms_repo.dart';
 import 'package:paisa/data/repos/transaction_repo.dart';
 import 'dart:convert';
@@ -256,6 +258,61 @@ void main() {
     expect(await balanceOf(db, 'nabil'), fromRupees(142350));
     await tester.scrollUntilVisible(find.text('Suggested by AI · may be wrong'), -200, scrollable: pageScrollable);
     expect(find.text('Suggested by AI · may be wrong'), findsOneWidget);
+    await tester.pump(kUndoWindow);
+  });
+
+  Future<void> openPartyDropdown(WidgetTester tester) async {
+    await tester.ensureVisible(find.byKey(const ValueKey('party-dropdown')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('party-dropdown')));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('Edit details: "Paid to" is a drop-down of parties; Add new… adds one and picks it', (tester) async {
+    final (db, repo) = await open(tester);
+    final m = await add(tester, repo, bhatBhateni, DateTime(2026, 10, 14, 8, 41));
+    await tester.tap(find.text('Bhat-Bhateni Supermarket Maharajgunj'));
+    await tester.pumpAndSettle();
+    await scrollAndTap(tester, find.text('Paid to'));
+    expect(find.text('Edit details'), findsOneWidget);
+    await openPartyDropdown(tester);
+    await tester.tap(find.text('Add new…').last);
+    await tester.pumpAndSettle();
+    expect(find.text('New party'), findsOneWidget);
+    await tester.enterText(fieldLabelled('Name'), 'Bhatbhateni Store');
+    await tester.tap(find.widgetWithText(PaisaButton, 'Add'));
+    await tester.pumpAndSettle();
+    expect(find.text('Bhatbhateni Store'), findsOneWidget, reason: 'the new party is selected in the drop-down');
+    await tester.tap(find.widgetWithText(PaisaButton, 'Save details'));
+    await tester.pumpAndSettle();
+    final party = (await (db.select(db.configItems)..where((c) => c.name.equals('Bhatbhateni Store'))).getSingle());
+    expect(party.listKey, ConfigList.parties);
+    expect((await repo.get(m.id)).partyId, party.id);
+    await scrollPageTo(tester, find.text('Paid to'));
+    expect(find.text('Bhatbhateni Store'), findsOneWidget);
+    await tester.pump(kUndoWindow);
+  });
+
+  testWidgets('a party named in the SMS is picked for you, and can be cleared', (tester) async {
+    final (db, repo) = await open(tester);
+    final audit = AuditLog(db, clock: testClock, newId: counterIds('t-party-audit'));
+    final bb = await CatalogRepository(db, audit, newId: counterIds('party')).addConfigItem(ConfigList.parties, 'Bhat-Bhateni', '');
+    final m = await add(tester, repo, bhatBhateni, DateTime(2026, 10, 14, 8, 41));
+    await tester.tap(find.text('Bhat-Bhateni Supermarket Maharajgunj'));
+    await tester.pumpAndSettle();
+    await scrollAndTap(tester, find.text('Paid to'));
+    expect(find.descendant(of: find.byKey(const ValueKey('party-dropdown')), matching: find.text('Bhat-Bhateni')), findsOneWidget);
+    await tester.tap(find.widgetWithText(PaisaButton, 'Save details'));
+    await tester.pumpAndSettle();
+    expect((await repo.get(m.id)).partyId, bb);
+
+    await scrollAndTap(tester, find.text('Paid to'));
+    await openPartyDropdown(tester);
+    await tester.tap(find.text('Not set').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(PaisaButton, 'Save details'));
+    await tester.pumpAndSettle();
+    expect((await repo.get(m.id)).partyId, isNull);
     await tester.pump(kUndoWindow);
   });
 }

@@ -57,6 +57,7 @@ class SmsEdit {
     required this.accountId,
     this.counterAccountId,
     this.loanId,
+    this.partyId,
     required this.date,
     required this.time,
     required this.merchant,
@@ -67,11 +68,18 @@ class SmsEdit {
   final String accountId;
   final String? counterAccountId;
   final String? loanId;
+
+  /// Who paid or was paid; only kept for income, expense and refund.
+  final String? partyId;
   final IsoDate date;
   final String time;
   final String merchant;
   final String? description;
 }
+
+/// Types that have someone on the other side: who paid (income, refund)
+/// or who was paid (expense).
+bool hasParty(TxType t) => t == TxType.income || t == TxType.expense || t == TxType.refund;
 
 /// The Transaction Inbox (spec §6). Messages are suggestions; only
 /// [confirm] (or an account's auto-update rule) changes balances.
@@ -317,6 +325,7 @@ class SmsRepository {
       categoryId: isExpenseLike ? m.categoryId : null,
       incomeTypeId: m.type == TxType.income ? m.incomeTypeId : null,
       loanId: needsLoan ? loan!.id : null,
+      partyId: hasParty(m.type) ? m.partyId : null,
       amount: m.amount,
       principal: split?.principal,
       interest: split?.interest,
@@ -389,6 +398,7 @@ class SmsRepository {
         incomeTypeId: m.incomeTypeId,
         counterAccountId: e.counterAccountId,
         loanId: e.loanId,
+        partyId: hasParty(m.type) ? e.partyId : null,
         confidence: m.confidence,
         reason: m.reason,
         suggestedBy: m.suggestedBy,

@@ -27,6 +27,7 @@ class SmsMessage {
     this.incomeTypeId,
     this.counterAccountId,
     this.loanId,
+    this.partyId,
     required this.confidence,
     required this.reason,
     this.suggestedBy = SmsSuggestedBy.rules,
@@ -60,6 +61,9 @@ class SmsMessage {
   final String? incomeTypeId;
   final String? counterAccountId;
   final String? loanId;
+
+  /// Who paid or was paid (Settings → Parties).
+  final String? partyId;
   final SmsConfidence confidence;
   final String reason;
   final SmsSuggestedBy suggestedBy;
@@ -83,6 +87,7 @@ class SmsMessage {
     String? incomeTypeId,
     String? counterAccountId,
     String? loanId,
+    String? partyId,
     SmsConfidence? confidence,
     String? reason,
     SmsSuggestedBy? suggestedBy,
@@ -93,6 +98,7 @@ class SmsMessage {
     String? description,
     bool clearCounter = false,
     bool clearLoan = false,
+    bool clearParty = false,
     bool clearTransaction = false,
     bool clearDuplicate = false,
   }) =>
@@ -115,6 +121,7 @@ class SmsMessage {
         incomeTypeId: incomeTypeId ?? this.incomeTypeId,
         counterAccountId: clearCounter ? null : counterAccountId ?? this.counterAccountId,
         loanId: clearLoan ? null : loanId ?? this.loanId,
+        partyId: clearParty ? null : partyId ?? this.partyId,
         confidence: confidence ?? this.confidence,
         reason: reason ?? this.reason,
         suggestedBy: suggestedBy ?? this.suggestedBy,

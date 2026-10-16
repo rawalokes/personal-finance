@@ -37,6 +37,9 @@ abstract final class ConfigList {
   static const contributionTypes = 'contribution_types';
   static const classificationRules = 'classification_rules';
   static const banks = 'banks';
+
+  /// Who pays you and who you pay, e.g. Office, Smartloan, Landlord.
+  static const parties = 'parties';
 }
 
 class ConfigItem {

@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/records.dart';
 import '../../finance/finance.dart';
 import '../../store/data_providers.dart';
 import '../components/tone.dart';
 import '../icons/paisa_icons.dart';
+import 'party_field.dart';
 
 /// Name, icon and one-line meaning of each transaction type (mockup `TYPES`).
 class TxTypeInfo {
@@ -53,23 +55,28 @@ class TxnLookup {
     required Iterable<Account> accounts,
     required Iterable<ExpenseCategory> categories,
     required Iterable<IncomeType> incomeTypes,
+    Iterable<ConfigItem> parties = const [],
   })  : accounts = {for (final a in accounts) a.id: a},
         categories = {for (final c in categories) c.id: c},
-        incomeTypes = {for (final t in incomeTypes) t.id: t};
+        incomeTypes = {for (final t in incomeTypes) t.id: t},
+        parties = {for (final p in parties) p.id: p};
 
   final Map<String, Account> accounts;
   final Map<String, ExpenseCategory> categories;
   final Map<String, IncomeType> incomeTypes;
+  final Map<String, ConfigItem> parties;
 
   String accountShort(String? id) => accounts[id]?.shortName ?? '—';
   String categoryName(String? id) => categories[id]?.name ?? 'Uncategorised';
   String incomeTypeName(String? id) => incomeTypes[id]?.name ?? 'Income';
+  String? partyName(String? id) => parties[id]?.name;
 }
 
 final txnLookupProvider = FutureProvider<TxnLookup>((ref) async => TxnLookup(
       accounts: await ref.watch(accountsProvider.future),
       categories: await ref.watch(categoriesProvider.future),
       incomeTypes: await ref.watch(incomeTypesProvider.future),
+      parties: await ref.watch(configListProvider(ConfigList.parties).future),
     ));
 
 enum AmountTone { positive, ink, muted }
@@ -165,6 +172,7 @@ List<(String, String)> txnDetailRows(Txn t, TxnLookup lookup, MoneyFormat money)
         (t.direction == Direction.credit ? 'From' : 'To', lookup.accountShort(t.counterAccountId)),
       if (t.type == TxType.expense || t.type == TxType.refund) ('Category', lookup.categoryName(t.categoryId)),
       if (t.type == TxType.income) ('Income type', lookup.incomeTypeName(t.incomeTypeId)),
+      if (lookup.partyName(t.partyId) case final party?) (partyLabel(t.type), party),
       if (t.type == TxType.loanRepayment) ...[
         ('Principal', money.npr(t.principal ?? 0)),
         ('Interest', money.npr(t.interest ?? 0)),

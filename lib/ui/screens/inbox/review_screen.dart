@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/records.dart';
+import '../../../data/repos/sms_repo.dart';
 import '../../../finance/finance.dart';
 import '../../../sms/sms_models.dart';
 import '../../../sms/treatment.dart';
@@ -21,6 +23,7 @@ import '../../sms/sms_presentation.dart';
 import '../../theme.dart';
 import '../../typography.dart';
 import '../../txn/txn_presentation.dart';
+import '../../txn/party_field.dart';
 import 'ai_sms_help.dart';
 
 /// Review one detected message (spec §7 Review detail): the suggestion, why,
@@ -46,6 +49,7 @@ class ReviewScreen extends ConsumerWidget {
     final accounts = ref.watch(accountsProvider).value ?? const <Account>[];
     final loans = ref.watch(loansProvider).value ?? const <Loan>[];
     final categories = ref.watch(categoriesProvider).value ?? const <ExpenseCategory>[];
+    final parties = ref.watch(configListProvider(ConfigList.parties)).value ?? const <ConfigItem>[];
     final incomeTypes = ref.watch(incomeTypesProvider).value ?? const <IncomeType>[];
     final month = ref.watch(monthTotalsProvider).value;
     final today = ref.watch(clockProvider).today();
@@ -136,6 +140,14 @@ class ReviewScreen extends ConsumerWidget {
             trailing: m.pending && editableCat ? Text('Change', style: PaisaText.buttonSmall.copyWith(color: c.primary)) : null,
             onTap: m.pending && editableCat ? () => showSmsCategorySheet(context, m) : null,
           ),
+          if (hasParty(m.type))
+            ListRow(
+              title: partyLabel(m.type),
+              subtitle: parties.where((p) => p.id == m.partyId).firstOrNull?.name ?? 'Not set',
+              leading: PaisaIcon(PaisaIcons.user, size: 20, color: c.ink2),
+              trailing: m.pending ? Text('Change', style: PaisaText.buttonSmall.copyWith(color: c.primary)) : null,
+              onTap: m.pending ? () => showSmsEditSheet(context, m) : null,
+            ),
         ]),
         const SizedBox(height: 12),
         KeyValueCard(rows: [

@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:paisa/data/audit_log.dart';
 import 'package:paisa/data/db/database.dart';
 import 'package:paisa/data/mappers.dart';
+import 'package:paisa/data/records.dart';
+import 'package:paisa/data/repos/catalog_repo.dart';
 import 'package:paisa/data/repos/sms_repo.dart';
 import 'package:paisa/data/repos/transaction_repo.dart';
 import 'package:paisa/finance/finance.dart';
@@ -256,5 +258,23 @@ void main() {
       receivedAt: DateTime(2026, 10, 14, 9),
     );
     expect(r.message!.accountId, 'gibl');
+  });
+
+  test('the party picked in Edit details is saved on the transaction; a transfer has none', () async {
+    final catalog = CatalogRepository(db, audit, newId: counterIds('party'));
+    final smartloan = await catalog.addConfigItem(ConfigList.parties, 'Smartloan', '');
+    final r = await sms.ingest(sender: 'NABIL_ALERT', body: _salary, receivedAt: DateTime(2026, 10, 14, 9, 12));
+    final id = r.message!.id;
+    await sms.edit(id, SmsEdit(amount: fromRupees(92789), accountId: 'nabil', partyId: smartloan, date: '2026-10-14', time: '09:12', merchant: 'Salary'));
+    expect((await only()).partyId, smartloan);
+    await sms.confirm(id);
+    final txId = (await only()).transactionId!;
+    final tx = txnFromRow(await (db.select(db.transactions)..where((t) => t.id.equals(txId))).getSingle());
+    expect(tx.partyId, smartloan);
+
+    final t = await sms.ingest(sender: 'NABIL_ALERT', body: _transfer, receivedAt: DateTime(2026, 10, 13, 19, 20));
+    await sms.edit(t.message!.id,
+        SmsEdit(amount: fromRupees(15000), accountId: 'nabil', counterAccountId: 'nic', partyId: smartloan, date: '2026-10-13', time: '19:20', merchant: 'Self'));
+    expect((await sms.get(t.message!.id)).partyId, isNull, reason: 'money between own accounts has no payer or payee');
   });
 }

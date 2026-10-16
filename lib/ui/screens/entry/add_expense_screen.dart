@@ -21,6 +21,7 @@ import '../../shell/detail_page.dart';
 import '../accounts/add_account_sheet.dart';
 import '../../theme.dart';
 import '../../typography.dart';
+import '../../txn/party_field.dart';
 import 'entry_data.dart';
 
 /// Add expense (spec §7). Opened from Home / Activity, or an account's
@@ -38,6 +39,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
   final _merchant = TextEditingController();
   String _categoryId = 'groceries';
   String? _accountId;
+  String? _partyId;
   late IsoDate _date = ref.read(clockProvider).today();
   bool _repeat = false;
   String? _amountError;
@@ -169,6 +171,8 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
         Expanded(child: PaisaTextField(label: 'Merchant', controller: _merchant, hint: 'e.g. Bhat-Bhateni')),
       ]),
       gap,
+      PartyField(label: partyLabel(TxType.expense), value: _partyId, onChanged: (id) => setState(() => _partyId = id)),
+      gap,
       PaisaCard(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: ToggleRow(
@@ -203,6 +207,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
       type: TxType.expense,
       accountId: accountId,
       categoryId: cat.id,
+      partyId: _partyId,
       amount: amount,
     );
     final toast = ref.read(toastProvider.notifier);

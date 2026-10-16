@@ -46,6 +46,9 @@ class Transactions extends Table {
   TextColumn get categoryId => text().nullable()();
   TextColumn get incomeTypeId => text().nullable()();
   TextColumn get loanId => text().nullable()();
+
+  /// Who paid or was paid: a ConfigItem in the 'parties' list. v4.
+  TextColumn get partyId => text().nullable()();
   IntColumn get amount => integer()();
   IntColumn get principal => integer().nullable()();
   IntColumn get interest => integer().nullable()();
@@ -255,6 +258,7 @@ class SmsMessages extends Table {
   TextColumn get incomeTypeId => text().nullable()();
   TextColumn get counterAccountId => text().nullable()();
   TextColumn get loanId => text().nullable()();
+  TextColumn get partyId => text().nullable()();
   TextColumn get confidence => text()();
   TextColumn get reason => text()();
   TextColumn get suggestedBy => text()();

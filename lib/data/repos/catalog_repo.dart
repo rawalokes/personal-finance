@@ -178,13 +178,32 @@ class CatalogRepository {
         return id;
       });
 
-  Future<void> addConfigItem(String listKey, String name, String description) => _db.transaction(() async {
-        final count = (await (_db.select(_db.configItems)..where((c) => c.listKey.equals(listKey))).get()).length;
+  /// Adds an entry and returns its id. Names are unique within a list
+  /// (case-insensitive).
+  Future<String> addConfigItem(String listKey, String name, String description) => _db.transaction(() async {
+        final items = await (_db.select(_db.configItems)..where((c) => c.listKey.equals(listKey))).get();
+        final trimmed = name.trim();
+        if (items.any((c) => c.name.toLowerCase() == trimmed.toLowerCase())) throw DuplicateName(trimmed);
+        final id = _newId();
         await _db.into(_db.configItems).insert(configItemToCompanion(
-              ConfigItem(id: _newId(), listKey: listKey, name: name.trim(), description: description.trim()),
-              sortOrder: count,
+              ConfigItem(id: id, listKey: listKey, name: trimmed, description: description.trim()),
+              sortOrder: items.length,
             ));
-        await _log('config.add', 'config', null, 'Added ${name.trim()}');
+        await _log('config.add', 'config', id, 'Added $trimmed');
+        return id;
+      });
+
+  /// Renames an entry or changes its description.
+  Future<void> editConfigItem(String id, String name, String description) => _db.transaction(() async {
+        final row = await (_db.select(_db.configItems)..where((c) => c.id.equals(id))).getSingle();
+        final trimmed = name.trim();
+        final others = await (_db.select(_db.configItems)
+              ..where((c) => c.listKey.equals(row.listKey) & c.id.equals(id).not()))
+            .get();
+        if (others.any((c) => c.name.toLowerCase() == trimmed.toLowerCase())) throw DuplicateName(trimmed);
+        await (_db.update(_db.configItems)..where((c) => c.id.equals(id)))
+            .write(ConfigItemsCompanion(name: Value(trimmed), description: Value(description.trim())));
+        await _log('config.edit', 'config', id, row.name == trimmed ? 'Edited $trimmed' : 'Renamed ${row.name} to $trimmed');
       });
 
   Future<void> setConfigActive(String id, bool active) => _db.transaction(() async {

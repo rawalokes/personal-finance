@@ -12,9 +12,7 @@ import '../../components/indicators.dart';
 import '../../components/inputs.dart';
 import '../../components/layout.dart';
 import '../../components/money_text.dart';
-import '../../components/sheet.dart';
 import '../../components/surfaces.dart';
-import '../../components/text_field.dart';
 import '../../components/toast.dart';
 import '../../components/tone.dart';
 import '../../icons/paisa_icons.dart';
@@ -22,6 +20,7 @@ import '../../shell/detail_page.dart';
 import '../../theme.dart';
 import '../../txn/txn_presentation.dart';
 import '../../typography.dart';
+import 'config_item_sheet.dart';
 
 /// Settings → Currency & date & display.
 class PreferencesScreen extends ConsumerWidget {
@@ -86,6 +85,10 @@ const _configMeta = {
     'Rules that suggest a type and category for detected SMS. Suggestions always wait for your approval.'
   ),
   ConfigList.banks: ('Banks & wallets', 'Only messages from these senders are read. Disable a sender to stop detection.'),
+  ConfigList.parties: (
+    'Parties',
+    'Who pays you and who you pay. Pick one as “Received from” or “Paid to” on a transaction. Tap a name to rename it.'
+  ),
 };
 
 /// One of the generic configurable lists (spec §4 ConfigItem).
@@ -99,12 +102,20 @@ class ConfigListScreen extends ConsumerWidget {
     final c = context.colors;
     return DetailPage(
       title: title,
-      actions: [PaisaLink(label: 'New', onPressed: () => _showAdd(context))],
+      actions: [
+        PaisaLink(
+          label: 'New',
+          onPressed: () => showConfigItemSheet(context, listKey, title: listKey == ConfigList.parties ? 'New party' : null),
+        ),
+      ],
       body: AsyncView(
         value: ref.watch(configListProvider(listKey)),
         data: (items) => ListView(padding: const EdgeInsets.fromLTRB(16, 0, 16, 28), children: [
           Text(blurb, style: PaisaText.sub.copyWith(color: c.ink3)),
           const SizedBox(height: 12),
+          if (items.isEmpty)
+            Text('Nothing here yet. Tap New to add the first one.', style: PaisaText.sub.copyWith(color: c.ink3))
+          else
           PaisaListCard(children: [
             for (final i in items)
               Opacity(
@@ -115,11 +126,19 @@ class ConfigListScreen extends ConsumerWidget {
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Wrap(spacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
-                          Text(i.name, style: PaisaText.h3.copyWith(color: c.ink)),
+                          Semantics(
+                            button: true,
+                            label: 'Edit ${i.name}',
+                            excludeSemantics: true,
+                            child: InkWell(
+                              onTap: () => showConfigItemSheet(context, listKey, item: i),
+                              child: Text(i.name, style: PaisaText.h3.copyWith(color: c.ink)),
+                            ),
+                          ),
                           if (i.isDefault) const Tag('Default', tone: Tone.positive),
                         ]),
                         if (i.description.isNotEmpty) Text(i.description, style: PaisaText.sub.copyWith(color: c.ink3)),
-                        if (!i.isDefault && i.active && listKey != ConfigList.classificationRules)
+                        if (!i.isDefault && i.active && listKey != ConfigList.classificationRules && listKey != ConfigList.parties)
                           PaisaLink(
                             label: 'Set default',
                             onPressed: () async {
@@ -141,55 +160,6 @@ class ConfigListScreen extends ConsumerWidget {
         ]),
       ),
     );
-  }
-
-  Future<void> _showAdd(BuildContext context) => showPaisaFormSheet<void, _NameForm>(
-        context,
-        title: 'New entry',
-        create: _NameForm.new,
-        body: (ctx, f) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          PaisaTextField(label: 'Name', controller: f.name, errorText: f.error),
-          const SizedBox(height: 14),
-          PaisaTextField(label: 'Description', controller: f.description, hint: 'Optional'),
-        ]),
-        footer: (ctx, f) => Consumer(
-          builder: (ctx, ref, _) => Row(children: [
-            Expanded(child: PaisaButton(label: 'Cancel', variant: ButtonVariant.outline, onPressed: () => Navigator.of(ctx).pop())),
-            const SizedBox(width: 10),
-            Expanded(
-              flex: 2,
-              child: PaisaButton(
-                label: 'Add',
-                onPressed: () async {
-                  if (f.name.text.trim().isEmpty) {
-                    f.setError('Enter a name');
-                    return;
-                  }
-                  await ref.read(catalogRepoProvider).addConfigItem(listKey, f.name.text, f.description.text);
-                  if (ctx.mounted) Navigator.of(ctx).pop();
-                  ref.read(toastProvider.notifier).show('${f.name.text.trim()} added');
-                },
-              ),
-            ),
-          ]),
-        ),
-      );
-}
-
-class _NameForm extends ChangeNotifier {
-  final name = TextEditingController();
-  final description = TextEditingController();
-  String? error;
-  void setError(String? e) {
-    error = e;
-    notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    name.dispose();
-    description.dispose();
-    super.dispose();
   }
 }
 

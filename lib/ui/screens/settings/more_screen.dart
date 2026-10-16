@@ -71,6 +71,7 @@ class MoreScreen extends ConsumerWidget {
         _Item('Account types', 'Liquid, reserved, locked or owed', PaisaIcons.wallet, () => go('/settings/config/${ConfigList.accountTypes}')),
         _Item('Contribution types', 'SSF, CIT, provident fund, insurance', PaisaIcons.shield,
             () => go('/settings/config/${ConfigList.contributionTypes}')),
+        _Item('Parties', 'Who pays you and who you pay', PaisaIcons.user, () => go('/settings/config/${ConfigList.parties}')),
         _Item('Recurring rules', '${n(recurring, (RecurringRule r) => r.active)} active reminders', PaisaIcons.repeat,
             () => go('/settings/recurring')),
         _Item('Transaction classification rules', 'Rules for suggesting a type from bank SMS', PaisaIcons.sliders,

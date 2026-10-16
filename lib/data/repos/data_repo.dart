@@ -6,6 +6,7 @@ import '../audit_log.dart';
 import '../clock.dart';
 import '../db/database.dart';
 import '../mappers.dart';
+import '../records.dart';
 import '../seed.dart';
 
 /// Export and "Delete all data" (spec §10). Exports contain only database
@@ -48,13 +49,17 @@ class DataRepository {
       return s.contains(RegExp(r'[",\n]')) ? '"${s.replaceAll('"', '""')}"' : s;
     }
 
+    final parties = {
+      for (final p in await (_db.select(_db.configItems)..where((c) => c.listKey.equals(ConfigList.parties))).get()) p.id: p.name,
+    };
     final txns = (await _db.select(_db.transactions).get()).map(txnFromRow).toList()
       ..sort((a, b) => '${a.date}${a.time}'.compareTo('${b.date}${b.time}'));
-    final b = StringBuffer('date,time,title,type,account,counter_account,category,income_type,amount_npr,status,source\n');
+    final b = StringBuffer('date,time,title,type,account,counter_account,category,income_type,amount_npr,status,source,party\n');
     for (final t in txns) {
       b.writeln([
         t.date, t.time, t.title, t.type.wire, t.accountId, t.counterAccountId, t.categoryId, t.incomeTypeId,
         (t.amount / 100).toStringAsFixed(2), t.status.name, t.source.name,
+        t.partyId == null ? null : parties[t.partyId],
       ].map(cell).join(','));
     }
     await _audit.write(action: 'data.export', entity: 'data', summary: 'Exported transactions as CSV');

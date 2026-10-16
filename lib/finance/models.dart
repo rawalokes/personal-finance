@@ -150,6 +150,7 @@ class Txn {
     this.categoryId,
     this.incomeTypeId,
     this.loanId,
+    this.partyId,
     required this.amount,
     this.principal,
     this.interest,
@@ -178,6 +179,9 @@ class Txn {
   final String? categoryId;
   final String? incomeTypeId;
   final String? loanId;
+
+  /// Who paid (income) or was paid (expense), from Settings → Parties.
+  final String? partyId;
 
   /// Always positive, except `adjustment`, which carries the signed difference.
   final Paisa amount;
