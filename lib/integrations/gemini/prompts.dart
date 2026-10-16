@@ -76,3 +76,12 @@ AMOUNT: NPR $amountNpr
 CATEGORIES: ${_json(categories)}
 INCOME TYPES: ${_json(incomeTypes)}
 ACCOUNTS: ${_json(accounts)}''';
+
+String lessonPrompt(Map<String, Object?> summary) => '''
+Write today's short money lesson for this user: one habit or idea that would help them most right now,
+based on their numbers (for example a category far above normal, low savings, a costly loan, no emergency
+fund). Title at most 8 words. Body: 3 short paragraphs, plain words, under 160 words, mention their real
+figures from the data. Takeaway: one action for this week, under 20 words. Encouraging, never shaming.
+
+DATA:
+${_json(summary)}''';

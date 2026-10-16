@@ -280,3 +280,27 @@ ChallengeState challengeStateFromJson(Json j) => ChallengeState(
       badges: {for (final b in (j['badges'] as List? ?? const [])) ?BadgeId.fromWire('$b')},
       lastSuggestedMonth: j['lastSuggestedMonth'] as String?,
     );
+
+Json waitListToJson(WaitList w) => {
+      'items': [
+        for (final i in w.items)
+          {'id': i.id, 'title': i.title, 'amount': i.amount, 'addedAt': i.addedAt, 'categoryId': i.categoryId, 'accountId': i.accountId},
+      ],
+      'savedByWaiting': w.savedByWaiting,
+    };
+
+WaitList waitListFromJson(Json j) => WaitList(
+      items: [
+        for (final raw in (j['items'] as List? ?? const []))
+          if (raw is Map)
+            WaitItem(
+              id: raw['id'] as String,
+              title: raw['title'] as String,
+              amount: (raw['amount'] as num).toInt(),
+              addedAt: raw['addedAt'] as String,
+              categoryId: raw['categoryId'] as String?,
+              accountId: raw['accountId'] as String?,
+            ),
+      ],
+      savedByWaiting: (j['savedByWaiting'] as num?)?.toInt() ?? 0,
+    );

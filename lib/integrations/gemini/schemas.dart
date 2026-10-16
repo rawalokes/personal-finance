@@ -288,3 +288,33 @@ class SmsAiSuggestion {
     );
   }
 }
+
+const Map<String, Object?> lessonSchema = {
+  'type': 'OBJECT',
+  'properties': {
+    'title': {'type': 'STRING'},
+    'body': {'type': 'STRING'},
+    'takeaway': {'type': 'STRING'},
+  },
+  'required': ['title', 'body', 'takeaway'],
+};
+
+/// Today's lesson, written by the AI from the user's own numbers.
+class AiLesson {
+  const AiLesson({required this.title, required this.body, required this.takeaway, this.date});
+  final String title;
+  final String body;
+  final String takeaway;
+
+  /// The day it was written (cached per day).
+  final String? date;
+
+  static AiLesson fromJson(JsonMap j) => AiLesson(
+        title: _req<String>(j, 'title'),
+        body: _req<String>(j, 'body'),
+        takeaway: _req<String>(j, 'takeaway'),
+        date: j['date'] as String?,
+      );
+
+  JsonMap toJson() => {'title': title, 'body': body, 'takeaway': takeaway, 'date': date};
+}

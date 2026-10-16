@@ -21,6 +21,7 @@ import 'ui/screens/loans/payoff_planner_screen.dart';
 import 'ui/screens/plans/plans_screen.dart';
 import 'ui/screens/settings/ai_settings_screen.dart';
 import 'ui/screens/settings/catalog_screens.dart';
+import 'ui/learn/learn_screens.dart';
 import 'ui/screens/settings/more_screen.dart';
 import 'ui/screens/settings/nudge_settings_screen.dart';
 import 'ui/screens/settings/salary_screen.dart';
@@ -85,6 +86,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/settings/security', builder: (context, state) => const SecurityScreen()),
       GoRoute(path: '/settings/ai', builder: (context, state) => const AiSettingsScreen()),
       GoRoute(path: '/settings/nudges', builder: (context, state) => const NudgeSettingsScreen()),
+      GoRoute(path: '/learn', builder: (context, state) => const LearnScreen()),
+      GoRoute(path: '/learn/:id', builder: (context, state) => LessonScreen(lessonId: state.pathParameters['id']!)),
       GoRoute(path: '/ai/insights', builder: (context, state) => const AiInsightsScreen()),
       GoRoute(path: '/ai/chat', builder: (context, state) => const AiChatScreen()),
       GoRoute(path: '/settings/audit', builder: (context, state) => const AuditScreen()),

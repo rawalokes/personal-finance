@@ -110,6 +110,7 @@ class AiService {
         'explain' => 'AI explained the payoff plan',
         'budgets' => 'AI suggested budgets',
         'sms' => 'AI suggested a type for an unclear SMS',
+        'lesson' => 'AI wrote today’s lesson',
         _ => 'AI checked the salary breakdown',
       };
 
@@ -128,6 +129,32 @@ class AiService {
     final stamped = AiAnalysis.fromJson({...parsed.toJson(), 'generatedAt': clock.stamp()});
     await settings.saveAiCache(month, stamped.toJson());
     return stamped;
+  }
+
+  /// Today's lesson: from the cache unless [force]; one request a day at most.
+  Future<AiLesson> lesson({bool force = false}) async {
+    final today = clock.today();
+    if (!force) {
+      final cached = await cachedLesson();
+      if (cached != null) return cached;
+    }
+    final s = await settings.ai();
+    final summary = buildSummaryPayload(await summaryInput(s.privacy));
+    final raw = await _ask('lesson', lessonPrompt(summary), lessonSchema);
+    final lesson = AiLesson.fromJson({...raw, 'date': today});
+    await settings.saveAiLesson(today, lesson.toJson());
+    return lesson;
+  }
+
+  /// Today's cached lesson, without any request.
+  Future<AiLesson?> cachedLesson() async {
+    final cached = await settings.aiLesson(clock.today());
+    if (cached == null) return null;
+    try {
+      return AiLesson.fromJson(cached);
+    } on AiError {
+      return null;
+    }
   }
 
   /// The cached analysis for this month, without any request.

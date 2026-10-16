@@ -64,6 +64,11 @@ class PlanHero extends ConsumerWidget {
           ProgressBar(value: p.saved / p.saveTarget, color: color),
           const SizedBox(height: 3),
           Text(status, style: PaisaText.hint.copyWith(color: color)),
+          // Future you: what this month's habit becomes (Hershfield).
+          Text(
+            '${money.npr(p.saveTarget)} a month → about ${money.npr(futureValue(monthly: p.saveTarget, years: 10))} in 10 years',
+            style: PaisaText.hint.copyWith(color: c.ink3),
+          ),
         ]),
       );
     }
@@ -84,7 +89,13 @@ class PlanHero extends ConsumerWidget {
                   style: PaisaText.sub.copyWith(color: overdue ? c.red : c.ink3),
                 ),
               ]),
-        below: Text('${p.emisPaid} of ${p.emisDue} EMIs paid', style: PaisaText.hint.copyWith(color: c.ink3)),
+        below: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('${p.emisPaid} of ${p.emisDue} EMIs paid', style: PaisaText.hint.copyWith(color: c.ink3)),
+          // Loss framing: interest is money that buys nothing.
+          if (p.interestThisMonth > 0)
+            Text('Interest costs you ${money.npr(p.interestThisMonth)} this month — money that buys nothing',
+                style: PaisaText.hint.copyWith(color: c.amber)),
+        ]),
       );
     }
 

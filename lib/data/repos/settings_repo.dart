@@ -26,6 +26,9 @@ abstract final class SettingKey {
   static const payoff = 'payoff.plan';
   static const aiChat = 'ai.chat';
   static String aiCache(String month) => 'ai.analysis.$month';
+  static String aiLesson(String day) => 'ai.lesson.$day';
+  static const learnRead = 'learn.read';
+  static const waitList = 'waitlist';
   static const smsLastScan = 'sms.last_scan';
   static const smsScannedSenders = 'sms.scanned_senders';
   static const reportsDashboard = 'reports.dashboard';
@@ -193,4 +196,22 @@ class SettingsRepository {
   Future<void> saveChallengeState(ChallengeState s, {String? summary}) => summary == null
       ? _write(SettingKey.challenges, challengeStateToJson(s))
       : _save(SettingKey.challenges, challengeStateToJson(s), summary);
+
+  Future<Json?> aiLesson(String day) async => (await _read(SettingKey.aiLesson(day)) as Map?)?.cast<String, Object?>();
+  Future<void> saveAiLesson(String day, Json lesson) => _write(SettingKey.aiLesson(day), lesson);
+
+  /// Ids of the Learn lessons the user has read.
+  Stream<Set<String>> watchLearnRead() =>
+      _watch(SettingKey.learnRead).map((r) => r is List ? {for (final x in r) if (x is String) x} : <String>{});
+  Future<Set<String>> learnRead() async {
+    final r = await _read(SettingKey.learnRead);
+    return r is List ? {for (final x in r) if (x is String) x} : <String>{};
+  }
+
+  Future<void> saveLearnRead(Set<String> ids) => _write(SettingKey.learnRead, ids.toList()..sort());
+
+  Future<WaitList> waitList() async => _decodeSafe(SettingKey.waitList, await _read(SettingKey.waitList), waitListFromJson, const WaitList());
+  Stream<WaitList> watchWaitList() =>
+      _watch(SettingKey.waitList).map((r) => _decodeSafe(SettingKey.waitList, r, waitListFromJson, const WaitList()));
+  Future<void> saveWaitList(WaitList w, {required String summary}) => _save(SettingKey.waitList, waitListToJson(w), summary);
 }

@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/undo.dart';
 import '../../../finance/finance.dart';
 import '../../../store/data_providers.dart';
+import '../../../store/learn.dart';
 import '../../../store/ui_state.dart';
 import '../../components/async_view.dart';
 import '../../components/buttons.dart';
+import '../../components/dialog.dart';
 import '../../components/empty_state.dart';
 import '../../components/inputs.dart';
 import '../../components/layout.dart';
@@ -198,6 +200,26 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
     final accountId = _account(_choices(d));
     final merchant = _merchant.text.trim();
     final title = merchant.isNotEmpty ? merchant : cat.name;
+    // The 24-hour rule: a big want can wait a day (most of the urge passes).
+    if (!_repeat && shouldSuggestWaiting(amount: amount, essential: cat.essential)) {
+      final choice = await showConfirmDialog(
+        context,
+        title: 'Wait 24 hours?',
+        body: 'This looks like a want, not a need. Sleep on it: Paisa keeps it on your Waiting list, and tomorrow you choose '
+            'to buy it or skip it. Skipped wants count as money saved.',
+        okLabel: 'Wait 24 hours',
+        altLabel: 'Buy now',
+      );
+      if (!mounted) return;
+      if (choice == ConfirmChoice.ok) {
+        await ref.read(waitListControllerProvider).add(title: title, amount: amount, categoryId: cat.id, accountId: _account(_choices(d)));
+        if (!mounted) return;
+        leavePage(context);
+        ref.read(toastProvider.notifier).show('On your Waiting list — decide tomorrow');
+        return;
+      }
+      if (choice != ConfirmChoice.alt) return;
+    }
     final newId = ref.read(idGenProvider);
     final tx = Txn(
       id: newId(),

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../data/records.dart';
 import '../../../finance/finance.dart';
 import '../../../store/data_providers.dart';
+import '../../../store/learn.dart';
 import '../../../store/reports.dart';
 import '../../../store/ui_state.dart';
 import '../../components/async_view.dart';
@@ -14,6 +15,7 @@ import '../../components/layout.dart';
 import '../../components/money_text.dart';
 import '../../components/surfaces.dart';
 import '../../date_line.dart';
+import '../../encourage/home_cards.dart';
 import '../../encourage/nudge_card.dart';
 import '../../loans/loan_presentation.dart';
 import '../../encourage/score_card.dart';
@@ -136,7 +138,17 @@ class _HomeBody extends ConsumerWidget {
     final money = ref.watch(moneyFormatProvider);
     final pending = ref.watch(inboxPendingCountProvider);
     final cards = d.accounts.where((a) => !a.archived && a.group != AccountGroup.locked).toList();
-    return SingleChildScrollView(
+    // Pull down for a fresh quote (and fresh numbers).
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.read(quoteIndexProvider.notifier).next();
+        ref
+          ..invalidate(monthPlanProvider)
+          ..invalidate(nudgesProvider)
+          ..invalidate(savingsScoreProvider);
+      },
+      child: SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 28),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         const PlanHero(),
@@ -165,6 +177,7 @@ class _HomeBody extends ConsumerWidget {
           ]),
         ),
         AccountCarousel(accounts: cards, types: d.types),
+        const Padding(padding: EdgeInsets.fromLTRB(20, 14, 20, 0), child: QuoteCard()),
         if (pending > 0)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -176,6 +189,8 @@ class _HomeBody extends ConsumerWidget {
           child: ScoreCard(compact: true, onTap: () => context.go('/reports')),
         ),
         const _HomeNudges(),
+        const Padding(padding: EdgeInsets.fromLTRB(20, 12, 20, 0), child: WaitingCard()),
+        const Padding(padding: EdgeInsets.fromLTRB(20, 12, 20, 0), child: LearnCard()),
         const AiInsightCard(),
         if (d.summary.loans > 0)
           Padding(
@@ -199,6 +214,7 @@ class _HomeBody extends ConsumerWidget {
                 ]),
         ),
       ]),
+    ),
     );
   }
 }

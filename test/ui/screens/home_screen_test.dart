@@ -129,6 +129,7 @@ void main() {
   group('acceptance 15: account cards scroll', () {
     testWidgets('by touch swipe', (tester) async {
       await pumpPaisa(tester);
+      await scrollPageTo(tester, find.byKey(const Key('account-carousel')));
       await tester.drag(find.byKey(const Key('account-carousel')), const Offset(-300, 0));
       await tester.pumpAndSettle();
       expect(carouselPosition(tester).pixels, greaterThan(0));
@@ -136,6 +137,7 @@ void main() {
 
     testWidgets('by mouse drag', (tester) async {
       await pumpPaisa(tester);
+      await scrollPageTo(tester, find.byKey(const Key('account-carousel')));
       await tester.drag(
         find.byKey(const Key('account-carousel')),
         const Offset(-300, 0),
@@ -147,6 +149,7 @@ void main() {
 
     testWidgets('by mouse wheel', (tester) async {
       await pumpPaisa(tester);
+      await scrollPageTo(tester, find.byKey(const Key('account-carousel')));
       final pointer = TestPointer(1, PointerDeviceKind.mouse);
       pointer.hover(tester.getCenter(find.byKey(const Key('account-carousel'))));
       await tester.sendEventToBinding(pointer.scroll(const Offset(0, 250)));
@@ -156,6 +159,7 @@ void main() {
 
     testWidgets('the last card opens Add account', (tester) async {
       await pumpPaisa(tester);
+      await scrollPageTo(tester, find.byKey(const Key('account-carousel')));
       await tester.scrollUntilVisible(
         find.text('Add eSewa, Khalti or bank'),
         300,
@@ -169,6 +173,7 @@ void main() {
 
   testWidgets('a card opens its account page', (tester) async {
     await pumpPaisa(tester);
+    await scrollPageTo(tester, find.byKey(const Key('account-carousel')));
     await tester.tap(find.text('Nabil ••4821'));
     await tester.pumpAndSettle();
     expect(find.text('Nabil Bank — Salary'), findsOneWidget);
