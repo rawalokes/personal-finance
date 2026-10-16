@@ -1,4 +1,5 @@
 import 'budgets.dart';
+import 'calendar.dart';
 import 'catalog.dart';
 import 'dates.dart';
 import 'loans.dart';
@@ -31,13 +32,12 @@ class DateRange {
 
   bool contains(IsoDate d) => d.compareTo(start) >= 0 && d.compareTo(end) <= 0;
 
-  /// 'YYYY-MM' keys from [start]'s month to [end]'s month.
-  List<String> get months {
+  /// Month keys from [start]'s month to [end]'s month in [cal].
+  List<String> months([MonthCalendar cal = const AdCalendar()]) {
     final out = <String>[];
-    var m = firstOfMonth(start);
-    while (monthKey(m).compareTo(monthKey(end)) <= 0) {
-      out.add(monthKey(m));
-      m = addMonths(m, 1);
+    final last = cal.key(end);
+    for (var m = cal.key(start); m.compareTo(last) <= 0; m = cal.shift(m, 1)) {
+      out.add(m);
     }
     return out;
   }
@@ -58,28 +58,31 @@ IsoDate lastOfMonth(String month) =>
 int daysInMonthOf(IsoDate d) => parseIsoDate(lastOfMonth(monthKey(d))).day;
 
 /// [fyStart] is the first day of the current Nepali fiscal year (1 Shrawan).
-DateRange resolvePeriod(ReportPeriod p, IsoDate today, {required IsoDate fyStart}) {
-  final first = firstOfMonth(today);
-  final prev = addMonths(first, -1);
+DateRange resolvePeriod(ReportPeriod p, IsoDate today, {required IsoDate fyStart, MonthCalendar cal = const AdCalendar()}) {
+  final key = cal.key(today);
+  IsoDate back(int n) => cal.start(cal.shift(key, -n));
   return switch (p) {
-    ReportPeriod.thisMonth => DateRange(first, today),
-    ReportPeriod.lastMonth => DateRange(prev, lastOfMonth(monthKey(prev))),
-    ReportPeriod.last3m => DateRange(addMonths(first, -2), today),
-    ReportPeriod.last6m => DateRange(addMonths(first, -5), today),
-    ReportPeriod.last12m => DateRange(addMonths(first, -11), today),
+    ReportPeriod.thisMonth => DateRange(cal.start(key), today),
+    ReportPeriod.lastMonth => DateRange(back(1), cal.end(cal.shift(key, -1))),
+    ReportPeriod.last3m => DateRange(back(2), today),
+    ReportPeriod.last6m => DateRange(back(5), today),
+    ReportPeriod.last12m => DateRange(back(11), today),
     ReportPeriod.thisFy => DateRange(fyStart, today),
   };
 }
 
 /// The same span one period earlier ("compare"): this month so far vs the
 /// same days last month; a fiscal year vs the same days a year before.
-DateRange previousRange(DateRange r) {
-  if (r.start != firstOfMonth(r.start)) return DateRange(addMonths(r.start, -12), addMonths(r.end, -12));
-  final n = r.months.length;
-  final wholeMonth = r.end == lastOfMonth(monthKey(r.end));
+DateRange previousRange(DateRange r, {MonthCalendar cal = const AdCalendar()}) {
+  if (r.start != cal.start(cal.key(r.start))) return DateRange(addMonths(r.start, -12), addMonths(r.end, -12));
+  final n = r.months(cal).length;
+  final endKey = cal.shift(cal.key(r.end), -n);
+  final wholeMonth = r.end == cal.end(cal.key(r.end));
+  final sameDay = addDays(cal.start(endKey), cal.dayOf(r.end) - 1);
+  final monthEnd = cal.end(endKey);
   return DateRange(
-    addMonths(r.start, -n),
-    wholeMonth ? lastOfMonth(monthKey(addMonths(firstOfMonth(r.end), -n))) : addMonths(r.end, -n),
+    cal.start(cal.shift(cal.key(r.start), -n)),
+    wholeMonth || sameDay.compareTo(monthEnd) > 0 ? monthEnd : sameDay,
   );
 }
 
@@ -150,17 +153,18 @@ List<CashFlowPoint> cashFlow(
   Iterable<Loan> loans = const [],
   IsoDate? today,
   int forecastMonths = 3,
+  MonthCalendar cal = const AdCalendar(),
 }) {
   final inRange = _inRange(txs, r, accountIds);
   final out = <CashFlowPoint>[];
-  for (final m in r.months) {
-    final t = monthlyTotals(inRange, m);
+  for (final m in r.months(cal)) {
+    final t = monthlyTotals(inRange, m, cal: cal);
     out.add(CashFlowPoint(m, t.income, t.expenses, PointKind.actual));
   }
-  if (today != null && monthKey(r.end) == monthKey(today)) {
+  if (today != null && cal.key(r.end) == cal.key(today)) {
     final f = monthlyForecast(recurring, loans);
     for (var i = 1; i <= forecastMonths; i++) {
-      out.add(CashFlowPoint(monthKey(addMonths(firstOfMonth(today), i)), f.income, f.expenses, PointKind.forecast));
+      out.add(CashFlowPoint(cal.shift(cal.key(today), i), f.income, f.expenses, PointKind.forecast));
     }
   }
   return out;
@@ -174,6 +178,7 @@ List<ReportSlice> spendingByCategory(
   Iterable<ExpenseCategory> categories, {
   Set<String> accountIds = const {},
   Set<String> categoryIds = const {},
+  MonthCalendar cal = const AdCalendar(),
 }) {
   final byId = {for (final c in categories) c.id: c};
   String top(String id) {
@@ -186,8 +191,8 @@ List<ReportSlice> spendingByCategory(
 
   final inRange = _inRange(txs, r, accountIds);
   final sums = <String, Paisa>{};
-  for (final m in r.months) {
-    monthlyTotals(inRange, m).byCategory.forEach((id, v) => sums[top(id)] = (sums[top(id)] ?? 0) + v);
+  for (final m in r.months(cal)) {
+    monthlyTotals(inRange, m, cal: cal).byCategory.forEach((id, v) => sums[top(id)] = (sums[top(id)] ?? 0) + v);
   }
   String label(String id) => byId[id]?.name ?? (id == kLoanInterestCategoryId ? 'Loan interest' : 'Uncategorised');
   return _sorted([
@@ -241,19 +246,20 @@ List<ReportPoint> netWorthSeries(
   IsoDate today, {
   Iterable<RecurringRule> recurring = const [],
   int forecastMonths = 3,
+  MonthCalendar cal = const AdCalendar(),
 }) {
   final now = summarizeBalances(accounts, loans).netWorth;
   final posted = [for (final t in txs) if (t.isPosted) t];
   final out = <ReportPoint>[];
-  for (final m in r.months) {
-    final end = monthKey(today) == m ? today : lastOfMonth(m);
+  for (final m in r.months(cal)) {
+    final end = cal.key(today) == m ? today : cal.end(m);
     final later = posted.where((t) => t.date.compareTo(end) > 0).fold<Paisa>(0, (s, t) => s + netWorthEffect(t));
     out.add(ReportPoint(m, now - later, PointKind.actual));
   }
-  if (monthKey(r.end) == monthKey(today) && forecastMonths > 0) {
+  if (cal.key(r.end) == cal.key(today) && forecastMonths > 0) {
     final f = monthlyForecast(recurring, loans);
     for (var i = 1; i <= forecastMonths; i++) {
-      out.add(ReportPoint(monthKey(addMonths(firstOfMonth(today), i)), now + i * (f.income - f.expenses), PointKind.forecast));
+      out.add(ReportPoint(cal.shift(cal.key(today), i), now + i * (f.income - f.expenses), PointKind.forecast));
     }
   }
   return out;
@@ -265,8 +271,9 @@ List<BudgetLine> budgetPerformance(
   Iterable<ExpenseCategory> categories,
   String month, {
   Set<String> categoryIds = const {},
+  MonthCalendar cal = const AdCalendar(),
 }) {
-  final totals = monthlyTotals(txs, month);
+  final totals = monthlyTotals(txs, month, cal: cal);
   return [
     for (final c in categories)
       if (c.active && c.isTopLevel && (c.monthlyBudget ?? 0) > 0 && (categoryIds.isEmpty || categoryIds.contains(c.id)))
@@ -296,12 +303,12 @@ List<LoanProgress> loanProgress(Iterable<Loan> loans, {Set<String> loanIds = con
           }(),
     ];
 
-List<ReportPoint> interestPaid(Iterable<Txn> txs, DateRange r, {Set<String> loanIds = const {}}) {
-  final sums = {for (final m in r.months) m: 0};
+List<ReportPoint> interestPaid(Iterable<Txn> txs, DateRange r, {Set<String> loanIds = const {}, MonthCalendar cal = const AdCalendar()}) {
+  final sums = {for (final m in r.months(cal)) m: 0};
   for (final t in txs) {
     if (!t.isPosted || t.type != TxType.loanRepayment || !r.contains(t.date)) continue;
     if (loanIds.isNotEmpty && !loanIds.contains(t.loanId)) continue;
-    final m = monthKey(t.date);
+    final m = cal.key(t.date);
     sums[m] = (sums[m] ?? 0) + (t.interest ?? 0);
   }
   return [for (final e in sums.entries) ReportPoint(e.key, e.value, PointKind.actual)];
@@ -315,12 +322,12 @@ class SavingsPoint {
   final Paisa cumulative;
 }
 
-List<SavingsPoint> savingsSeries(Iterable<Txn> txs, DateRange r, {Set<String> accountIds = const {}}) {
+List<SavingsPoint> savingsSeries(Iterable<Txn> txs, DateRange r, {Set<String> accountIds = const {}, MonthCalendar cal = const AdCalendar()}) {
   final inRange = _inRange(txs, r, accountIds);
   var cumulative = 0;
   final out = <SavingsPoint>[];
-  for (final m in r.months) {
-    final t = monthlyTotals(inRange, m);
+  for (final m in r.months(cal)) {
+    final t = monthlyTotals(inRange, m, cal: cal);
     cumulative += t.surplus;
     out.add(SavingsPoint(m, t.savingsRate, t.surplus, cumulative));
   }

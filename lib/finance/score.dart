@@ -1,3 +1,4 @@
+import 'calendar.dart';
 import 'catalog.dart';
 import 'dates.dart';
 import 'models.dart';
@@ -57,12 +58,13 @@ SavingsScore scoreForMonth(
   required Iterable<Loan> loans,
   required IsoDate today,
   MoneyFormat money = const MoneyFormat(),
+  MonthCalendar cal = const AdCalendar(),
 }) {
-  final isCurrent = monthKey(today) == month;
-  final end = isCurrent ? today : lastOfMonth(month);
-  final dayShare = isCurrent ? parseIsoDate(today).day / daysInMonthOf(today) : 1.0;
+  final isCurrent = cal.key(today) == month;
+  final end = isCurrent ? today : cal.end(month);
+  final dayShare = isCurrent ? cal.dayOf(today) / cal.daysIn(month) : 1.0;
   final posted = [for (final t in txs) if (t.isPosted) t];
-  final t = monthlyTotals(posted, month);
+  final t = monthlyTotals(posted, month, cal: cal);
   final raw = <ScorePartKind, double>{};
   final tips = <(String, double)>[]; // text, raw points gained
 
@@ -75,7 +77,7 @@ SavingsScore scoreForMonth(
   }
 
   // Budgets kept (25).
-  final budgets = budgetPerformance(posted, categories, month);
+  final budgets = budgetPerformance(posted, categories, month, cal: cal);
   if (budgets.isNotEmpty) {
     final kept = budgets.where((b) => b.spent <= b.limit).toList();
     raw[ScorePartKind.budgets] = 25 * kept.length / budgets.length;
@@ -92,7 +94,7 @@ SavingsScore scoreForMonth(
       if (!l.closed && l.installment > 0 && (l.startDate == null || l.startDate!.compareTo(end) <= 0)) l,
   ];
   if (open.isNotEmpty) {
-    bool paid(Loan l) => posted.any((x) => x.type == TxType.loanRepayment && x.loanId == l.id && monthKey(x.date) == month);
+    bool paid(Loan l) => posted.any((x) => x.type == TxType.loanRepayment && x.loanId == l.id && cal.key(x.date) == month);
     final paidLoans = open.where(paid).toList();
     // Due = paid this month, or its due date has passed and it is still unpaid.
     final overdue = [
@@ -101,10 +103,10 @@ SavingsScore scoreForMonth(
     ];
     final due = paidLoans.length + overdue.length;
     final principal = posted
-        .where((x) => x.type == TxType.loanRepayment && monthKey(x.date) == month)
+        .where((x) => x.type == TxType.loanRepayment && cal.key(x.date) == month)
         .fold<Paisa>(0, (s, x) => s + (x.principal ?? 0));
     final borrowed = posted
-        .where((x) => x.type == TxType.loanDisbursement && monthKey(x.date) == month)
+        .where((x) => x.type == TxType.loanDisbursement && cal.key(x.date) == month)
         .fold<Paisa>(0, (s, x) => s + x.amount);
     raw[ScorePartKind.loans] = (due == 0 ? 10 : 10 * paidLoans.length / due) + (principal > borrowed ? 10 : 0);
     if (overdue.isNotEmpty) tips.add(('Record the ${overdue.first.name} installment', 10 / due));
@@ -112,7 +114,7 @@ SavingsScore scoreForMonth(
 
   // Spending vs your normal (15).
   final previous = [
-    for (var k = 1; k <= 3; k++) monthlyTotals(posted, monthKey(addMonths('$month-01', -k))).expenses,
+    for (var k = 1; k <= 3; k++) monthlyTotals(posted, cal.shift(month, -k), cal: cal).expenses,
   ].where((e) => e > 0).toList();
   if (previous.isNotEmpty) {
     final reference = previous.reduce((a, b) => a + b) / previous.length * dayShare;
@@ -150,9 +152,10 @@ List<SavingsScore> scoreTrend({
   required IsoDate today,
   MoneyFormat money = const MoneyFormat(),
   int months = 6,
+  MonthCalendar cal = const AdCalendar(),
 }) =>
     [
       for (var k = months - 1; k >= 0; k--)
-        scoreForMonth(monthKey(addMonths(firstOfMonth(today), -k)),
-            txs: txs, categories: categories, loans: loans, today: today, money: money),
+        scoreForMonth(cal.shift(cal.key(today), -k),
+            txs: txs, categories: categories, loans: loans, today: today, money: money, cal: cal),
     ];

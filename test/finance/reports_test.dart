@@ -25,7 +25,7 @@ void main() {
       expect(resolvePeriod(ReportPeriod.last3m, today, fyStart: fy), const DateRange('2026-08-01', today));
       expect(resolvePeriod(ReportPeriod.last12m, today, fyStart: fy), const DateRange('2025-11-01', today));
       expect(resolvePeriod(ReportPeriod.thisFy, today, fyStart: fy), const DateRange(fy, today));
-      expect(const DateRange('2026-08-01', today).months, ['2026-08', '2026-09', '2026-10']);
+      expect(const DateRange('2026-08-01', today).months(), ['2026-08', '2026-09', '2026-10']);
     });
 
     test('the previous range has the same number of months just before', () {

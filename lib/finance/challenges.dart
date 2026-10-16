@@ -1,11 +1,11 @@
 import 'dart:math' as math;
 
 import 'budgets.dart';
+import 'calendar.dart';
 import 'catalog.dart';
 import 'dates.dart';
 import 'models.dart';
 import 'money.dart';
-import 'reports.dart';
 import 'score.dart';
 import 'totals.dart';
 
@@ -74,9 +74,10 @@ class ChallengeProgress {
 }
 
 ChallengeProgress challengeProgress(Challenge c, Iterable<Txn> txs, Iterable<Loan> loans, IsoDate today) {
-  final end = monthKey(today) == c.month ? today : lastOfMonth(c.month);
-  final inMonth = [for (final t in txs) if (t.isPosted && monthKey(t.date) == c.month && t.date.compareTo(end) <= 0) t];
-  final totals = monthlyTotals(inMonth, c.month);
+  final cal = calendarOf(c.month);
+  final end = cal.key(today) == c.month ? today : cal.end(c.month);
+  final inMonth = [for (final t in txs) if (t.isPosted && cal.key(t.date) == c.month && t.date.compareTo(end) <= 0) t];
+  final totals = monthlyTotals(inMonth, c.month, cal: cal);
   switch (c.template) {
     case ChallengeTemplate.saveAmount:
       return ChallengeProgress(current: totals.surplus, target: c.target, met: totals.surplus >= c.target);
@@ -85,7 +86,7 @@ ChallengeProgress challengeProgress(Challenge c, Iterable<Txn> txs, Iterable<Loa
       return ChallengeProgress(current: spent, target: c.target, met: spent <= c.target);
     case ChallengeTemplate.noSpendDays:
       final spendDays = {for (final t in inMonth) if (t.type == TxType.expense) t.date};
-      final free = parseIsoDate(end).day - spendDays.length;
+      final free = cal.dayOf(end) - spendDays.length;
       return ChallengeProgress(current: free, target: c.target, met: free >= c.target);
     case ChallengeTemplate.loanExtra:
       final installment = loans.where((l) => l.id == c.loanId).firstOrNull?.installment ?? 0;
@@ -94,7 +95,7 @@ ChallengeProgress challengeProgress(Challenge c, Iterable<Txn> txs, Iterable<Loa
           .fold<int>(0, (s, t) => s + math.max(0, t.amount - installment));
       return ChallengeProgress(current: extra, target: c.target, met: extra >= c.target);
     case ChallengeTemplate.categoryCut:
-      final prev = monthlyTotals(txs.where((t) => t.isPosted), monthKey(addMonths('${c.month}-01', -1))).byCategory[c.categoryId] ?? 0;
+      final prev = monthlyTotals(txs.where((t) => t.isPosted), cal.shift(c.month, -1), cal: cal).byCategory[c.categoryId] ?? 0;
       final now = totals.byCategory[c.categoryId] ?? 0;
       final pct = prev <= 0 ? 0 : ((prev - now) * 100 / prev).floor();
       return ChallengeProgress(current: pct, target: c.target, met: prev > 0 && pct >= c.target);
@@ -149,31 +150,36 @@ class ChallengeState {
 }
 
 /// Months in a row, ending last month, with at least one finished challenge.
+/// A month finished in the other calendar counts for the month of [cal]
+/// it ended in, so switching calendars keeps the streak.
 int challengeStreak(List<ChallengeResult> history, String currentMonth) {
-  final done = {for (final r in history) if (r.done) r.challenge.month};
-  var m = monthKey(addMonths('$currentMonth-01', -1));
+  final cal = calendarOf(currentMonth);
+  final done = {
+    for (final r in history)
+      if (r.done) cal.key(calendarOf(r.challenge.month).end(r.challenge.month)),
+  };
+  var m = cal.shift(currentMonth, -1);
   var n = 0;
   while (done.contains(m)) {
     n++;
-    m = monthKey(addMonths('$m-01', -1));
+    m = cal.shift(m, -1);
   }
   return n;
 }
 
 /// Two suggestions for [today]'s month (spec §4.3).
-List<Challenge> suggestChallenges(Iterable<Txn> txs, Iterable<ExpenseCategory> categories, IsoDate today) {
-  final month = monthKey(today);
+List<Challenge> suggestChallenges(Iterable<Txn> txs, Iterable<ExpenseCategory> categories, IsoDate today, {MonthCalendar cal = const AdCalendar()}) {
+  final month = cal.key(today);
   final posted = [for (final t in txs) if (t.isPosted) t];
-  final m1 = monthKey(addMonths(firstOfMonth(today), -1));
-  final last = monthlyTotals(posted, m1);
+  final last = monthlyTotals(posted, cal.shift(month, -1), cal: cal);
   final saveTarget = math.max(100000, (last.surplus * 1.1 / 10000).round() * 10000);
   final out = [
     Challenge(id: 'sugg-save-$month', template: ChallengeTemplate.saveAmount, month: month, target: saveTarget,
         accepted: false, source: ChallengeSource.suggested),
   ];
   final before = [
-    monthlyTotals(posted, monthKey(addMonths(firstOfMonth(today), -2))),
-    monthlyTotals(posted, monthKey(addMonths(firstOfMonth(today), -3))),
+    monthlyTotals(posted, cal.shift(month, -2), cal: cal),
+    monthlyTotals(posted, cal.shift(month, -3), cal: cal),
   ];
   ExpenseCategory? fastest;
   var growth = 0.0;
@@ -216,26 +222,29 @@ ChallengeState rollOverChallenges(
   required Iterable<ExpenseCategory> categories,
   required Iterable<Account> accounts,
   required IsoDate today,
+  MonthCalendar cal = const AdCalendar(),
 }) {
-  final month = monthKey(today);
+  final month = cal.key(today);
   final keep = <Challenge>[];
   final finished = <ChallengeResult>[];
   for (final c in s.active) {
-    if (c.month.compareTo(month) >= 0) {
+    if (!isMonthOf(c.month, cal)) {
+      continue; // left over from the other calendar: dropped, never "missed"
+    } else if (c.month.compareTo(month) >= 0) {
       keep.add(c);
     } else if (c.accepted && challengeTracked(c, categories, loans)) {
-      finished.add(ChallengeResult(c, challengeProgress(c, txs, loans, lastOfMonth(c.month)).met));
+      finished.add(ChallengeResult(c, challengeProgress(c, txs, loans, cal.end(c.month)).met));
     }
   }
   var next = s.copyWith(active: keep, history: [...s.history, ...finished]);
   if (s.lastSuggestedMonth != month) {
     final have = {for (final c in keep) c.id};
     next = next.copyWith(
-      active: [...keep, for (final c in suggestChallenges(txs, categories, today)) if (!have.contains(c.id)) c],
+      active: [...keep, for (final c in suggestChallenges(txs, categories, today, cal: cal)) if (!have.contains(c.id)) c],
       lastSuggestedMonth: month,
     );
   }
-  return next.copyWith(badges: _badges(next, txs: txs, loans: loans, categories: categories, accounts: accounts, today: today));
+  return next.copyWith(badges: _badges(next, txs: txs, loans: loans, categories: categories, accounts: accounts, today: today, cal: cal));
 }
 
 Set<BadgeId> _badges(
@@ -245,10 +254,11 @@ Set<BadgeId> _badges(
   required Iterable<ExpenseCategory> categories,
   required Iterable<Account> accounts,
   required IsoDate today,
+  required MonthCalendar cal,
 }) {
   final b = {...s.badges};
   if (s.history.any((r) => r.done)) b.add(BadgeId.firstChallenge);
-  final streak = challengeStreak(s.history, monthKey(today));
+  final streak = challengeStreak(s.history, cal.key(today));
   if (streak >= 3) b.add(BadgeId.streak3);
   if (streak >= 6) b.add(BadgeId.streak6);
   if (loans.any((l) => l.closed)) b.add(BadgeId.firstLoanClosed);
@@ -258,14 +268,15 @@ Set<BadgeId> _badges(
     b.add(BadgeId.emergencyFundFull);
   }
   final posted = [for (final t in txs) if (t.isPosted) t];
-  final rates = [for (var k = 1; k <= 3; k++) monthlyTotals(posted, monthKey(addMonths(firstOfMonth(today), -k)))];
+  final rates = [for (var k = 1; k <= 3; k++) monthlyTotals(posted, cal.shift(cal.key(today), -k), cal: cal)];
   if (rates.every((t) => t.income > 0 && t.savingsRate >= kTargetSavingsRate)) b.add(BadgeId.savingsRate3);
   return b;
 }
 
 /// True when an accepted save, no-spend or loan-extra challenge is already met.
-bool challengeDoneThisMonth(ChallengeState s, Iterable<Txn> txs, Iterable<Loan> loans, IsoDate today) =>
-    s.acceptedIn(monthKey(today)).any((c) =>
+bool challengeDoneThisMonth(ChallengeState s, Iterable<Txn> txs, Iterable<Loan> loans, IsoDate today,
+        {MonthCalendar cal = const AdCalendar()}) =>
+    s.acceptedIn(cal.key(today)).any((c) =>
         c.template != ChallengeTemplate.categoryCap &&
         c.template != ChallengeTemplate.categoryCut &&
         challengeProgress(c, txs, loans, today).met);

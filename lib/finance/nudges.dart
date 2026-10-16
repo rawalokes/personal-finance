@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'budgets.dart';
+import 'calendar.dart';
 import 'catalog.dart';
 import 'dates.dart';
 import 'models.dart';
@@ -86,16 +87,17 @@ List<Nudge> buildNudges(
   MoneyFormat money, {
   Map<String, IsoDate> dismissed = const {},
   Set<NudgeKind> disabled = const {},
+  MonthCalendar cal = const AdCalendar(),
 }) {
   final today = i.today;
-  final month = monthKey(today);
-  final day = parseIsoDate(today).day;
-  final dim = daysInMonthOf(today);
+  final month = cal.key(today);
+  final day = cal.dayOf(today);
+  final dim = cal.daysIn(month);
   final daysLeft = dim - day;
   final posted = [for (final t in i.txs) if (t.isPosted) t];
-  final thisMonth = monthlyTotals(posted, month);
-  final lastKey = monthKey(addMonths(firstOfMonth(today), -1));
-  final last = monthlyTotals(posted, lastKey);
+  final thisMonth = monthlyTotals(posted, month, cal: cal);
+  final lastKey = cal.shift(month, -1);
+  final last = monthlyTotals(posted, lastKey, cal: cal);
   final names = {for (final c in i.categories) c.id: c.name};
   final all = <Nudge>[];
 
@@ -124,7 +126,7 @@ List<Nudge> buildNudges(
   }
 
   // Budget pace.
-  for (final b in budgetPerformance(posted, i.categories, month)) {
+  for (final b in budgetPerformance(posted, i.categories, month, cal: cal)) {
     final projected = (b.spent * dim / day).round();
     if (b.ratio < kBudgetWarnRatio && projected <= b.limit) continue;
     final name = names[b.categoryId] ?? 'Budget';
@@ -145,7 +147,7 @@ List<Nudge> buildNudges(
   }
 
   // Category spike vs the pro-rated 3-month average.
-  final previous = [for (var k = 1; k <= 3; k++) monthlyTotals(posted, monthKey(addMonths(firstOfMonth(today), -k)))];
+  final previous = [for (var k = 1; k <= 3; k++) monthlyTotals(posted, cal.shift(month, -k), cal: cal)];
   for (final c in i.categories) {
     if (!c.active || !c.isTopLevel || c.isAutomatic) continue;
     // Average the months that have spending, so a new user isn't compared
@@ -247,7 +249,7 @@ List<Nudge> buildNudges(
   }
 
   // Praise.
-  final lastSamePoint = monthlyTotals([for (final t in posted) if (parseIsoDate(t.date).day <= day) t], lastKey).expenses;
+  final lastSamePoint = monthlyTotals([for (final t in posted) if (cal.dayOf(t.date) <= day) t], lastKey, cal: cal).expenses;
   if (lastSamePoint > 0 && thisMonth.expenses <= lastSamePoint * 0.9) {
     final pct = ((1 - thisMonth.expenses / lastSamePoint) * 100).round();
     all.add(Nudge(

@@ -1,4 +1,4 @@
-import 'dates.dart';
+import 'calendar.dart';
 import 'models.dart';
 import 'money.dart';
 
@@ -26,7 +26,8 @@ class MonthlyTotals {
 /// Totals for [month] ('YYYY-MM'). Only posted transactions count. Transfers,
 /// card payments, cash withdrawals, reversals, disbursements and adjustments
 /// are never income or spending.
-MonthlyTotals monthlyTotals(Iterable<Txn> txs, String month) {
+/// [month] is a [MonthCalendar] key: 'YYYY-MM' (AD) or 'B2083-06' (BS).
+MonthlyTotals monthlyTotals(Iterable<Txn> txs, String month, {MonthCalendar cal = const AdCalendar()}) {
   Paisa income = 0;
   Paisa expenses = 0;
   final byCategory = <String, Paisa>{};
@@ -34,7 +35,7 @@ MonthlyTotals monthlyTotals(Iterable<Txn> txs, String month) {
   void add(Map<String, Paisa> m, String key, Paisa v) => m[key] = (m[key] ?? 0) + v;
 
   for (final t in txs) {
-    if (!t.isPosted || monthKey(t.date) != month) continue;
+    if (!t.isPosted || cal.key(t.date) != month) continue;
     switch (t.type) {
       case TxType.income:
         income += t.amount;

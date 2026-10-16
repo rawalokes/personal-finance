@@ -120,3 +120,9 @@ class BsCalendar extends MonthCalendar {
   @override
   String longDate(IsoDate d) => '${shortDate(d)} ${_bs(d).year}';
 }
+
+/// The calendar a stored month key belongs to.
+MonthCalendar calendarOf(String key) => key.startsWith('B') ? const BsCalendar() : const AdCalendar();
+
+/// True when [key] is a month of [cal] (not left over from the other calendar).
+bool isMonthOf(String key, MonthCalendar cal) => key.startsWith('B') == (cal is BsCalendar);
