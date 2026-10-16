@@ -17,6 +17,7 @@ import '../../components/layout.dart';
 import '../../components/surfaces.dart';
 import '../../components/toast.dart';
 import '../../components/tone.dart';
+import '../../icons/paisa_icon.dart';
 import '../../icons/paisa_icons.dart';
 import '../../sms/sms_actions.dart';
 import '../../sms/sms_presentation.dart';
@@ -37,6 +38,14 @@ class InboxView extends ConsumerStatefulWidget {
 
 class _InboxViewState extends ConsumerState<InboxView> {
   InboxTab _tab = InboxTab.review;
+
+  /// Bulk ignore: the picked message ids, or null when not selecting.
+  Set<String>? _picked;
+
+  void _pick(String id) => setState(() {
+        final p = _picked ??= {};
+        if (!p.remove(id)) p.add(id);
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +68,11 @@ class _InboxViewState extends ConsumerState<InboxView> {
             return s != 0 ? s : '${b.date}${b.time}'.compareTo('${a.date}${a.time}');
           });
         final c = context.colors;
-        return ListView(padding: const EdgeInsets.only(bottom: 28), children: [
+        final selecting = _picked != null && _tab == InboxTab.review;
+        // Messages confirmed elsewhere meanwhile drop out of the selection.
+        final picked = [for (final m in shown) if (selecting && m.pending && _picked!.contains(m.id)) m];
+        final allPicked = picked.length == shown.length;
+        final list = ListView(padding: const EdgeInsets.only(bottom: 28), children: [
           const Padding(padding: EdgeInsets.fromLTRB(16, 4, 16, 6), child: _SmsAccessCard()),
           ChipRow(children: [
             for (final (t, label) in [
@@ -68,16 +81,38 @@ class _InboxViewState extends ConsumerState<InboxView> {
               (InboxTab.rejected, 'Rejected / Ignored · ${count({SmsStatus.rejected})}'),
               (InboxTab.all, 'All messages · ${all.length}'),
             ])
-              PaisaChip(label: label, selected: _tab == t, onTap: () => setState(() => _tab = t)),
+              PaisaChip(
+                label: label,
+                selected: _tab == t,
+                onTap: () => setState(() {
+                  _tab = t;
+                  _picked = null;
+                }),
+              ),
           ]),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Text(
-              _tab == InboxTab.review
-                  ? (waiting > 0 ? '$waiting waiting · nothing saved until you confirm' : 'Inbox clear')
-                  : '${shown.length} message${shown.length == 1 ? '' : 's'}',
-              style: PaisaText.sub.copyWith(color: c.ink3),
-            ),
+            child: Row(children: [
+              Expanded(
+                child: Text(
+                  selecting
+                      ? '${picked.length} selected'
+                      : _tab == InboxTab.review
+                          ? (waiting > 0 ? '$waiting waiting · nothing saved until you confirm' : 'Inbox clear')
+                          : '${shown.length} message${shown.length == 1 ? '' : 's'}',
+                  style: PaisaText.sub.copyWith(color: c.ink3),
+                ),
+              ),
+              if (selecting) ...[
+                PaisaLink(
+                  label: allPicked ? 'Clear' : 'Select all',
+                  onPressed: () => setState(() => _picked = allPicked ? {} : {for (final m in shown) m.id}),
+                ),
+                const SizedBox(width: 12),
+                PaisaLink(label: 'Cancel', onPressed: () => setState(() => _picked = null)),
+              ] else if (_tab == InboxTab.review && shown.length > 1)
+                PaisaLink(label: 'Select', onPressed: () => setState(() => _picked = {})),
+            ]),
           ),
           if (shown.isEmpty)
             EmptyState(
@@ -87,8 +122,38 @@ class _InboxViewState extends ConsumerState<InboxView> {
                   ? 'Every detected transaction has been reviewed. New bank and wallet messages will appear here for approval.'
                   : 'Messages you approve or ignore will be listed here.',
             ),
-          for (final m in shown) Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 0), child: SmsCard(m)),
+          for (final m in shown)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: SmsCard(
+                m,
+                picked: selecting ? picked.contains(m) : null,
+                onPick: m.pending && _tab == InboxTab.review ? () => _pick(m.id) : null,
+              ),
+            ),
           const Padding(padding: EdgeInsets.fromLTRB(16, 16, 16, 0), child: _WalletNotificationsCard()),
+        ]);
+        if (!selecting) return list;
+        return Column(children: [
+          Expanded(child: list),
+          DecoratedBox(
+            decoration: BoxDecoration(color: c.surface, border: Border(top: BorderSide(color: c.line))),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+              child: SizedBox(
+                width: double.infinity,
+                child: PaisaButton(
+                  label: picked.isEmpty ? 'Pick messages to ignore' : 'Ignore ${picked.length}',
+                  variant: ButtonVariant.danger,
+                  onPressed: picked.isEmpty
+                      ? null
+                      : () async {
+                          if (await rejectManySmsFlow(context, ref, picked) && mounted) setState(() => _picked = null);
+                        },
+                ),
+              ),
+            ),
+          ),
         ]);
       },
     );
@@ -246,8 +311,15 @@ class _WalletNotificationsCardState extends ConsumerState<_WalletNotificationsCa
 
 /// One message in the inbox list.
 class SmsCard extends ConsumerWidget {
-  const SmsCard(this.m, {super.key});
+  const SmsCard(this.m, {super.key, this.picked, this.onPick});
   final SmsMessage m;
+
+  /// Bulk ignore: whether this card is picked, or null when not selecting.
+  final bool? picked;
+
+  /// Picks or unpicks it; a long press starts selecting. Null if it can't
+  /// be picked (already handled).
+  final VoidCallback? onPick;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -266,13 +338,17 @@ class SmsCard extends ConsumerWidget {
     final today = ref.watch(clockProvider).today();
     final cal = ref.watch(monthCalendarProvider);
     void open() => context.push('/inbox/${m.id}');
+    final selecting = picked != null;
     return PaisaCard(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      borderColor: picked == true ? c.primary : null,
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         InkWell(
-          onTap: open,
+          onTap: selecting ? onPick : open,
+          onLongPress: selecting ? null : onPick,
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Row(children: [
+              if (selecting) ...[_PickMark(picked!), const SizedBox(width: 10)],
               Flexible(child: Align(alignment: Alignment.centerLeft, child: Tag(head, tone: headTone))),
               const SizedBox(width: 8),
               Text('${cal.relativeDay(m.date, today)}, ${m.time}', style: PaisaText.hint.copyWith(color: c.ink3)),
@@ -310,7 +386,7 @@ class SmsCard extends ConsumerWidget {
           const Note('Same amount and account as another message a few minutes earlier. Saving both would double count.',
               tone: Tone.amber),
         ],
-        if (m.pending) ...[
+        if (m.pending && !selecting) ...[
           const SizedBox(height: 12),
           Row(children: [
             Expanded(child: PaisaButton(label: 'Confirm', small: true, onPressed: () => confirmSmsFlow(context, ref, m))),
@@ -336,6 +412,31 @@ class SmsCard extends ConsumerWidget {
           Text('Saved to history and balances', style: PaisaText.sub.copyWith(color: c.positive)),
         ],
       ]),
+    );
+  }
+}
+
+/// The round tick on a card while bulk-ignore selection is on.
+class _PickMark extends StatelessWidget {
+  const _PickMark(this.on);
+  final bool on;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Semantics(
+      checked: on,
+      label: 'Select message',
+      child: Container(
+        width: 22,
+        height: 22,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: on ? c.primary : null,
+          border: Border.all(color: on ? c.primary : c.ink3, width: 1.5),
+        ),
+        child: on ? PaisaIcon(PaisaIcons.check, size: 16, color: c.onPrimary) : null,
+      ),
     );
   }
 }

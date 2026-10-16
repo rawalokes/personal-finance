@@ -372,6 +372,27 @@ class SmsRepository {
     return _setStatus(id, SmsStatus.rejected, 'sms.reject', 'Ignored SMS: ${m.merchant} · ${auditMoney(m.amount)}');
   }
 
+  /// Bulk ignore: every still-pending message in [ids], in one go and with
+  /// one undo. Ones handled meanwhile are left as they are.
+  Future<UndoAction> rejectMany(Iterable<String> ids) async {
+    final before = <SmsMessage>[];
+    await _db.transaction(() async {
+      for (final id in ids) {
+        final m = await get(id);
+        if (!m.pending) continue;
+        before.add(m);
+        await _write(m.copyWith(status: SmsStatus.rejected));
+        await _audit.write(action: 'sms.reject', entity: 'sms', entityId: id, summary: 'Ignored SMS: ${m.merchant} · ${auditMoney(m.amount)}');
+      }
+    });
+    return UndoAction(() => _db.transaction(() async {
+          for (final m in before) {
+            await _write(m);
+            await _audit.write(action: 'sms.undo', entity: 'sms', entityId: m.id, summary: 'Undid the last change');
+          }
+        }));
+  }
+
   Future<UndoAction> later(String id) => _setStatus(id, SmsStatus.later, 'sms.later', 'Moved an SMS to review later');
 
   Future<UndoAction> restore(String id) => _setStatus(id, SmsStatus.review, 'sms.restore', 'Restored an SMS to review');

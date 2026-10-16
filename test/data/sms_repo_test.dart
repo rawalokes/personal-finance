@@ -150,6 +150,18 @@ void main() {
     expect(await balanceOf(db, 'nabil'), fromRupees(142350));
   });
 
+  test('bulk ignore rejects every pending one, skips handled ones, and undoes as one', () async {
+    final a = await sms.ingest(sender: 'NABIL_ALERT', body: _bhatBhateni, receivedAt: DateTime(2026, 10, 14, 8, 41));
+    final b = await sms.ingest(sender: 'NABIL_ALERT', body: _transfer, receivedAt: DateTime(2026, 10, 13, 19, 20));
+    await sms.confirm(b.message!.id);
+    final undo = await sms.rejectMany([a.message!.id, b.message!.id]);
+    expect((await sms.get(a.message!.id)).status, SmsStatus.rejected);
+    expect((await sms.get(b.message!.id)).status, SmsStatus.approved);
+    await undo();
+    expect((await sms.get(a.message!.id)).status, SmsStatus.review);
+    expect((await sms.get(b.message!.id)).status, SmsStatus.approved);
+  });
+
   test('edit, change type and change category are kept until confirmed', () async {
     final r = await sms.ingest(sender: 'NABIL_ALERT', body: _bhatBhateni, receivedAt: DateTime(2026, 10, 14, 8, 41));
     final id = r.message!.id;

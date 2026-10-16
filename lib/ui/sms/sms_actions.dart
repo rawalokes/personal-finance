@@ -95,6 +95,23 @@ Future<bool> rejectSmsFlow(BuildContext context, WidgetRef ref, SmsMessage m) as
   return true;
 }
 
+/// Bulk ignore, after asking. True if done.
+Future<bool> rejectManySmsFlow(BuildContext context, WidgetRef ref, List<SmsMessage> ms) async {
+  final n = ms.length;
+  final choice = await showConfirmDialog(
+    context,
+    title: 'Ignore $n message${n == 1 ? '' : 's'}?',
+    body: '${n == 1 ? 'It' : 'They'} won’t be counted in any balance, budget or report. '
+        'You can restore ${n == 1 ? 'it' : 'them'} later from Rejected / Ignored.',
+    okLabel: n == 1 ? 'Ignore message' : 'Ignore $n messages',
+    okVariant: ButtonVariant.danger,
+  );
+  if (choice != ConfirmChoice.ok) return false;
+  final undo = await ref.read(smsRepoProvider).rejectMany([for (final m in ms) m.id]);
+  showUndoToast(ref.read(toastProvider.notifier), n == 1 ? 'Message ignored' : '$n messages ignored', undo);
+  return true;
+}
+
 Future<void> laterSms(WidgetRef ref, SmsMessage m) async {
   await ref.read(smsRepoProvider).later(m.id);
   ref.read(toastProvider.notifier).show('Moved to the end of Needs review');
