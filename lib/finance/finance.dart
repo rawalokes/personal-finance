@@ -20,3 +20,4 @@ export 'reports.dart';
 export 'score.dart';
 export 'nudges.dart';
 export 'challenges.dart';
+export 'calendar.dart';

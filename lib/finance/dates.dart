@@ -29,6 +29,9 @@ IsoDate addMonths(IsoDate date, int months) {
   return toIsoDate(DateTime.utc(year, month + 1, day));
 }
 
+/// [date] plus [days] (may be negative).
+IsoDate addDays(IsoDate date, int days) => toIsoDate(parseIsoDate(date).add(Duration(days: days)));
+
 /// a − b in whole days.
 int daysBetween(IsoDate a, IsoDate b) => parseIsoDate(a).difference(parseIsoDate(b)).inDays;
 
