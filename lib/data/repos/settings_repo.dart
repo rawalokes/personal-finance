@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 
 import '../../finance/finance.dart';
 import '../audit_log.dart';
 import '../db/database.dart';
+import '../records.dart' show AuditActor;
+import '../report_settings.dart';
 import '../settings_models.dart';
 
 /// Saving tax rules whose brackets have gaps, overlaps or bad rates.
@@ -25,6 +28,9 @@ abstract final class SettingKey {
   static String aiCache(String month) => 'ai.analysis.$month';
   static const smsLastScan = 'sms.last_scan';
   static const smsScannedSenders = 'sms.scanned_senders';
+  static const reportsDashboard = 'reports.dashboard';
+  static const nudges = 'nudges.state';
+  static const challenges = 'challenges';
 }
 
 /// Typed access to the `settings` table. A missing document means "use the
@@ -137,4 +143,54 @@ class SettingsRepository {
   /// 30-day scan. Null before 1.3.2.
   Future<List<String>?> smsScannedSenders() async => (await _read(SettingKey.smsScannedSenders) as List?)?.cast<String>();
   Future<void> saveSmsScannedSenders(List<String> senders) => _write(SettingKey.smsScannedSenders, senders);
+
+  /// Like [_decode], but a document this version can't read is deleted (so
+  /// defaults apply) and its text is kept in the audit log (spec §5).
+  T _decodeSafe<T>(String key, Object? raw, T Function(Json) decode, T fallback) {
+    if (raw == null) return fallback;
+    try {
+      return decode((raw as Map).cast<String, Object?>());
+    } on Object {
+      unawaited(_resetUnreadable(key, raw));
+      return fallback;
+    }
+  }
+
+  Future<void> _resetUnreadable(String key, Object? raw) => db.transaction(() async {
+        await (db.delete(db.settings)..where((s) => s.key.equals(key))).go();
+        final text = jsonEncode(raw);
+        await _audit.write(
+          action: 'settings.reset',
+          entity: 'settings',
+          entityId: key,
+          summary: 'Reset unreadable $key to defaults: ${text.length > 500 ? '${text.substring(0, 500)}…' : text}',
+          actor: AuditActor.system,
+        );
+      });
+
+  /// Null = no saved layout (show the default).
+  Future<DashboardConfig?> dashboard() async =>
+      _decodeSafe<DashboardConfig?>(SettingKey.reportsDashboard, await _read(SettingKey.reportsDashboard), DashboardConfig.fromJson, null);
+  Stream<DashboardConfig?> watchDashboard() => _watch(SettingKey.reportsDashboard)
+      .map((r) => _decodeSafe<DashboardConfig?>(SettingKey.reportsDashboard, r, DashboardConfig.fromJson, null));
+
+  // Layout edits are frequent and not financial: not audited (like prefs).
+  Future<void> saveDashboard(DashboardConfig d) => _write(SettingKey.reportsDashboard, d.toJson());
+  Future<void> resetDashboard() => (db.delete(db.settings)..where((s) => s.key.equals(SettingKey.reportsDashboard))).go();
+
+  Future<NudgeState> nudgeState() async =>
+      _decodeSafe(SettingKey.nudges, await _read(SettingKey.nudges), NudgeState.fromJson, const NudgeState());
+  Stream<NudgeState> watchNudgeState() =>
+      _watch(SettingKey.nudges).map((r) => _decodeSafe(SettingKey.nudges, r, NudgeState.fromJson, const NudgeState()));
+  Future<void> saveNudgeState(NudgeState s) => _write(SettingKey.nudges, s.toJson());
+
+  Future<ChallengeState> challengeState() async =>
+      _decodeSafe(SettingKey.challenges, await _read(SettingKey.challenges), challengeStateFromJson, const ChallengeState());
+  Stream<ChallengeState> watchChallengeState() => _watch(SettingKey.challenges)
+      .map((r) => _decodeSafe(SettingKey.challenges, r, challengeStateFromJson, const ChallengeState()));
+
+  /// Audited when [summary] is given (the user started, changed or removed one).
+  Future<void> saveChallengeState(ChallengeState s, {String? summary}) => summary == null
+      ? _write(SettingKey.challenges, challengeStateToJson(s))
+      : _save(SettingKey.challenges, challengeStateToJson(s), summary);
 }
