@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paisa/data/settings_models.dart';
 import 'package:paisa/data/undo.dart';
 import 'package:paisa/finance/finance.dart';
 import 'package:paisa/store/ui_state.dart';
@@ -47,7 +48,10 @@ void main() {
 
   testWidgets('DateField shows the date and returns the picked one', (tester) async {
     IsoDate? picked;
-    await tester.pumpWidget(wrap(DateField(label: 'Date', value: '2026-10-14', onChanged: (d) => picked = d)));
+    await tester.pumpWidget(ProviderScope(
+      overrides: [initialPrefsProvider.overrideWithValue(const AppPrefs(calendar: CalendarPref.ad))],
+      child: wrap(DateField(label: 'Date', value: '2026-10-14', onChanged: (d) => picked = d)),
+    ));
     expect(find.text('14 Oct 2026'), findsOneWidget);
     await tester.tap(find.text('14 Oct 2026'));
     await tester.pumpAndSettle();
@@ -55,6 +59,11 @@ void main() {
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
     expect(picked, '2026-10-12');
+  });
+
+  testWidgets('in Bikram Sambat the DateField shows the BS date with the AD date beside it', (tester) async {
+    await tester.pumpWidget(ProviderScope(child: wrap(DateField(label: 'Date', value: '2026-10-14', onChanged: (_) {}))));
+    expect(find.text('28 Asoj 2083 · 14 Oct 2026'), findsOneWidget);
   });
 
   testWidgets('KeyValueCard lays out label/value rows', (tester) async {

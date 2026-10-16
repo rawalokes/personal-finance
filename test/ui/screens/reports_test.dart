@@ -8,7 +8,6 @@ import 'package:paisa/finance/finance.dart';
 import 'package:paisa/ui/components/buttons.dart';
 import 'package:paisa/ui/components/toast.dart';
 import 'package:paisa/data/settings_models.dart';
-import 'package:paisa/store/ui_state.dart';
 import 'package:paisa/ui/components/top_bar.dart';
 
 import '../../data/data_fixtures.dart';
@@ -33,9 +32,7 @@ void main() {
   });
 
   testWidgets('hidden balances mask every amount on Reports, nudges included', (tester) async {
-    await pumpPaisa(tester, location: '/reports', overrides: [
-      initialPrefsProvider.overrideWithValue(const AppPrefs(hideBalances: true)),
-    ]);
+    await pumpPaisa(tester, location: '/reports', prefs: const AppPrefs(calendar: CalendarPref.ad, hideBalances: true));
     expect(find.textContaining(RegExp(r'NPR \d')), findsNothing);
   });
 

@@ -5,6 +5,7 @@ import '../../data/report_settings.dart';
 import '../../finance/finance.dart';
 import '../../store/data_providers.dart';
 import '../../store/reports.dart';
+import '../../store/ui_state.dart';
 import '../components/indicators.dart';
 import '../components/money_text.dart';
 import '../components/surfaces.dart';
@@ -32,11 +33,12 @@ class ReportWidgetCard extends ConsumerWidget {
     final today = ref.watch(clockProvider).today();
     final usesPeriod = config.type.settings.contains(WidgetSetting.period);
     final period = periodOverride ?? config.period;
-    final range = resolvePeriod(period, today, fyStart: ref.watch(fyStartProvider));
+    final cal = ref.watch(monthCalendarProvider);
+    final range = resolvePeriod(period, today, fyStart: ref.watch(fyStartProvider), cal: cal);
     Widget body;
     var forecast = false;
     try {
-      (body, forecast) = _body(context, i, range, today);
+      (body, forecast) = _body(context, i, range, today, cal);
     } on Object {
       body = Text('Couldn’t draw this widget.', style: PaisaText.sub.copyWith(color: c.red));
     }
@@ -68,7 +70,7 @@ class ReportWidgetCard extends ConsumerWidget {
   }
 
   /// The widget body and whether it shows forecast figures.
-  (Widget, bool) _body(BuildContext context, ReportInputs i, DateRange range, IsoDate today) {
+  (Widget, bool) _body(BuildContext context, ReportInputs i, DateRange range, IsoDate today, MonthCalendar cal) {
     final c = context.colors;
     final palette = chartPalette(context);
     final accounts = config.accountIds.toSet();
@@ -78,10 +80,10 @@ class ReportWidgetCard extends ConsumerWidget {
       case ReportWidgetType.challenges:
         return (const ChallengeSummary(), false);
       case ReportWidgetType.cashFlow:
-        final pts = cashFlow(i.txs, range, accountIds: accounts, recurring: i.recurring, loans: i.loans, today: today);
+        final pts = cashFlow(i.txs, range, accountIds: accounts, recurring: i.recurring, loans: i.loans, today: today, cal: cal);
         final actual = pts.where((p) => p.kind == PointKind.actual).toList();
         if (actual.every((p) => p.income == 0 && p.expenses == 0)) return (_empty(context, 'No money in or out in this period.'), false);
-        final labels = [for (final p in pts) shortMonth(p.month)];
+        final labels = [for (final p in pts) cal.monthShort(p.month)];
         final series = [
           [for (final p in pts) p.income / 100],
           [for (final p in pts) p.expenses / 100],
@@ -101,7 +103,7 @@ class ReportWidgetCard extends ConsumerWidget {
             LegendRow(label: 'Net', amount: income - out),
             if (config.compare)
               () {
-                final prev = cashFlow(i.txs, previousRange(range), accountIds: accounts);
+                final prev = cashFlow(i.txs, previousRange(range, cal: cal), accountIds: accounts, cal: cal);
                 return _compare(context, 'Net', income - out, prev.fold<Paisa>(0, (t, p) => t + p.net));
               }(),
           ]),
@@ -111,7 +113,7 @@ class ReportWidgetCard extends ConsumerWidget {
       case ReportWidgetType.incomeBySource:
         final spending = config.type == ReportWidgetType.spendingByCategory;
         List<ReportSlice> slicesFor(DateRange r) => spending
-            ? spendingByCategory(i.txs, r, i.categories, accountIds: accounts, categoryIds: config.categoryIds.toSet())
+            ? spendingByCategory(i.txs, r, i.categories, accountIds: accounts, categoryIds: config.categoryIds.toSet(), cal: cal)
             : incomeBySource(i.txs, r, groupBy: config.groupBy, incomeTypes: i.incomeTypes, parties: i.parties, accountIds: accounts);
         final all = slicesFor(range);
         if (all.isEmpty) return (_empty(context, spending ? 'No spending in this period.' : 'No income in this period.'), false);
@@ -128,16 +130,16 @@ class ReportWidgetCard extends ConsumerWidget {
               ),
             const SizedBox(height: 8),
             SliceList(slices: slices, colors: palette),
-            if (config.compare) _compare(context, 'Total', total, slicesFor(previousRange(range)).fold<Paisa>(0, (t, s) => t + s.value)),
+            if (config.compare) _compare(context, 'Total', total, slicesFor(previousRange(range, cal: cal)).fold<Paisa>(0, (t, s) => t + s.value)),
           ]),
           false,
         );
       case ReportWidgetType.netWorth:
         if (i.accounts.isEmpty && i.loans.isEmpty) return (_empty(context, 'Add accounts to see your net worth.'), false);
-        final pts = netWorthSeries(i.accounts, i.loans, i.txs, range, today, recurring: i.recurring);
+        final pts = netWorthSeries(i.accounts, i.loans, i.txs, range, today, recurring: i.recurring, cal: cal);
         final actual = pts.where((p) => p.kind == PointKind.actual).toList();
         final firstForecast = pts.indexWhere((p) => p.kind == PointKind.forecast);
-        final labels = [for (final p in pts) shortMonth(p.label)];
+        final labels = [for (final p in pts) cal.monthShort(p.label)];
         final series = [[for (final p in pts) p.value / 100]];
         return (
           Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -169,7 +171,7 @@ class ReportWidgetCard extends ConsumerWidget {
           false,
         );
       case ReportWidgetType.budgetPerformance:
-        final lines = budgetPerformance(i.txs, i.categories, monthKey(today), categoryIds: config.categoryIds.toSet());
+        final lines = budgetPerformance(i.txs, i.categories, cal.key(today), categoryIds: config.categoryIds.toSet(), cal: cal);
         if (lines.isEmpty) return (_empty(context, 'No budgets set. Add them in Plans → Budgets.'), false);
         final names = {for (final x in i.categories) x.id: x.name};
         return (
@@ -216,7 +218,7 @@ class ReportWidgetCard extends ConsumerWidget {
                       child: Text(
                         l.monthsLeft == null
                             ? ' left · never repaid at this installment'
-                            : ' left · debt-free ${monthNameYear(addMonths(today, l.monthsLeft!))}',
+                            : ' left · debt-free ${cal.monthYear(cal.shift(cal.key(today), l.monthsLeft!))}',
                         style: PaisaText.hint.copyWith(color: c.ink3),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -228,11 +230,11 @@ class ReportWidgetCard extends ConsumerWidget {
           false,
         );
       case ReportWidgetType.interestPaid:
-        List<ReportPoint> pointsFor(DateRange r) => interestPaid(i.txs, r, loanIds: config.loanIds.toSet());
+        List<ReportPoint> pointsFor(DateRange r) => interestPaid(i.txs, r, loanIds: config.loanIds.toSet(), cal: cal);
         final pts = pointsFor(range);
         final total = pts.fold<Paisa>(0, (t, p) => t + p.value);
         if (total == 0) return (_empty(context, 'No loan interest paid in this period.'), false);
-        final labels = [for (final p in pts) shortMonth(p.label)];
+        final labels = [for (final p in pts) cal.monthShort(p.label)];
         final series = [[for (final p in pts) p.value / 100]];
         return (
           Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -241,14 +243,14 @@ class ReportWidgetCard extends ConsumerWidget {
                 : PaisaBarChart(labels: labels, series: series, colors: [c.red]),
             const SizedBox(height: 8),
             LegendRow(label: 'Interest paid', amount: total, color: c.red),
-            if (config.compare) _compare(context, 'Interest', total, pointsFor(previousRange(range)).fold<Paisa>(0, (t, p) => t + p.value)),
+            if (config.compare) _compare(context, 'Interest', total, pointsFor(previousRange(range, cal: cal)).fold<Paisa>(0, (t, p) => t + p.value)),
           ]),
           false,
         );
       case ReportWidgetType.savingsRate:
-        final pts = savingsSeries(i.txs, range, accountIds: accounts);
+        final pts = savingsSeries(i.txs, range, accountIds: accounts, cal: cal);
         if (pts.every((p) => p.saved == 0)) return (_empty(context, 'No income or spending in this period.'), false);
-        final labels = [for (final p in pts) shortMonth(p.month)];
+        final labels = [for (final p in pts) cal.monthShort(p.month)];
         final series = [[for (final p in pts) p.rate * 100]];
         final withIncome = pts.where((p) => p.rate != 0).toList();
         final avg = withIncome.isEmpty ? 0 : (withIncome.fold<double>(0, (t, p) => t + p.rate) / withIncome.length * 100).round();
@@ -277,7 +279,7 @@ class ReportWidgetCard extends ConsumerWidget {
                 colors: [palette.first],
               ),
             SliceList(slices: top, colors: palette),
-            if (config.compare) _compare(context, 'Paid', total, payees(previousRange(range)).fold<Paisa>(0, (t, s) => t + s.value)),
+            if (config.compare) _compare(context, 'Paid', total, payees(previousRange(range, cal: cal)).fold<Paisa>(0, (t, s) => t + s.value)),
           ]),
           false,
         );

@@ -14,6 +14,7 @@ import '../data/repos/settings_repo.dart';
 import '../data/settings_models.dart';
 import '../data/repos/transaction_repo.dart';
 import '../finance/finance.dart';
+import 'ui_state.dart';
 
 /// Opened in main.dart (and in tests) and passed in with an override.
 final databaseProvider = Provider<AppDatabase>(
@@ -105,7 +106,8 @@ final balanceSummaryProvider = FutureProvider<BalanceSummary>((ref) async {
 /// Income, spending and per-category totals for the current calendar month.
 final monthTotalsProvider = FutureProvider<MonthlyTotals>((ref) async {
   final txns = await ref.watch(transactionsProvider.future);
-  return monthlyTotals(txns, monthKey(ref.watch(clockProvider).today()));
+  final cal = ref.watch(monthCalendarProvider);
+  return monthlyTotals(txns, cal.key(ref.watch(clockProvider).today()), cal: cal);
 });
 
 final loanTypesProvider = StreamProvider<List<LoanType>>((ref) => ref.watch(catalogRepoProvider).watchLoanTypes());

@@ -264,6 +264,7 @@ class SmsCard extends ConsumerWidget {
       _ => null,
     };
     final today = ref.watch(clockProvider).today();
+    final cal = ref.watch(monthCalendarProvider);
     void open() => context.push('/inbox/${m.id}');
     return PaisaCard(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
@@ -274,7 +275,7 @@ class SmsCard extends ConsumerWidget {
             Row(children: [
               Flexible(child: Align(alignment: Alignment.centerLeft, child: Tag(head, tone: headTone))),
               const SizedBox(width: 8),
-              Text('${relativeDay(m.date, today)}, ${m.time}', style: PaisaText.hint.copyWith(color: c.ink3)),
+              Text('${cal.relativeDay(m.date, today)}, ${m.time}', style: PaisaText.hint.copyWith(color: c.ink3)),
             ]),
             const SizedBox(height: 10),
             Row(children: [

@@ -24,8 +24,9 @@ String methodLabel(InterestMethod m) => switch (m) {
     };
 
 /// The payoff engine counts months from next month (index 0).
-String payoffMonthLabel(IsoDate today, int monthIndex) =>
-    monthYear(addMonths(addMonths('${monthKey(today)}-01', 1), monthIndex));
+String payoffMonthLabel(IsoDate today, int monthIndex, {MonthCalendar cal = const AdCalendar()}) => cal is AdCalendar
+    ? monthYear(addMonths(addMonths('${monthKey(today)}-01', 1), monthIndex))
+    : cal.monthYearFrom(today, 1 + monthIndex);
 
 /// Loans that still need paying.
 List<Loan> owedLoans(Iterable<Loan> loans) => [for (final l in loans) if (!l.closed && l.outstanding > 0) l];

@@ -84,6 +84,7 @@ class _DetailBody extends ConsumerWidget {
     final (tagText, tagTone) = groupTag(a.group);
     final money = ref.watch(moneyFormatProvider);
     final today = ref.watch(clockProvider).today();
+    final cal = ref.watch(monthCalendarProvider);
     return ListView(padding: const EdgeInsets.only(bottom: 28), children: [
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -113,7 +114,7 @@ class _DetailBody extends ConsumerWidget {
                 const SizedBox(height: 6),
                 Text(
                   '${money.npr(a.balance)} used of ${money.npr(a.creditLimit!)} limit'
-                  '${a.statementDueDate == null ? '' : ' · statement due ${shortDate(a.statementDueDate)}'}',
+                  '${a.statementDueDate == null ? '' : ' · statement due ${cal.shortDate(a.statementDueDate)}'}',
                   style: PaisaText.hint.copyWith(color: c.ink3),
                 ),
               ],
@@ -163,7 +164,7 @@ class _DetailBody extends ConsumerWidget {
           const SizedBox(height: 12),
           KeyValueCard(rows: [
             KeyValueRow('Opening balance', valueWidget: MoneyText(a.openingBalance, style: PaisaText.body.copyWith(fontSize: 14))),
-            KeyValueRow('Last reconciled', value: a.lastReconciled == null ? 'Never' : longDate(a.lastReconciled)),
+            KeyValueRow('Last reconciled', value: a.lastReconciled == null ? 'Never' : cal.longDate(a.lastReconciled)),
             KeyValueRow('Counts toward', value: countsToward(a.group)),
           ]),
         ]),

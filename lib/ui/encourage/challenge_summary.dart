@@ -42,7 +42,8 @@ class ChallengeSummary extends ConsumerWidget {
     final i = ref.watch(reportInputsProvider).value;
     if (s == null || i == null) return const SizedBox(height: 60);
     final today = ref.watch(clockProvider).today();
-    final month = monthKey(today);
+    final cal = ref.watch(monthCalendarProvider);
+    final month = cal.key(today);
     final money = ref.watch(moneyFormatProvider);
     final accepted = s.acceptedIn(month);
     final waiting = s.suggestionsIn(month).length;

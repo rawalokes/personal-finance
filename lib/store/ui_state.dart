@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/settings_models.dart';
+import '../finance/calendar.dart';
 import '../finance/money.dart';
 import 'sms_sync.dart';
 
@@ -66,6 +67,11 @@ class CalendarController extends Notifier<CalendarPref> {
 }
 
 final calendarProvider = NotifierProvider<CalendarController, CalendarPref>(CalendarController.new);
+
+/// Months and dates follow this calendar (Settings → Currency & date).
+final monthCalendarProvider = Provider<MonthCalendar>(
+  (ref) => ref.watch(calendarProvider) == CalendarPref.bs ? const BsCalendar() : const AdCalendar(),
+);
 
 final _pendingSmsProvider = StreamProvider<int>((ref) => ref.watch(smsRepoProvider).watchPendingCount());
 

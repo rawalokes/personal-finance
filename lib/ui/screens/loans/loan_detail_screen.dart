@@ -74,6 +74,7 @@ class _Body extends ConsumerWidget {
     final c = context.colors;
     final money = ref.watch(moneyFormatProvider);
     final today = ref.watch(clockProvider).today();
+    final cal = ref.watch(monthCalendarProvider);
     final l = d.loan!;
     final type = d.types.where((t) => t.id == l.loanTypeId).firstOrNull?.name ?? 'Loan';
     final account = d.accounts.where((a) => a.id == l.repaymentAccountId).firstOrNull?.shortName ?? 'Not set';
@@ -111,7 +112,7 @@ class _Body extends ConsumerWidget {
           if (overdue) ...[
             const SizedBox(height: 12),
             Note(
-              'Installment of ${money.npr(l.installment)} was due ${longDate(l.nextDueDate)}. Record the payment once made.',
+              'Installment of ${money.npr(l.installment)} was due ${cal.longDate(l.nextDueDate)}. Record the payment once made.',
               tone: Tone.red,
               icon: PaisaIcons.alert,
             ),
@@ -135,10 +136,10 @@ class _Body extends ConsumerWidget {
               Flexible(child: MoneyText(l.installment, style: kv)),
               Text(' · ${frequencyLabel(l.frequency)}', style: kv.copyWith(color: c.ink)),
             ])),
-            KeyValueRow('Next due', value: l.nextDueDate == null ? 'Not set' : '${longDate(l.nextDueDate)} · ${dueText(l.nextDueDate, today)}'),
+            KeyValueRow('Next due', value: l.nextDueDate == null ? 'Not set' : '${cal.longDate(l.nextDueDate)} · ${dueText(l.nextDueDate, today)}'),
             KeyValueRow('Remaining term', value: term()),
             KeyValueRow('Original principal', valueWidget: MoneyText(l.principal, style: kv)),
-            KeyValueRow('Start · Maturity', value: '${longDate(l.startDate)} · ${l.maturityDate == null ? 'Not set' : longDate(l.maturityDate)}'),
+            KeyValueRow('Start · Maturity', value: '${cal.longDate(l.startDate)} · ${l.maturityDate == null ? 'Not set' : cal.longDate(l.maturityDate)}'),
             KeyValueRow('Repayment account', value: account),
             KeyValueRow('Fees & prepayment', value: l.feesAndPrepayment ?? 'Not entered'),
           ]),
@@ -188,7 +189,7 @@ class _Body extends ConsumerWidget {
               _ScheduleRow(cells: const ['Due', 'Pay', 'Princ.', 'Int.', 'Balance'], header: true),
               for (final r in schedule.rows)
                 _ScheduleRow(cells: [
-                  r.dueDate == null ? '—' : shortDate(r.dueDate),
+                  r.dueDate == null ? '—' : cal.shortDate(r.dueDate),
                   money.short(r.payment),
                   money.short(r.principal),
                   money.short(r.interest),
@@ -218,7 +219,7 @@ class _Body extends ConsumerWidget {
             : PaisaListCard(children: [
                 for (final t in d.repayments)
                   ListRow(
-                    title: longDate(t.date),
+                    title: cal.longDate(t.date),
                     subtitle: 'Principal ${money.plain(t.principal ?? 0)} · Interest ${money.plain(t.interest ?? 0)}',
                     leading: const IconWell(icon: PaisaIcons.check, tone: Tone.positive, size: 36),
                     trailing: MoneyText(t.amount, style: kv),

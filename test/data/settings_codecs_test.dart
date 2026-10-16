@@ -3,10 +3,10 @@ import 'package:paisa/data/settings_models.dart';
 import 'package:paisa/finance/finance.dart';
 
 void main() {
-  test('preferences round-trip and default to lakh, AD, Night, balances shown', () {
+  test('preferences round-trip and default to lakh, Bikram Sambat, Night, balances shown', () {
     const d = AppPrefs();
     expect(d.grouping, Grouping.lakh);
-    expect(d.calendar, CalendarPref.ad);
+    expect(d.calendar, CalendarPref.bs);
     expect(d.theme, ThemePref.dark);
     expect(d.hideBalances, isFalse);
     const p = AppPrefs(grouping: Grouping.international, calendar: CalendarPref.bs, theme: ThemePref.light, hideBalances: true);

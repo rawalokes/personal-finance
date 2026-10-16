@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/records.dart';
 import '../../finance/finance.dart';
 import '../../store/data_providers.dart';
+import '../../store/ui_state.dart';
 import '../components/tone.dart';
 import '../icons/paisa_icons.dart';
 import 'party_field.dart';
@@ -56,6 +57,7 @@ class TxnLookup {
     required Iterable<ExpenseCategory> categories,
     required Iterable<IncomeType> incomeTypes,
     Iterable<ConfigItem> parties = const [],
+    this.cal = const AdCalendar(),
   })  : accounts = {for (final a in accounts) a.id: a},
         categories = {for (final c in categories) c.id: c},
         incomeTypes = {for (final t in incomeTypes) t.id: t},
@@ -65,6 +67,9 @@ class TxnLookup {
   final Map<String, ExpenseCategory> categories;
   final Map<String, IncomeType> incomeTypes;
   final Map<String, ConfigItem> parties;
+
+  /// Dates on rows and details follow this calendar.
+  final MonthCalendar cal;
 
   String accountShort(String? id) => accounts[id]?.shortName ?? '—';
   String categoryName(String? id) => categories[id]?.name ?? 'Uncategorised';
@@ -77,6 +82,7 @@ final txnLookupProvider = FutureProvider<TxnLookup>((ref) async => TxnLookup(
       categories: await ref.watch(categoriesProvider.future),
       incomeTypes: await ref.watch(incomeTypesProvider.future),
       parties: await ref.watch(configListProvider(ConfigList.parties).future),
+      cal: ref.watch(monthCalendarProvider),
     ));
 
 enum AmountTone { positive, ink, muted }
@@ -159,14 +165,14 @@ TxnView describeTxn(Txn t, TxnLookup lookup, {required IsoDate today, required M
     icon: icon,
     iconTone: iconTone,
     meta: t.isPosted ? '${t.source == TxSource.sms ? 'SMS · ' : ''}${t.time}' : 'Pending',
-    dateText: relativeDay(t.date, today),
+    dateText: lookup.cal.relativeDay(t.date, today),
   );
 }
 
 /// Label/value rows for the transaction detail sheet.
 List<(String, String)> txnDetailRows(Txn t, TxnLookup lookup, MoneyFormat money) => [
       ('Type', kTxTypeInfo[t.type]!.name),
-      ('Date', '${longDate(t.date)}, ${t.time}'),
+      ('Date', '${lookup.cal.longDate(t.date)}, ${t.time}'),
       ('Account', lookup.accountShort(t.accountId)),
       if (t.counterAccountId != null)
         (t.direction == Direction.credit ? 'From' : 'To', lookup.accountShort(t.counterAccountId)),

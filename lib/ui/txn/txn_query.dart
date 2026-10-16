@@ -27,15 +27,15 @@ enum TxnRange {
   last30,
   all;
 
-  /// The month chip reads 'October 2026'.
-  String label(IsoDate today) => switch (this) {
-        TxnRange.month => monthNameYear(today),
+  /// The month chip reads 'October 2026' (or 'Asoj 2083').
+  String label(IsoDate today, {MonthCalendar cal = const AdCalendar()}) => switch (this) {
+        TxnRange.month => cal.monthYear(cal.key(today)),
         TxnRange.last30 => 'Last 30 days',
         TxnRange.all => 'All time',
       };
 
-  bool contains(Txn t, IsoDate today) => switch (this) {
-        TxnRange.month => monthKey(t.date) == monthKey(today),
+  bool contains(Txn t, IsoDate today, {MonthCalendar cal = const AdCalendar()}) => switch (this) {
+        TxnRange.month => cal.key(t.date) == cal.key(today),
         TxnRange.last30 => daysBetween(today, t.date) <= 30,
         TxnRange.all => true,
       };
@@ -64,18 +64,18 @@ Paisa _netEffect(Txn t) {
   };
 }
 
-String dayLabel(IsoDate date, IsoDate today) {
-  final rel = relativeDay(date, today);
+String dayLabel(IsoDate date, IsoDate today, {MonthCalendar cal = const AdCalendar()}) {
+  final rel = cal.relativeDay(date, today);
   final lead = rel == 'Today' || rel == 'Yesterday' ? rel : weekdayName(date);
-  return '$lead · ${longDate(date)}';
+  return '$lead · ${cal.longDate(date)}';
 }
 
 /// Groups newest-first transactions into consecutive days.
-List<DayGroup> groupByDay(List<Txn> newestFirst, IsoDate today) {
+List<DayGroup> groupByDay(List<Txn> newestFirst, IsoDate today, {MonthCalendar cal = const AdCalendar()}) {
   final groups = <DayGroup>[];
   for (final t in newestFirst) {
     if (groups.isEmpty || groups.last.date != t.date) {
-      groups.add(DayGroup(date: t.date, label: dayLabel(t.date, today), items: [t], net: _netEffect(t)));
+      groups.add(DayGroup(date: t.date, label: dayLabel(t.date, today, cal: cal), items: [t], net: _netEffect(t)));
     } else {
       final g = groups.removeLast();
       groups.add(DayGroup(date: g.date, label: g.label, items: [...g.items, t], net: g.net + _netEffect(t)));

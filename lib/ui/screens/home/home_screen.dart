@@ -15,6 +15,7 @@ import '../../components/money_text.dart';
 import '../../components/surfaces.dart';
 import '../../date_line.dart';
 import '../../encourage/nudge_card.dart';
+import '../../loans/loan_presentation.dart';
 import '../../encourage/score_card.dart';
 import '../../icons/paisa_icon.dart';
 import '../../icons/paisa_icons.dart';
@@ -67,13 +68,12 @@ String greetingFor(DateTime now) => now.hour < 12
 
 /// 'Debt-free Mar 2029' at the current installments (no extra, no rollover),
 /// or null when a loan is never repaid or nothing is owed.
-String? debtFreeLabel(List<Loan> loans, IsoDate today) {
+String? debtFreeLabel(List<Loan> loans, IsoDate today, {MonthCalendar cal = const AdCalendar()}) {
   final active = loans.where((l) => !l.closed && l.outstanding > 0).toList();
   if (active.isEmpty) return null;
   final base = simulatePayoff(active, rollover: false);
   if (base.hitLimit || base.months == 0) return null;
-  final firstOfNextMonth = addMonths('${monthKey(today)}-01', 1);
-  return 'Debt-free ${monthYear(addMonths(firstOfNextMonth, base.months - 1))}';
+  return 'Debt-free ${payoffMonthLabel(today, base.months - 1, cal: cal)}';
 }
 
 /// Home tab (spec §7): available to spend, three actions, account cards,
@@ -131,6 +131,7 @@ class _HomeBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final today = ref.watch(clockProvider).today();
+    final cal = ref.watch(monthCalendarProvider);
     final money = ref.watch(moneyFormatProvider);
     final pending = ref.watch(inboxPendingCountProvider);
     final cards = d.accounts.where((a) => !a.archived && a.group != AccountGroup.locked).toList();
@@ -195,7 +196,7 @@ class _HomeBody extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
             child: _PendingBar(count: pending, onTap: () => context.go('/activity?seg=inbox')),
           ),
-        Padding(padding: const EdgeInsets.fromLTRB(20, 12, 20, 0), child: _MonthCard(month: d.month, today: today)),
+        Padding(padding: const EdgeInsets.fromLTRB(20, 12, 20, 0), child: _MonthCard(month: d.month, today: today, cal: cal)),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
           child: ScoreCard(compact: true, onTap: () => context.go('/reports')),
@@ -205,7 +206,7 @@ class _HomeBody extends ConsumerWidget {
         if (d.summary.loans > 0)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            child: _LoansCard(loans: d.loans, outstanding: d.summary.loans, today: today),
+            child: _LoansCard(loans: d.loans, outstanding: d.summary.loans, today: today, cal: cal),
           ),
         SectionHeader(title: 'Recent', trailing: PaisaLink(label: 'See all', onPressed: () => context.go('/activity'))),
         Padding(
@@ -302,7 +303,8 @@ class _PendingBar extends StatelessWidget {
 }
 
 class _MonthCard extends StatelessWidget {
-  const _MonthCard({required this.month, required this.today});
+  const _MonthCard({required this.month, required this.today, required this.cal});
+  final MonthCalendar cal;
   final MonthlyTotals month;
   final IsoDate today;
 
@@ -315,7 +317,7 @@ class _MonthCard extends StatelessWidget {
     return PaisaCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(children: [
-          Expanded(child: Text('${monthName(today)} so far', style: PaisaText.sub.copyWith(color: c.ink3))),
+          Expanded(child: Text('${cal.monthLong(cal.key(today))} so far', style: PaisaText.sub.copyWith(color: c.ink3))),
           Text('${net >= 0 ? 'Surplus' : 'Deficit'} ', style: PaisaText.sub.copyWith(color: netColor)),
           Flexible(child: MoneyText(net.abs(), sign: net >= 0 ? '+' : kMinus, color: netColor, style: PaisaText.sub)),
         ]),
@@ -341,7 +343,8 @@ class _MonthCard extends StatelessWidget {
 }
 
 class _LoansCard extends StatelessWidget {
-  const _LoansCard({required this.loans, required this.outstanding, required this.today});
+  const _LoansCard({required this.loans, required this.outstanding, required this.today, required this.cal});
+  final MonthCalendar cal;
   final List<Loan> loans;
   final Paisa outstanding;
   final IsoDate today;
@@ -351,7 +354,7 @@ class _LoansCard extends StatelessWidget {
     final c = context.colors;
     final principal = loans.where((l) => !l.closed && l.outstanding > 0).fold<int>(0, (t, l) => t + l.principal);
     final paid = principal <= 0 ? 0.0 : (1 - outstanding / principal).clamp(0.0, 1.0).toDouble();
-    final free = debtFreeLabel(loans, today);
+    final free = debtFreeLabel(loans, today, cal: cal);
     return PaisaCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(children: [

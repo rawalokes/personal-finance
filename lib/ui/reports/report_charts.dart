@@ -8,11 +8,6 @@ import '../components/money_text.dart';
 import '../theme.dart';
 import '../typography.dart';
 
-const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-/// 'Oct' for '2026-10'.
-String shortMonth(String monthKey) => _months[int.parse(monthKey.substring(5, 7)) - 1];
-
 /// Series colours, in order.
 List<Color> chartPalette(BuildContext context) {
   final c = context.colors;

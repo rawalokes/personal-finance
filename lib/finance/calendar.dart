@@ -32,11 +32,25 @@ abstract class MonthCalendar {
   /// 'October 2026' / 'Kartik 2083'.
   String monthYear(String key);
 
-  /// '14 Oct' / '28 Asoj'.
-  String shortDate(IsoDate d);
+  /// '14 Oct' / '28 Asoj'; '—' for no date.
+  String shortDate(IsoDate? d) => d == null || d.isEmpty ? '—' : formatShort(d);
 
-  /// '14 Oct 2026' / '28 Asoj 2083'.
-  String longDate(IsoDate d);
+  /// '14 Oct 2026' / '28 Asoj 2083'; '—' for no date.
+  String longDate(IsoDate? d) => d == null || d.isEmpty ? '—' : formatLong(d);
+
+  String formatShort(IsoDate d);
+  String formatLong(IsoDate d);
+
+  /// 'Today', 'Yesterday', 'Tomorrow', else [shortDate].
+  String relativeDay(IsoDate date, IsoDate today) => switch (daysBetween(date, today)) {
+        0 => 'Today',
+        -1 => 'Yesterday',
+        1 => 'Tomorrow',
+        _ => shortDate(date),
+      };
+
+  /// [months] after next month, e.g. a loan's debt-free month.
+  String monthYearFrom(IsoDate today, int months) => monthYear(shift(key(today), months));
 }
 
 const _adShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -61,9 +75,9 @@ class AdCalendar extends MonthCalendar {
   @override
   String monthYear(String key) => '${monthLong(key)} ${key.substring(0, 4)}';
   @override
-  String shortDate(IsoDate d) => '${parseIsoDate(d).day} ${_adShort[parseIsoDate(d).month - 1]}';
+  String formatShort(IsoDate d) => '${parseIsoDate(d).day} ${_adShort[parseIsoDate(d).month - 1]}';
   @override
-  String longDate(IsoDate d) => '${shortDate(d)} ${parseIsoDate(d).year}';
+  String formatLong(IsoDate d) => '${formatShort(d)} ${parseIsoDate(d).year}';
 }
 
 /// Common spellings of the Bikram Sambat months.
@@ -112,13 +126,13 @@ class BsCalendar extends MonthCalendar {
   @override
   String monthYear(String key) => '${monthLong(key)} ${_parts(key).$1}';
   @override
-  String shortDate(IsoDate d) {
+  String formatShort(IsoDate d) {
     final b = _bs(d);
     return '${b.day} ${kBsMonths[b.month - 1]}';
   }
 
   @override
-  String longDate(IsoDate d) => '${shortDate(d)} ${_bs(d).year}';
+  String formatLong(IsoDate d) => '${formatShort(d)} ${_bs(d).year}';
 }
 
 /// The calendar a stored month key belongs to.

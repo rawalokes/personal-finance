@@ -5,7 +5,6 @@ import '../../finance/finance.dart';
 import '../../store/reports.dart';
 import '../components/indicators.dart';
 import '../components/surfaces.dart';
-import '../reports/report_charts.dart';
 import '../theme.dart';
 import '../typography.dart';
 
@@ -81,7 +80,7 @@ class ScoreCard extends ConsumerWidget {
                       decoration: BoxDecoration(color: m.isFinal ? color.withValues(alpha: 0.6) : color, borderRadius: BorderRadius.circular(3)),
                     ),
                     const SizedBox(height: 4),
-                    Text(shortMonth(m.month), style: PaisaText.hint.copyWith(color: c.ink3)),
+                    Text(calendarOf(m.month).monthShort(m.month), style: PaisaText.hint.copyWith(color: c.ink3)),
                   ]),
                 ),
             ]),

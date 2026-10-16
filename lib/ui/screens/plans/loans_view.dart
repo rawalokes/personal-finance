@@ -38,6 +38,7 @@ class LoansView extends ConsumerWidget {
         }
         final c = context.colors;
         final today = ref.watch(clockProvider).today();
+        final cal = ref.watch(monthCalendarProvider);
         final money = ref.watch(moneyFormatProvider);
         final owed = owedLoans(loans);
         final out = owed.fold<int>(0, (t, l) => t + l.outstanding);
@@ -51,7 +52,7 @@ class LoansView extends ConsumerWidget {
             ? 'You have no outstanding loans'
             : base.hitLimit
                 ? 'One installment is too low to ever clear its loan'
-                : 'At this pace you’re debt-free by ${payoffMonthLabel(today, base.months - 1)}';
+                : 'At this pace you’re debt-free by ${payoffMonthLabel(today, base.months - 1, cal: cal)}';
         final byId = {for (final r in base.loans) r.loanId: r};
         return ListView(padding: const EdgeInsets.only(bottom: 28), children: [
           Padding(
@@ -109,12 +110,13 @@ class _LoanCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final money = ref.watch(moneyFormatProvider);
+    final cal = ref.watch(monthCalendarProvider);
     final l = loan;
     final done = l.outstanding <= 0 || l.closed;
     final paid = l.principal <= 0 ? 0.0 : (1 - l.outstanding / l.principal).clamp(0.0, 1.0).toDouble();
     final days = l.nextDueDate == null ? 99 : daysBetween(l.nextDueDate!, today);
     final month = result?.payoffMonth;
-    final ends = done ? 'Paid off' : month == null ? 'Never at this rate' : payoffMonthLabel(today, month);
+    final ends = done ? 'Paid off' : month == null ? 'Never at this rate' : payoffMonthLabel(today, month, cal: cal);
     final label = PaisaText.hint.copyWith(color: c.ink3);
     return PaisaCard(
       onTap: () => context.push('/loans/${l.id}'),

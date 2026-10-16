@@ -53,6 +53,7 @@ class ReviewScreen extends ConsumerWidget {
     final incomeTypes = ref.watch(incomeTypesProvider).value ?? const <IncomeType>[];
     final month = ref.watch(monthTotalsProvider).value;
     final today = ref.watch(clockProvider).today();
+    final cal = ref.watch(monthCalendarProvider);
     final account = accounts.where((a) => a.id == m.accountId).firstOrNull;
     final t = treatSms(
       m,
@@ -62,14 +63,14 @@ class ReviewScreen extends ConsumerWidget {
       incomeTypes: incomeTypes,
       spentThisMonth: month?.byCategory ?? const {},
       money: money,
-      monthName: monthName(today),
+      monthName: cal.monthLong(cal.key(today)),
     );
     final credit = m.direction == Direction.credit;
     final editableCat = hasCategory(m.type);
     final catName = m.type == TxType.income
         ? incomeTypes.where((x) => x.id == m.incomeTypeId).firstOrNull?.name ?? 'Other income'
         : categories.where((x) => x.id == m.categoryId).firstOrNull?.name ?? 'Other';
-    final when = '${longDate(m.date)}, ${m.time}';
+    final when = '${cal.longDate(m.date)}, ${m.time}';
     final (statusShort, statusTone) = m.pending
         ? ('Awaiting approval', Tone.amber)
         : m.status == SmsStatus.approved

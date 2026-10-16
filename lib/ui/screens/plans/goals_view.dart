@@ -145,6 +145,7 @@ class _GoalCard extends ConsumerWidget {
     final c = context.colors;
     final money = ref.watch(moneyFormatProvider);
     final today = ref.watch(clockProvider).today();
+    final cal = ref.watch(monthCalendarProvider);
     final g = goal;
     final linked = accounts.where((a) => a.id == g.linkedAccountId).firstOrNull;
     final current = linked?.balance ?? g.current;
@@ -160,7 +161,7 @@ class _GoalCard extends ConsumerWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(g.name, style: PaisaText.h3.copyWith(color: c.ink)),
               Text(
-                '${g.kind} · ${g.targetDate == null ? 'no date' : 'by ${longDate(g.targetDate)}'}',
+                '${g.kind} · ${g.targetDate == null ? 'no date' : 'by ${cal.longDate(g.targetDate)}'}',
                 style: PaisaText.sub.copyWith(color: c.ink3),
               ),
             ]),

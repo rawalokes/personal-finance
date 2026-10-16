@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../finance/calendar.dart';
 import '../../finance/dates.dart';
+import '../../store/ui_state.dart';
 import '../icons/paisa_icon.dart';
 import 'buttons.dart';
 import '../icons/paisa_icons.dart';
@@ -135,13 +138,21 @@ class DateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Consumer(builder: (context, ref, _) {
+      final cal = ref.watch(monthCalendarProvider);
+      final text = cal is AdCalendar ? longDate(value) : '${cal.longDate(value)} · ${longDate(value)}';
+      return _build(context, text);
+    });
+  }
+
+  Widget _build(BuildContext context, String text) {
     final c = context.colors;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
       ExcludeSemantics(child: Text(label, style: PaisaText.label.copyWith(color: c.ink2))),
       const SizedBox(height: 6),
       Semantics(
         button: true,
-        label: '$label, ${longDate(value)}',
+        label: '$label, $text',
         excludeSemantics: true,
         child: Material(
           color: c.surface,
@@ -157,7 +168,7 @@ class DateField extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Row(children: [
-                  Expanded(child: Text(longDate(value), style: PaisaText.body.copyWith(fontSize: 16, color: c.ink))),
+                  Expanded(child: Text(text, style: PaisaText.body.copyWith(fontSize: 16, color: c.ink))),
                   PaisaIcon(PaisaIcons.calendar, size: 19, color: c.ink3),
                 ]),
               ),

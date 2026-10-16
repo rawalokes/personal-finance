@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paisa/data/settings_models.dart';
 import 'package:paisa/finance/finance.dart';
+import 'package:paisa/store/ui_state.dart';
 import 'package:paisa/store/data_providers.dart';
 import 'package:paisa/store/salary_settings.dart';
 
@@ -22,6 +24,7 @@ Future<ProviderContainer> seededContainer() async {
   final db = openTestDb();
   await seedWithSampleData(db);
   return ProviderContainer.test(overrides: [
+    initialPrefsProvider.overrideWithValue(const AppPrefs(calendar: CalendarPref.ad)),
     databaseProvider.overrideWithValue(db),
     clockProvider.overrideWithValue(testClock),
     idGenProvider.overrideWithValue(counterIds()),

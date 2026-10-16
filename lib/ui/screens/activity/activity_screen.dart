@@ -79,9 +79,10 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
   Widget _history(List<Txn> all, TxnLookup lookup) {
     final c = context.colors;
     final today = ref.watch(clockProvider).today();
+    final cal = ref.watch(monthCalendarProvider);
     final money = ref.watch(moneyFormatProvider);
-    final shown = all.where((t) => _range.contains(t, today) && _filter.matches(t)).toList();
-    final groups = groupByDay(shown, today);
+    final shown = all.where((t) => _range.contains(t, today, cal: cal) && _filter.matches(t)).toList();
+    final groups = groupByDay(shown, today, cal: cal);
     final (moneyIn, moneyOut) = inOutTotals(shown);
     final tileValue = PaisaText.body.copyWith(fontVariations: const [FontVariation('wght', 600)]);
     return ListView(padding: const EdgeInsets.only(bottom: 28), children: [
@@ -93,7 +94,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
       ChipRow(children: [
         for (final r in TxnRange.values)
           PaisaChip(
-            label: r.label(today),
+            label: r.label(today, cal: cal),
             icon: PaisaIcons.calendar,
             selected: r == _range,
             onTap: () => setState(() => _range = r),

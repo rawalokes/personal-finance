@@ -6,7 +6,9 @@ import 'package:paisa/app.dart';
 import 'package:paisa/data/clock.dart';
 import 'package:paisa/data/db/database.dart';
 import 'package:paisa/data/seed.dart';
+import 'package:paisa/data/settings_models.dart';
 import 'package:paisa/router.dart';
+import 'package:paisa/store/ui_state.dart';
 import 'package:paisa/store/data_providers.dart';
 import 'package:paisa/ui/components/inputs.dart';
 
@@ -26,6 +28,8 @@ Future<AppDatabase> pumpPaisa(
   bool cleanInstall = false,
   List<Override> overrides = const [],
   Clock? clock,
+  // Existing tests read AD dates ('14 Oct'); BS tests pass their own prefs.
+  AppPrefs prefs = const AppPrefs(calendar: CalendarPref.ad),
 }) async {
   final db = openTestDb();
   if (cleanInstall) {
@@ -40,6 +44,7 @@ Future<AppDatabase> pumpPaisa(
     overrides: [
       databaseProvider.overrideWithValue(db),
       clockProvider.overrideWithValue(clock ?? testClock),
+      initialPrefsProvider.overrideWithValue(prefs),
       idGenProvider.overrideWithValue(counterIds('new')),
       initialLocationProvider.overrideWithValue(location),
       ...overrides,

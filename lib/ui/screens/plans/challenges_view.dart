@@ -31,7 +31,8 @@ class ChallengesView extends ConsumerWidget {
     final i = ref.watch(reportInputsProvider).value;
     if (s == null || i == null) return const SizedBox.shrink();
     final today = ref.watch(clockProvider).today();
-    final month = monthKey(today);
+    final cal = ref.watch(monthCalendarProvider);
+    final month = cal.key(today);
     final money = ref.watch(moneyFormatProvider);
     final ctl = ref.read(challengeControllerProvider);
     final toast = ref.read(toastProvider.notifier);
@@ -56,7 +57,7 @@ class ChallengesView extends ConsumerWidget {
         ]),
       ),
       if (suggestions.isNotEmpty) ...[
-        SectionHeader(title: 'Suggested for ${monthName(today)}', padding: section),
+        SectionHeader(title: 'Suggested for ${cal.monthLong(month)}', padding: section),
         for (final ch in suggestions)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -243,7 +244,7 @@ Future<void> showChallengeSheet(BuildContext context, {Challenge? existing}) => 
                 final c = Challenge(
                   id: existing?.id ?? '',
                   template: f.template,
-                  month: existing?.month ?? monthKey(ref.read(clockProvider).today()),
+                  month: existing?.month ?? ref.read(monthCalendarProvider).key(ref.read(clockProvider).today()),
                   target: target!,
                   categoryId: needsCategory ? f.categoryId : null,
                   loanId: f.template == ChallengeTemplate.loanExtra ? f.loanId : null,

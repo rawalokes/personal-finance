@@ -45,6 +45,7 @@ class BudgetsView extends ConsumerWidget {
         final (cats, month) = d;
         final c = context.colors;
         final today = ref.watch(clockProvider).today();
+        final cal = ref.watch(monthCalendarProvider);
         final money = ref.watch(moneyFormatProvider);
         final shown = cats.where((x) => x.active && x.isTopLevel).toList()
           ..sort((a, b) => (a.isAutomatic ? 1 : 0).compareTo(b.isAutomatic ? 1 : 0));
@@ -73,7 +74,7 @@ class BudgetsView extends ConsumerWidget {
                 : PaisaCard(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Row(children: [
-                        Expanded(child: Text('${monthName(today)} budget', style: PaisaText.sub.copyWith(color: c.ink3))),
+                        Expanded(child: Text('${cal.monthLong(cal.key(today))} budget', style: PaisaText.sub.copyWith(color: c.ink3))),
                         Tag(over > 0 ? '$over over budget' : 'On track', tone: over > 0 ? Tone.red : Tone.positive),
                       ]),
                       const SizedBox(height: 8),
@@ -216,9 +217,10 @@ Future<void> showBudgetSheet(BuildContext context, ExpenseCategory category, Pai
     create: () => _BudgetForm(category.monthlyBudget),
     body: (ctx, form) => Consumer(builder: (ctx, ref, _) {
       final today = ref.watch(clockProvider).today();
+      final cal = ref.watch(monthCalendarProvider);
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text(
-          'Spent ${ref.watch(moneyFormatProvider).npr(spent)} so far in ${monthName(today)}.',
+          'Spent ${ref.watch(moneyFormatProvider).npr(spent)} so far in ${cal.monthLong(cal.key(today))}.',
           style: PaisaText.sub.copyWith(color: ctx.colors.ink3),
         ),
         const SizedBox(height: 14),

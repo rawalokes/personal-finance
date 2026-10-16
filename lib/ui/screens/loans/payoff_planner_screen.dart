@@ -112,6 +112,7 @@ class _PayoffPlannerScreenState extends ConsumerState<PayoffPlannerScreen> {
     final c = context.colors;
     final money = ref.watch(moneyFormatProvider);
     final today = ref.watch(clockProvider).today();
+    final cal = ref.watch(monthCalendarProvider);
     final extra = _extraValue;
     final cmp = comparePayoff(d.loans, extraMonthly: extra, strategy: _strategy);
     final base = cmp.baseline;
@@ -119,7 +120,7 @@ class _PayoffPlannerScreenState extends ConsumerState<PayoffPlannerScreen> {
     final out = d.loans.fold<int>(0, (t, l) => t + l.outstanding);
     final installments = d.loans.fold<int>(0, (t, l) => t + l.installment);
     final surplus = averageMonthlySurplus(d.txns, today);
-    String when(PayoffResult r) => r.hitLimit ? 'never' : payoffMonthLabel(today, r.months - 1);
+    String when(PayoffResult r) => r.hitLimit ? 'never' : payoffMonthLabel(today, r.months - 1, cal: cal);
     final baseById = {for (final r in base.loans) r.loanId: r};
     final order = [...plan.loans]..sort((a, b) => (a.payoffMonth ?? 9999).compareTo(b.payoffMonth ?? 9999));
     final saved = cmp.monthsSaved;
@@ -213,11 +214,11 @@ class _PayoffPlannerScreenState extends ConsumerState<PayoffPlannerScreen> {
             }(),
             leading: IconWell(icon: i == 0 ? PaisaIcons.flag : PaisaIcons.rupee, tone: i == 0 ? Tone.positive : Tone.neutral, size: 36),
             trailing: Column(crossAxisAlignment: CrossAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
-              Text(r.payoffMonth == null ? '—' : payoffMonthLabel(today, r.payoffMonth!), style: PaisaText.h3.copyWith(color: c.ink)),
+              Text(r.payoffMonth == null ? '—' : payoffMonthLabel(today, r.payoffMonth!, cal: cal), style: PaisaText.h3.copyWith(color: c.ink)),
               Text(
                 () {
                   final b = baseById[r.loanId]?.payoffMonth;
-                  return b != null && b != r.payoffMonth ? 'was ${payoffMonthLabel(today, b)}' : 'no change';
+                  return b != null && b != r.payoffMonth ? 'was ${payoffMonthLabel(today, b, cal: cal)}' : 'no change';
                 }(),
                 style: PaisaText.hint.copyWith(color: c.ink3),
               ),
@@ -251,12 +252,13 @@ class _PayoffPlannerScreenState extends ConsumerState<PayoffPlannerScreen> {
 
   Future<void> _save(_PlannerData d, PayoffResult plan, IsoDate today) async {
     setState(() => _saving = true);
+    final cal = ref.read(monthCalendarProvider);
     final extra = _extraValue;
     final target = plan.loans.where((l) => l.nextMonthExtra > 0).firstOrNull;
     final targetLoan = d.loans.where((l) => l.id == target?.loanId).firstOrNull;
     final account = targetLoan?.repaymentAccountId ??
         d.accounts.where((a) => !a.archived && a.group == AccountGroup.liquid).firstOrNull?.id;
-    final when = plan.hitLimit ? 'never' : payoffMonthLabel(today, plan.months - 1);
+    final when = plan.hitLimit ? 'never' : payoffMonthLabel(today, plan.months - 1, cal: cal);
     final strategy = _strategy == PayoffStrategy.avalanche ? 'highest interest first' : 'smallest balance first';
     final settings = ref.read(settingsRepoProvider);
     final catalog = ref.read(catalogRepoProvider);
@@ -275,7 +277,7 @@ class _PayoffPlannerScreenState extends ConsumerState<PayoffPlannerScreen> {
         amount: extra,
         accountId: account,
         frequency: RecurringFrequency.monthly,
-        nextDate: addMonths('${monthKey(today)}-01', 1),
+        nextDate: cal.start(cal.shift(cal.key(today), 1)),
       ));
     }
     if (mounted) setState(() => _saving = false);

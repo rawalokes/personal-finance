@@ -89,11 +89,12 @@ final nudgesProvider = FutureProvider<List<Nudge>>((ref) async {
       loans: i.loans,
       goals: i.goals,
       parties: i.parties,
-      challengeDoneThisMonth: challengeDoneThisMonth(challenges, i.txs, i.loans, today),
+      challengeDoneThisMonth: challengeDoneThisMonth(challenges, i.txs, i.loans, today, cal: ref.watch(monthCalendarProvider)),
     ),
     ref.watch(moneyFormatProvider),
     dismissed: state.dismissed,
     disabled: state.disabled,
+    cal: ref.watch(monthCalendarProvider),
   );
 });
 
@@ -106,6 +107,7 @@ final savingsScoreProvider = FutureProvider<List<SavingsScore>>((ref) async {
     loans: i.loans,
     today: ref.watch(clockProvider).today(),
     money: ref.watch(moneyFormatProvider),
+    cal: ref.watch(monthCalendarProvider),
   );
 });
 
@@ -132,10 +134,10 @@ class ChallengeController {
 
   /// Finishes past months, suggests for this month once, awards badges.
   /// Saves only when something changed.
-  Future<void> rollOver(ReportInputs i) async {
+  Future<void> rollOver(ReportInputs i, {MonthCalendar cal = const AdCalendar()}) async {
     final before = await _repo.challengeState();
     final after = rollOverChallenges(before,
-        txs: i.txs, loans: i.loans, categories: i.categories, accounts: i.accounts, today: _clock.today());
+        txs: i.txs, loans: i.loans, categories: i.categories, accounts: i.accounts, today: _clock.today(), cal: cal);
     if (jsonEncode(challengeStateToJson(after)) != jsonEncode(challengeStateToJson(before))) {
       await _repo.saveChallengeState(after);
     }
@@ -194,5 +196,5 @@ final challengeControllerProvider = Provider<ChallengeController>(
 /// once per app run; reads (not watches) inputs so it never re-runs on edits.
 final challengeRolloverProvider = FutureProvider<void>((ref) async {
   final inputs = await ref.read(reportInputsProvider.future);
-  await ref.read(challengeControllerProvider).rollOver(inputs);
+  await ref.read(challengeControllerProvider).rollOver(inputs, cal: ref.watch(monthCalendarProvider));
 });

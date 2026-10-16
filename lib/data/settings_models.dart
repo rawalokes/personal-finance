@@ -36,7 +36,7 @@ enum ThemePref { dark, light }
 class AppPrefs {
   const AppPrefs({
     this.grouping = Grouping.lakh,
-    this.calendar = CalendarPref.ad,
+    this.calendar = CalendarPref.bs,
     this.theme = ThemePref.dark,
     this.hideBalances = false,
   });
@@ -64,7 +64,7 @@ class AppPrefs {
 
   static AppPrefs fromJson(Json j) => AppPrefs(
         grouping: _enum(Grouping.values, j['grouping'] ?? 'lakh', 'grouping'),
-        calendar: _enum(CalendarPref.values, j['calendar'] ?? 'ad', 'calendar'),
+        calendar: _enum(CalendarPref.values, j['calendar'] ?? 'bs', 'calendar'),
         theme: _enum(ThemePref.values, j['theme'] ?? 'dark', 'theme'),
         hideBalances: _opt<bool>(j, 'hideBalances') ?? false,
       );
