@@ -121,6 +121,15 @@ class BudgetsView extends ConsumerWidget {
               ),
             ]),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: PaisaButton(
+              label: 'Build a budget plan',
+              icon: PaisaIcons.sliders,
+              variant: ButtonVariant.outline,
+              onPressed: () => context.push('/reality/budget'),
+            ),
+          ),
           const AiBudgetSuggestionsButton(),
           SectionHeader(
             title: 'By category',

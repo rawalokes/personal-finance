@@ -150,11 +150,12 @@ class AiService {
   /// An honest check built on facts the engine computed. Purchases are
   /// asked fresh every time; the other topics are cached for the month
   /// unless [force].
-  Future<RealityAnswer> reality(RealityTopic topic, Map<String, Object?> facts, {String? question, bool force = false}) async {
+  /// [scope] keeps separate answers within a topic (a month, a method).
+  Future<RealityAnswer> reality(RealityTopic topic, Map<String, Object?> facts, {String? question, String? scope, bool force = false}) async {
     final month = monthKey(clock.today());
     final cacheable = topic != RealityTopic.afford;
     if (cacheable && !force) {
-      final cached = await cachedReality(topic);
+      final cached = await cachedReality(topic, scope: scope);
       if (cached != null) return cached;
     }
     final s = await settings.ai();
@@ -172,13 +173,13 @@ class AiService {
       },
     );
     final answer = RealityAnswer.fromJson({...raw, 'at': clock.stamp()});
-    if (cacheable) await settings.saveAiReality(topic.wire, month, answer.toJson());
+    if (cacheable) await settings.saveAiReality(_realityKey(topic, scope), month, answer.toJson());
     return answer;
   }
 
   /// This month's cached answer for [topic], without any request.
-  Future<RealityAnswer?> cachedReality(RealityTopic topic) async {
-    final cached = await settings.aiReality(topic.wire, monthKey(clock.today()));
+  Future<RealityAnswer?> cachedReality(RealityTopic topic, {String? scope}) async {
+    final cached = await settings.aiReality(_realityKey(topic, scope), monthKey(clock.today()));
     if (cached == null) return null;
     try {
       return RealityAnswer.fromJson(cached);
@@ -186,6 +187,8 @@ class AiService {
       return null;
     }
   }
+
+  String _realityKey(RealityTopic topic, String? scope) => scope == null ? topic.wire : '${topic.wire}.$scope';
 
   /// Today's cached lesson, without any request.
   Future<AiLesson?> cachedLesson() async {

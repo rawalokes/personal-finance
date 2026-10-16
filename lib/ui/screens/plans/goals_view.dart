@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../data/undo.dart';
 import '../../../finance/finance.dart';
 import '../../../store/data_providers.dart';
+import '../../../store/reality.dart';
 import '../../../store/ui_state.dart';
 import '../../components/async_view.dart';
 import '../../components/buttons.dart';
@@ -18,6 +20,7 @@ import '../../components/toast.dart';
 import '../../components/tone.dart';
 import '../../feedback.dart';
 import '../../icons/paisa_icons.dart';
+import '../../reality/reality_screen.dart' show goalVerdictLabel, goalVerdictTone;
 import '../../theme.dart';
 import '../../typography.dart';
 
@@ -152,6 +155,7 @@ class _GoalCard extends ConsumerWidget {
     final ratio = g.target <= 0 ? 0.0 : (current / g.target).clamp(0.0, 1.0).toDouble();
     final monthly = recommendedMonthlySaving(target: g.target, current: current, today: today, targetDate: g.targetDate);
     final reached = current >= g.target;
+    final check = ref.watch(goalChecksProvider).value?.where((x) => x.goal.id == g.id).firstOrNull;
     return PaisaCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(children: [
@@ -188,6 +192,23 @@ class _GoalCard extends ConsumerWidget {
             style: PaisaText.sub.copyWith(color: reached ? c.positive : c.ink2),
           ),
         ]),
+        if (check != null && !reached && check.verdict != GoalVerdict.noDate)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: InkWell(
+              onTap: () => context.push('/reality'),
+              child: Row(children: [
+                Tag(goalVerdictLabel(check.verdict), tone: goalVerdictTone(check.verdict)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'You put aside about ${money.npr(check.available)} a month for it',
+                    style: PaisaText.hint.copyWith(color: c.ink3),
+                  ),
+                ),
+              ]),
+            ),
+          ),
         if (linked != null)
           Padding(
             padding: const EdgeInsets.only(top: 6),

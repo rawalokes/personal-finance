@@ -153,6 +153,16 @@ void main() {
       expect(calls, 3, reason: 'each topic has its own cache');
     });
 
+    test('scoped answers (a month, a method) are cached apart', () async {
+      final s = service();
+      await s.reality(RealityTopic.review, const {}, scope: '2026-09');
+      await s.reality(RealityTopic.review, const {}, scope: '2026-10');
+      await s.reality(RealityTopic.review, const {}, scope: '2026-09');
+      expect(calls, 2);
+      expect(await s.cachedReality(RealityTopic.review), isNull, reason: 'the unscoped cache is separate');
+      expect(await s.cachedReality(RealityTopic.review, scope: '2026-10'), isNotNull);
+    });
+
     test('a malformed answer is an error, never half-shown', () async {
       respond = (_) => jsonEncode(reply(jsonEncode({'verdict': 'yes'})));
       await expectLater(service().reality(RealityTopic.afford, const {}, question: 'x'), throwsA(isA<AiError>()));

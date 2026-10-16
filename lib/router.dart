@@ -6,6 +6,10 @@ import 'finance/finance.dart';
 
 import 'ui/ai/ai_chat_screen.dart';
 import 'ui/ai/ai_insights_screen.dart';
+import 'ui/reality/afford_screen.dart';
+import 'ui/reality/budget_plan_screen.dart';
+import 'ui/reality/reality_screen.dart';
+import 'ui/reality/wishlist_screen.dart';
 import 'ui/reports/category_screens.dart';
 import 'ui/reports/reports_screen.dart';
 import 'ui/screens/accounts/account_detail_screen.dart';
@@ -97,6 +101,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => CategoryReportScreen(
           categoryId: state.pathParameters['id']!,
           initial: ReportPeriod.fromWire(state.uri.queryParameters['period'] ?? ''),
+        ),
+      ),
+      GoRoute(path: '/reality', builder: (context, state) => const RealityScreen()),
+      GoRoute(path: '/reality/budget', builder: (context, state) => const BudgetPlanScreen()),
+      GoRoute(path: '/wishlist', builder: (context, state) => const WishListScreen()),
+      GoRoute(
+        path: '/afford',
+        builder: (context, state) => AffordScreen(
+          wishId: state.uri.queryParameters['wish'],
+          item: state.uri.queryParameters['item'],
+          price: parseNpr(state.uri.queryParameters['price'] ?? ''),
         ),
       ),
       GoRoute(path: '/learn/:id', builder: (context, state) => LessonScreen(lessonId: state.pathParameters['id']!)),

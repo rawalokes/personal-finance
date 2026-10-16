@@ -178,6 +178,7 @@ class _HomeBody extends ConsumerWidget {
         ),
         AccountCarousel(accounts: cards, types: d.types),
         const Padding(padding: EdgeInsets.fromLTRB(20, 14, 20, 0), child: QuoteCard()),
+        const Padding(padding: EdgeInsets.fromLTRB(20, 12, 20, 0), child: RealityCard()),
         if (pending > 0)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),

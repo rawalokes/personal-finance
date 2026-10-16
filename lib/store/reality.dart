@@ -59,9 +59,10 @@ final budgetPlanProvider = FutureProvider.family<BudgetPlan, BudgetMethod>((ref,
 });
 
 /// This month's cached AI answer for a topic (never makes a request).
-final cachedRealityProvider = FutureProvider.family<RealityAnswer?, RealityTopic>((ref, topic) async {
+/// Keyed by (topic, scope); see [AiService.reality].
+final cachedRealityProvider = FutureProvider.family<RealityAnswer?, (RealityTopic, String?)>((ref, key) async {
   ref.watch(aiSettingsProvider);
-  return ref.watch(aiServiceProvider).cachedReality(topic);
+  return ref.watch(aiServiceProvider).cachedReality(key.$1, scope: key.$2);
 });
 
 /// Sets each line of [plan] as its category's monthly budget. Returns how
