@@ -10,6 +10,7 @@ class SmsContext {
     required this.incomeTypes,
     required this.history,
     required this.trustedSenders,
+    this.banks = const [],
   });
 
   final List<Account> accounts;
@@ -22,7 +23,25 @@ class SmsContext {
 
   /// Approved sender IDs (Settings → Banks & wallets).
   final List<String> trustedSenders;
+
+  /// Banks & wallets with every sender ID each one uses.
+  final List<SmsBank> banks;
 }
+
+/// A bank or wallet from Settings → Banks & wallets.
+class SmsBank {
+  const SmsBank(this.name, this.senders);
+  final String name;
+  final List<String> senders;
+}
+
+/// "GBIME_ALERT, GIBL" → ['GBIME_ALERT', 'GIBL']. Banks often send from
+/// more than one ID.
+List<String> splitSenders(String ids) => [
+      for (final s in ids.split(',')) if (s.trim().isNotEmpty) s.trim(),
+    ];
+
+bool _matchesAny(String sender, String ids) => splitSenders(ids).any((id) => senderMatches(sender, id));
 
 /// What the rules suggest for one message. Only a suggestion: nothing is
 /// saved until the user confirms (or the account's auto-update rule does).
@@ -83,6 +102,13 @@ final _amountAfter = RegExp(r'(?<![\w.,])(\d[\d,]*(?:\.\d{1,2})?)\s*(?:NPR|NRs)\
 final _last4 = RegExp(r'##(\d{4})');
 final _date = RegExp(r'\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})\b');
 final _isoDate = RegExp(r'\b(\d{4})-(\d{2})-(\d{2})\b');
+
+/// NIMB's "12Oct26" / "12-Oct-2026".
+final _monthDate = RegExp(r'\b(\d{1,2})[\s\-]?(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s\-]?(\d{4}|\d{2})\b', caseSensitive: false);
+const _months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
+/// Global IME's "Payment successful to Khalti with amount 2,000.00".
+final _amountWord = RegExp(r'\bamount\s+(?:of\s+)?([\d,]+(?:\.\d{1,2})?)', caseSensitive: false);
 final _time = RegExp(r'\b([01]?\d|2[0-3]):([0-5]\d)\b');
 
 bool _has(String text, String pattern) => RegExp(pattern, caseSensitive: false).hasMatch(text);
@@ -93,7 +119,7 @@ Direction? _direction(String b) {
     if (_has(b, r'\bdebited\b|\bdr\b') && !_has(b, r'reversed|refund')) return Direction.debit;
     return Direction.credit;
   }
-  if (_has(b, r'\bdebited\b|\bpaid\b|\bwithdrawn\b|\bwithdrawal\b|\bspent\b|\bpurchase\b|\bsent\b|\bpayment of\b|\bdr\b|\btransferred\b|\bused\b|transaction of|debit of')) {
+  if (_has(b, r'\bdebited\b|\bpaid\b|\bwithdrawn\b|\bwithdrawal\b|\bspent\b|\bpurchase\b|\bsent\b|\bpayment of\b|payment successful|successful payment|\bdr\b|\btransferred\b|\bused\b|transaction of|debit of')) {
     return Direction.debit;
   }
   return null;
@@ -104,6 +130,11 @@ String _remark(String b) {
   final patterns = [
     r'Rmks?\s*[:\-]\s*([^.]+)',
     r'Remarks?\s*[:\-]\s*([^.]+)',
+    // Global IME: "Payment successful to Khalti with amount …", "… by:FonePay:IBFT:…".
+    r'Payment successful to\s+(.+?)\s+with amount',
+    r'\bby\s*:\s*(.+?)(?:\.\s|$)',
+    // NIMB: "… on 12Oct26 14:52:55 - CIPSFIRSTFINTECH COR".
+    r'\d{1,2}:\d{2}(?::\d{2})?\s+-\s+(.+)$',
     r'towards\s+([^.]+)',
     r'paid to\s+(.+?)(?:\s+on\s+\d|\.|$)',
     r'Payment of\s+[^\s]+\s*[\d,.]+\s+to\s+(.+?)(?:\s+on\s+\d|\s+has|\.|$)',
@@ -133,6 +164,14 @@ String _merchantName(String remark) {
       .replaceAll(RegExp(r'^(POS|ECOM|QR|FONEPAY|IPS|PMT|PAYMENT)\s+', caseSensitive: false), '')
       .trim();
   if (r.isEmpty) r = remark.trim();
+  // "136014434,BOALNPKA;0", "FonePay:IBFT:1890221321": keep the words.
+  if (r.contains(RegExp('[,;:/]'))) {
+    final words = [
+      for (final p in r.split(RegExp('[,;:/]')))
+        if (RegExp('[A-Za-z]{2}').hasMatch(p)) p.trim(),
+    ];
+    if (words.isNotEmpty) r = words.join(' ');
+  }
   return r == r.toUpperCase() ? _titleCase(r) : r;
 }
 
@@ -190,16 +229,22 @@ SmsDraft? parseSms({
   // Offers, and notices about money that has not moved yet.
   if (_has(b, r'\boffers?\b|\bget\s+(?:up to\s+)?(?:rs|npr|nrs)|T&C|apply now|\beligible\b|\bwin\b|\blucky\b')) return null;
   if (_has(b, r'will be (?:refunded|reversed|credited|debited)')) return null;
-  final amountMatch = _amount.firstMatch(b) ?? _amountAfter.firstMatch(b);
+  final amountMatch = _amount.firstMatch(b) ?? _amountAfter.firstMatch(b) ?? _amountWord.firstMatch(b);
   final direction = _direction(b);
   if (amountMatch == null || direction == null) return null;
   final amount = parseNpr(amountMatch[1]!);
   if (amount == null || amount <= 0) return null;
 
   // Account: sender plus last 4 digits; wallets match by sender alone.
+  // The account's own sender IDs, or those of its bank in Banks & wallets
+  // (an account set up with "GIBL" still gets "GBIME_ALERT" messages).
+  final banks = [for (final bank in ctx.banks) if (bank.senders.any((id) => senderMatches(sender, id))) bank];
+  bool ofBank(Account a) => banks.any((bank) =>
+      (a.institution ?? '').trim().toLowerCase() == bank.name.trim().toLowerCase() ||
+      (a.smsSender != null && splitSenders(a.smsSender!).any((id) => bank.senders.any((b) => senderMatches(id, b)))));
   final bySender = [
     for (final a in ctx.accounts)
-      if (!a.archived && a.smsSender != null && senderMatches(sender, a.smsSender!)) a,
+      if (!a.archived && ((a.smsSender != null && _matchesAny(sender, a.smsSender!)) || ofBank(a))) a,
   ];
   final digits = [for (final m in _last4.allMatches(b)) m[1]!];
   Account? account;
@@ -239,6 +284,16 @@ SmsDraft? parseSms({
     ]..sort((x, y) => x.group.index.compareTo(y.group.index));
     ownDestination = named.firstOrNull;
   }
+  // A bank SMS naming one of your wallets: "Dr … - ESEWA,1667…",
+  // "Payment successful to Khalti".
+  if (ownDestination == null && account != null && account.kind != AccountKind.wallet && remark.isNotEmpty) {
+    ownDestination = others
+        .where((a) =>
+            a.kind == AccountKind.wallet &&
+            (a.institution ?? '').trim().length > 2 &&
+            _has(remark, '\\b${RegExp.escape(a.institution!.trim())}\\b'))
+        .firstOrNull;
+  }
 
   // Date and time from the message, else when it arrived. A date that is
   // not a real calendar date, or far from when the SMS arrived (a Bikram
@@ -255,7 +310,16 @@ SmsDraft? parseSms({
 
   final dm = _date.firstMatch(b);
   final im = _isoDate.firstMatch(b);
-  if (dm != null) {
+  final mm = _monthDate.firstMatch(b);
+  if (dm == null && im == null && mm != null) {
+    final y = int.parse(mm[3]!);
+    final v = valid(y < 100 ? 2000 + y : y, _months.indexOf(mm[2]!.toLowerCase().substring(0, 3)) + 1, int.parse(mm[1]!));
+    if (v != null) {
+      date = v;
+    } else {
+      dateTrusted = false;
+    }
+  } else if (dm != null) {
     final v = valid(int.parse(dm[3]!), int.parse(dm[2]!), int.parse(dm[1]!));
     if (v != null) {
       date = v;

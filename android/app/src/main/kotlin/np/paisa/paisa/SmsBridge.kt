@@ -70,9 +70,9 @@ object SmsBridge {
         }
     }
 
-    private val amount = Regex("(?i)(?<![A-Za-z])(NPR|NRs|Rs)\\.?\\s*\\d|\\d\\s*(NPR|NRs)\\b")
+    private val amount = Regex("(?i)(?<![A-Za-z])(NPR|NRs|Rs)\\.?\\s*\\d|\\d\\s*(NPR|NRs)\\b|\\bamount\\s+\\d")
     private val movement = Regex(
-        "(?i)debited|credited|paid|received|withdrawn|withdrawal|refunded|reversed|transferred|deposited|used for|loaded|transaction of|debit of|payment of",
+        "(?i)\\b(Dr|Cr)\\s+by\\b|payment successful|debited|credited|paid|received|withdrawn|withdrawal|refunded|reversed|transferred|deposited|used for|loaded|transaction of|debit of|payment of",
     )
     private val notMoney = Regex("(?i)\\bOTP\\b|one[- ]time password|verification code|\\boffers?\\b|T&C|apply now|will be (refunded|reversed|credited|debited)")
 

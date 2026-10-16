@@ -1,3 +1,5 @@
+import 'package:drift/drift.dart' show Value;
+
 import '../finance/finance.dart';
 import 'db/database.dart';
 import 'mappers.dart';
@@ -25,9 +27,40 @@ Future<bool> seedIfNeeded(AppDatabase db) async {
           for (final (i, c) in list.indexed) configItemToCompanion(c, sortOrder: i),
       ]);
       b.insert(db.appMeta, AppMetaCompanion.insert(key: kSeedVersionKey, value: kSeedVersion));
+      b.insert(db.appMeta, AppMetaCompanion.insert(key: kBankSendersKey, value: '2'));
     });
   });
   return true;
+}
+
+const String kBankSendersKey = 'bank_senders';
+
+/// The banks & wallets as 1.3.1 and earlier seeded them.
+const _oldBankSenders = {
+  'b1': 'Sender NABIL_ALERT',
+  'b2': 'Sender NIC_ASIA',
+  'b3': 'Sender GIBL',
+  'b5': 'Sender eSewa · wallet notifications',
+};
+
+/// Once per install: the sender IDs Nepali banks really use ("GBIME_ALERT",
+/// "NIMB", "eSewa_Alert"). Banks the user edited keep their text; missing
+/// default banks are added.
+Future<void> updateBankSenders(AppDatabase db) async {
+  final marker = await (db.select(db.appMeta)..where((m) => m.key.equals(kBankSendersKey))).getSingleOrNull();
+  if (marker != null) return;
+  await db.transaction(() async {
+    final rows = await (db.select(db.configItems)..where((c) => c.listKey.equals(ConfigList.banks))).get();
+    for (final (i, b) in seedConfig[ConfigList.banks]!.indexed) {
+      final row = rows.where((r) => r.id == b.id).firstOrNull;
+      if (row == null) {
+        await db.into(db.configItems).insert(configItemToCompanion(b, sortOrder: rows.length + i));
+      } else if (row.description == _oldBankSenders[b.id]) {
+        await (db.update(db.configItems)..where((c) => c.id.equals(b.id))).write(ConfigItemsCompanion(description: Value(b.description)));
+      }
+    }
+    await db.into(db.appMeta).insert(AppMetaCompanion.insert(key: kBankSendersKey, value: '2'));
+  });
 }
 
 /// Spec §12 income types, without amounts or accounts (the user has none yet).
@@ -147,12 +180,14 @@ final Map<String, List<ConfigItem>> seedConfig = {
     ('k8', 'Low confidence', '→ Always ask; never auto-approve'),
   ]),
   ConfigList.banks: _list(ConfigList.banks, [
-    ('b1', 'Nabil Bank', 'Sender NABIL_ALERT'),
-    ('b2', 'NIC Asia Bank', 'Sender NIC_ASIA'),
-    ('b3', 'Global IME Bank', 'Sender GIBL'),
+    ('b1', 'Nabil Bank', 'Sender NABIL_ALERT, NABIL'),
+    ('b2', 'NIC Asia Bank', 'Sender NIC_ASIA, NICASIA'),
+    ('b3', 'Global IME Bank', 'Sender GBIME_ALERT, GIBL'),
     ('b4', 'Siddhartha Bank', 'Sender SBL_ALERT'),
-    ('b5', 'eSewa', 'Sender eSewa · wallet notifications'),
+    ('b5', 'eSewa', 'Sender eSewa, eSewa_Alert · wallet notifications'),
     ('b6', 'Khalti', 'Sender Khalti · wallet notifications'),
     ('b7', 'IME Pay', 'Sender IMEPay · not linked'),
+    ('b8', 'Nepal Investment Mega Bank', 'Sender NIMB, NIMB_ALERT'),
+    ('b9', 'Rastriya Banijya Bank', 'Sender RBBALERT'),
   ], off: {'b7'}),
 };

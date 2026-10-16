@@ -108,21 +108,26 @@ class SmsRepository {
     return row == null ? null : smsFromRow(row);
   }
 
-  /// Approved sender IDs: active banks & wallets (`Sender <ID>`) and every
-  /// account's SMS sender.
-  Future<List<String>> trustedSenders() async {
-    final banks = await (_db.select(_db.configItems)
+  /// Active banks & wallets with their sender IDs (`Sender A, B · note`).
+  Future<List<SmsBank>> banks() async {
+    final rows = await (_db.select(_db.configItems)
           ..where((c) => c.listKey.equals(ConfigList.banks) & c.active.equals(true)))
         .get();
-    final fromBanks = [
-      for (final b in banks)
-        if (RegExp(r'Sender\s+([^\s·,]+)').firstMatch(b.description) case final m?) m[1]!,
+    return [
+      for (final b in rows)
+        if (RegExp(r'Sender\s+([^·]+)').firstMatch(b.description) case final m?)
+          SmsBank(b.name, [for (final id in splitSenders(m[1]!)) id.split(RegExp(r'\s')).first]),
     ];
+  }
+
+  /// Approved sender IDs: every ID of the active banks & wallets, and every
+  /// account's SMS senders.
+  Future<List<String>> trustedSenders() async {
     final accounts = await _db.select(_db.accounts).get();
     return {
-      ...fromBanks,
+      for (final b in await banks()) ...b.senders,
       for (final a in accounts)
-        if (!a.archived && (a.smsSender ?? '').trim().isNotEmpty) a.smsSender!.trim(),
+        if (!a.archived) ...splitSenders(a.smsSender ?? ''),
     }.toList();
   }
 
@@ -138,6 +143,7 @@ class SmsRepository {
                 .map(txnFromRow)
                 .toList()),
         trustedSenders: await trustedSenders(),
+        banks: await banks(),
       );
 
   static String _stamp(DateTime d) =>

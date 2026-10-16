@@ -26,6 +26,21 @@ SmsContext sampleContext() => SmsContext(
 SmsDraft parse(String sender, String body) =>
     parseSms(sender: sender, body: body, receivedAt: _received, ctx: sampleContext())!;
 
+Account _bank(String id, String institution, String mask, String sender) => Account(
+      id: id,
+      name: '$institution — savings',
+      shortName: '$institution ••$mask',
+      institution: institution,
+      accountTypeId: 'a1',
+      group: AccountGroup.liquid,
+      kind: AccountKind.bank,
+      maskedNumber: mask,
+      smsSender: sender,
+      openingBalance: 0,
+      balance: 0,
+      lastReconciled: '2026-10-01',
+    );
+
 void main() {
   group('masking (spec §6 step 2)', () {
     test('balances become ●●●●●● and account numbers keep only the last 4 digits', () {
@@ -292,6 +307,112 @@ void main() {
           isNull,
           reason: body,
         );
+      }
+    });
+  });
+
+  group('real Nepali sender IDs (several per bank)', () {
+    SmsContext withAccounts(List<Account> accounts, {List<SmsBank> banks = const []}) => SmsContext(
+          accounts: accounts,
+          loans: const [],
+          categories: seedCategories,
+          incomeTypes: seedIncomeTypes,
+          history: const [],
+          trustedSenders: const ['GBIME_ALERT', 'GIBL', 'NIMB', 'NIMB_ALERT', 'eSewa', 'eSewa_Alert'],
+          banks: banks,
+        );
+    final gibl = sampleAccounts.firstWhere((a) => a.id == 'gibl');
+
+    test('splitSenders reads a comma-separated list', () {
+      expect(splitSenders(' GBIME_ALERT, GIBL ,,'), ['GBIME_ALERT', 'GIBL']);
+    });
+
+    test('an account can list several senders', () {
+      final ctx = withAccounts([gibl.copyWith(smsSender: 'GBIME_ALERT, GIBL')]);
+      final d = parseSms(sender: 'GBIME_ALERT', body: 'Your A/C ##3307 has been debited by NPR 500.00. Rmks: POS BIG MART.', receivedAt: _received, ctx: ctx)!;
+      expect(d.accountId, 'gibl');
+    });
+
+    test('an account set up with an old sender ID still matches through its bank', () {
+      final ctx = withAccounts([gibl], banks: const [SmsBank('Global IME Bank', ['GBIME_ALERT', 'GIBL'])]);
+      final d = parseSms(sender: 'GBIME_ALERT', body: 'Your A/C ##3307 has been debited by NPR 500.00. Rmks: POS BIG MART.', receivedAt: _received, ctx: ctx)!;
+      expect(d.accountId, 'gibl');
+    });
+
+    test('a bank SMS with no matching account is still read, for review', () {
+      final d = parseSms(sender: 'NIMB', body: 'Your A/C ##1234 has been credited by NPR 2,000.00.', receivedAt: _received, ctx: withAccounts(const []));
+      expect(d, isNotNull);
+      expect(d!.accountId, isNull);
+    });
+  });
+
+  group('real NIMB and Global IME messages', () {
+    final accounts = [
+      ...sampleAccounts.where((a) => a.id == 'esewa' || a.id == 'khalti'),
+      _bank('nimb', 'Nepal Investment Mega Bank', '0046', 'NIMB'),
+      _bank('gibl', 'Global IME Bank', '9168', 'GBIME_ALERT, GIBL'),
+    ];
+    final ctx = SmsContext(
+      accounts: accounts,
+      loans: const [],
+      categories: seedCategories,
+      incomeTypes: seedIncomeTypes,
+      history: const [],
+      trustedSenders: const ['NIMB', 'GBIME_ALERT', 'GIBL', 'eSewa', 'Khalti'],
+    );
+    SmsDraft read(String sender, String body, DateTime at) => parseSms(sender: sender, body: body, receivedAt: at, ctx: ctx)!;
+
+    test('NIMB "Dr by NPR … on 12Oct26": a debit from the NIMB account on that day', () {
+      final d = read('NIMB', 'AC#017XX0046 Dr by NPR 1440 on 12Oct26 14:52:55 - 136014434,BOALNPKA;0', DateTime(2026, 10, 13, 9));
+      expect(d.accountId, 'nimb');
+      expect(d.direction, Direction.debit);
+      expect(d.amount, fromRupees(1440));
+      expect(d.date, '2026-10-12');
+      expect(d.time, '14:52');
+      expect(d.maskedBody, isNot(contains('017XX0046')));
+    });
+
+    test('NIMB debit to ESEWA is a transfer to your eSewa wallet', () {
+      final d = read('NIMB', 'AC#017XX0046 Dr by NPR 1300 on 12Oct26 15:01:04 - ESEWA,166708071,9817', DateTime(2026, 10, 12, 15, 2));
+      expect(d.type, TxType.transfer);
+      expect(d.counterAccountId, 'esewa');
+    });
+
+    test('NIMB credit names the sender and keeps the paisa', () {
+      final d = read('NIMB', 'AC#017XX0046 Cr by NPR 110216.4 on 15Oct26 17:17:04 - CIPSFIRSTFINTECH COR', DateTime(2026, 10, 15, 17, 18));
+      expect(d.direction, Direction.credit);
+      expect(d.amount, parseNpr('110216.40'));
+      expect(d.date, '2026-10-15');
+      expect(d.merchant, 'Cipsfirstfintech Cor');
+    });
+
+    test('Global IME credit "by:FonePay:IBFT:…" with an ISO date', () {
+      final d = read('GBIME_ALERT', 'Dear user, Your account ##9168 is credited by NPR 50000 on 2026-09-21 11:54:33 by:FonePay:IBFT:1890221321',
+          DateTime(2026, 9, 21, 11, 55));
+      expect(d.accountId, 'gibl');
+      expect(d.direction, Direction.credit);
+      expect(d.amount, fromRupees(50000));
+      expect(d.date, '2026-09-21');
+      expect(d.merchant, 'FonePay IBFT');
+    });
+
+    test('Global IME "Payment successful to Khalti with amount …" is a transfer to your Khalti wallet', () {
+      final d = read('GBIME_ALERT',
+          'Payment successful to Khalti with amount 2,000.00 and remarks MOS/Khalti/9868752880/lks\nFrom a/c : ###9168\nTxn ID : SYAYXMJQTWZ',
+          DateTime(2026, 9, 22, 14, 42));
+      expect(d.accountId, 'gibl');
+      expect(d.direction, Direction.debit);
+      expect(d.amount, fromRupees(2000));
+      expect(d.type, TxType.transfer);
+      expect(d.counterAccountId, 'khalti');
+    });
+
+    test('the OTP and "Code successfully validated" messages are not transactions', () {
+      for (final (sender, body) in [
+        ('GBIME_ALERT', 'Your OTP for GIBL EKYC Request is 648957 and expires in 120 seconds.'),
+        ('NIMB', 'Code successfully validated.\nNIMB'),
+      ]) {
+        expect(parseSms(sender: sender, body: body, receivedAt: DateTime(2026, 10, 15), ctx: ctx), isNull, reason: body);
       }
     });
   });

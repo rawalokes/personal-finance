@@ -243,4 +243,18 @@ void main() {
     ]);
     expect(await sms.list(), hasLength(1));
   });
+
+  test('trusted senders include every ID a bank lists, as Nepali banks really send them', () async {
+    final senders = await sms.trustedSenders();
+    expect(senders, containsAll(['NIMB', 'NIMB_ALERT', 'GBIME_ALERT', 'GIBL', 'eSewa', 'eSewa_Alert', 'Khalti', 'RBBALERT']));
+  });
+
+  test('a GBIME_ALERT message is matched to the Global IME account', () async {
+    final r = await sms.ingest(
+      sender: 'GBIME_ALERT',
+      body: 'Dear Customer, your A/C ##3307 has been debited by NPR 900.00 on 14/10/2026. Rmks: POS BIG MART.',
+      receivedAt: DateTime(2026, 10, 14, 9),
+    );
+    expect(r.message!.accountId, 'gibl');
+  });
 }

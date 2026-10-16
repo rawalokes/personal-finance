@@ -28,7 +28,7 @@ void main() {
     expect(cats[kLoanInterestCategoryId]!.isAutomatic, isTrue);
     expect(cats['transport_fuel']!.parentId, 'transport');
     expect(await db.select(db.loanTypes).get(), hasLength(7));
-    expect(await db.select(db.configItems).get(), hasLength(10 + 5 + 8 + 7));
+    expect(await db.select(db.configItems).get(), hasLength(10 + 5 + 8 + 9));
   });
 
   test('no personal sample values: no budgets, expected amounts, default accounts or account numbers', () async {
@@ -42,7 +42,7 @@ void main() {
         .map(configItemFromRow)
         .where((c) => c.listKey == ConfigList.banks);
     expect(banks.where((b) => b.description.contains('##')), isEmpty, reason: 'no account or card numbers');
-    expect(banks.map((b) => b.description), contains('Sender NABIL_ALERT'));
+    expect(banks.map((b) => b.description), contains('Sender NABIL_ALERT, NABIL'));
   });
 
   test('review focus: seeding runs exactly once, even after the user changes the defaults', () async {

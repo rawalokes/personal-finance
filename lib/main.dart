@@ -25,6 +25,7 @@ Future<void> main() async {
     native: const DriftNativeOptions(databaseDirectory: getApplicationSupportDirectory),
   ));
   await seedIfNeeded(db);
+  await updateBankSenders(db);
 
   // Saved preferences are read before the first frame, so the app opens in
   // the right theme and grouping; changes are written back in order.

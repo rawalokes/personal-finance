@@ -134,4 +134,27 @@ void main() {
       expect(phone.queued, hasLength(1));
     });
   });
+
+  test('a sender added after the first scan gets its own 30-day scan, without auto-saving', () async {
+    await sync.catchUp();
+    // Later the user adds a sender (or an update adds one); its older SMS are read once.
+    await (db.update(db.accounts)..where((a) => a.id.equals('gibl')))
+        .write(const AccountsCompanion(smsSender: Value('GIBL, CIT_Alert'), autoUpdateFromSms: Value(true)));
+    phone.inbox = [
+      RawSms(
+        sender: 'CIT_Alert',
+        body: 'AC#017XX3307 Dr by NPR 1440 on 02Oct26 14:52:55 - BIG MART',
+        receivedAt: DateTime(2026, 10, 2, 14, 53),
+        sourceKey: '77',
+      ),
+    ];
+    final report = await sync.catchUp();
+    expect(report.added, 1);
+    expect(report.autoSaved, 0, reason: 'old messages are never auto-saved');
+    expect((await repo.list()).single.sender, 'CIT_Alert');
+    phone.inbox = [];
+    final again = await sync.catchUp();
+    expect(phone.lastSince, DateTime(2026, 10, 14, 9, 30), reason: 'only once: back to since-last-scan');
+    expect(again.added, 0);
+  });
 }

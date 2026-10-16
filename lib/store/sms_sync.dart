@@ -83,7 +83,27 @@ class SmsSync {
         allowAutoSave: last != null,
       ));
     }
+    // Senders approved since the last scan (a new account, a bank added in
+    // Settings, or an update with more bank IDs) never had their first scan.
+    final scanned = await settings.smsScannedSenders();
+    if (last != null) {
+      final fresh = [for (final s in senders) if (scanned == null || !scanned.contains(s)) s];
+      if (fresh.isNotEmpty) {
+        final old = await source.readInbox(since: now.subtract(firstScan), senders: fresh)
+          ..sort((a, b) => a.receivedAt.compareTo(b.receivedAt));
+        for (final m in old) {
+          results.add(await repo.ingest(
+            sender: m.sender,
+            body: m.body,
+            receivedAt: m.receivedAt,
+            sourceKey: m.sourceKey,
+            allowAutoSave: false,
+          ));
+        }
+      }
+    }
     await settings.saveSmsLastScan(now.millisecondsSinceEpoch);
+    await settings.saveSmsScannedSenders(senders);
   }
 
   /// Live SMS and wallet notifications while Paisa runs.

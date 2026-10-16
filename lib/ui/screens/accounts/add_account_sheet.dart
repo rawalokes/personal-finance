@@ -24,12 +24,13 @@ class _Preset {
 }
 
 const _presets = [
-  _Preset('eSewa', 'eSewa — personal', AccountTypeChoice.wallet, 'eSewa'),
+  _Preset('eSewa', 'eSewa — personal', AccountTypeChoice.wallet, 'eSewa, eSewa_Alert'),
   _Preset('Khalti', 'Khalti — personal', AccountTypeChoice.wallet, 'Khalti'),
   _Preset('IME Pay', 'IME Pay — personal', AccountTypeChoice.wallet, 'IMEPay'),
-  _Preset('Nabil Bank', 'Nabil Bank — savings', AccountTypeChoice.bank, 'NABIL_ALERT'),
+  _Preset('Nabil Bank', 'Nabil Bank — savings', AccountTypeChoice.bank, 'NABIL_ALERT, NABIL'),
   _Preset('NIC Asia Bank', 'NIC Asia Bank — savings', AccountTypeChoice.bank, 'NIC_ASIA'),
-  _Preset('Global IME Bank', 'Global IME Bank — savings', AccountTypeChoice.bank, 'GIBL'),
+  _Preset('Global IME Bank', 'Global IME Bank — savings', AccountTypeChoice.bank, 'GBIME_ALERT, GIBL'),
+  _Preset('NIMB', 'Nepal Investment Mega Bank — savings', AccountTypeChoice.bank, 'NIMB, NIMB_ALERT'),
   _Preset('Cash', 'Cash in hand', AccountTypeChoice.cash, ''),
 ];
 

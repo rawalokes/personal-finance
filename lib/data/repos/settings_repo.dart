@@ -24,6 +24,7 @@ abstract final class SettingKey {
   static const aiChat = 'ai.chat';
   static String aiCache(String month) => 'ai.analysis.$month';
   static const smsLastScan = 'sms.last_scan';
+  static const smsScannedSenders = 'sms.scanned_senders';
 }
 
 /// Typed access to the `settings` table. A missing document means "use the
@@ -131,4 +132,9 @@ class SettingsRepository {
   /// When Paisa last read the phone's SMS inbox (ms since epoch).
   Future<int?> smsLastScan() async => await _read(SettingKey.smsLastScan) as int?;
   Future<void> saveSmsLastScan(int millis) => _write(SettingKey.smsLastScan, millis);
+
+  /// The sender IDs that scan covered; a sender added later gets its own
+  /// 30-day scan. Null before 1.3.2.
+  Future<List<String>?> smsScannedSenders() async => (await _read(SettingKey.smsScannedSenders) as List?)?.cast<String>();
+  Future<void> saveSmsScannedSenders(List<String> senders) => _write(SettingKey.smsScannedSenders, senders);
 }
