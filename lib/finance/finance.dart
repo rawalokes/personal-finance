@@ -17,3 +17,4 @@ export 'budgets.dart';
 export 'duplicates.dart';
 export 'catalog.dart';
 export 'reports.dart';
+export 'score.dart';
